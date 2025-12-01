@@ -21,6 +21,7 @@ import SubscriptionPlans from "./pages/SubscriptionPlans";
 import RefundPolicy from "./pages/RefundPolicy";
 import DataSafety from "./pages/DataSafety";
 import Contact from "./pages/Contact";
+import Explorer from "./pages/Explorer";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ const App = () => (
           <ScrollToTop />
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/explorer" element={<Explorer />} />
             <Route path="/model/:id" element={<ModelDetail />} />
             <Route path="/categories" element={<Categories />} />
             <Route path="/category/:slug" element={<CategoryDetail />} />

@@ -11,11 +11,11 @@ import {
 } from "@/components/ui/sheet";
 
 interface NavbarProps {
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
 }
 
-export const Navbar = ({ searchQuery, onSearchChange }: NavbarProps) => {
+export const Navbar = ({ searchQuery = "", onSearchChange = () => {} }: NavbarProps) => {
   const { isAuthenticated, currentUser, logout } = useAuth();
   return (
     <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border">
@@ -32,22 +32,17 @@ export const Navbar = ({ searchQuery, onSearchChange }: NavbarProps) => {
           </div>
         </Link>
 
-        <div className="hidden lg:flex flex-1 justify-center max-w-md">
-          <SearchBar value={searchQuery} onChange={onSearchChange} />
-        </div>
+
 
         <div className="hidden md:flex items-center gap-3">
-          <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-            Discover
+          <Link to="/explorer" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            Explorer
           </Link>
           <Link to="/categories" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
             Categories
           </Link>
           <Link to="/subscription-plans" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
             Subscription Plans
-          </Link>
-          <Link to="/upload-model" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-            Submit Your Tools
           </Link>
           {isAuthenticated && currentUser ? (
             <UserAvatar user={currentUser} />
@@ -68,10 +63,9 @@ export const Navbar = ({ searchQuery, onSearchChange }: NavbarProps) => {
           </SheetTrigger>
           <SheetContent side="right" className="w-80">
             <div className="flex flex-col gap-6 mt-6">
-              <SearchBar value={searchQuery} onChange={onSearchChange} />
               <nav className="flex flex-col gap-4">
-                <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Discover
+                <Link to="/explorer" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Explorer
                 </Link>
                 <Link to="/categories" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Categories
@@ -134,9 +128,7 @@ export const Navbar = ({ searchQuery, onSearchChange }: NavbarProps) => {
         </Sheet>
       </div>
 
-      <div className="lg:hidden border-t border-border px-4 py-3">
-        <SearchBar value={searchQuery} onChange={onSearchChange} />
-      </div>
+
     </nav>
   );
 };

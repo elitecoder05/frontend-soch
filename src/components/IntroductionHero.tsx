@@ -132,7 +132,7 @@ export const IntroductionHero = ({ onGetStarted }: IntroductionHeroProps) => {
               className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
               onClick={onGetStarted}
             >
-              Get Started
+              Start Exploring
               <Sparkles className="w-5 h-5 ml-2" />
             </Button>
 
