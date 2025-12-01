@@ -98,3 +98,30 @@ To connect a domain, navigate to Project > Settings > Domains and click Connect 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
 # ai-sochh-frontend
 # frontend-soch
+
+## Firebase (Optional)
+
+This frontend project already includes an initialization helper and a small example to wire Firebase into the codebase.
+
+1) Copy `.env.example` to `.env.local` (or `.env`) and set actual Firebase values. Vite expects env vars to begin with `VITE_`.
+2) Install the npm Firebase package (if not yet installed):
+```bash
+npm install firebase
+```
+3) The file `src/lib/firebase.ts` contains the SDK initialization and exports `app`, `auth`, `db`, and `analytics`.
+Example usage inside a component:
+```ts
+import { auth } from '@/lib/firebase';
+// Now you can use `auth` from firebase/auth
+```
+
+If you prefer to include the SDK via CDN using a `<script>` tag in `index.html`, use the Firebase CDN script snippet (not recommended for this module-based repo):
+
+```html
+<!-- CDN approach (alternative) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
+```
+
+Using the npm package + Vite ensures tree-shaking and better build size control.
+
