@@ -28,7 +28,10 @@ const Home = () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await modelsAPI.getAllModels({ limit: 100 }); // Get more models initially
+        const response = await modelsAPI.getAllModels({ 
+          limit: 100,
+          includePending: 'true' // Include pending models for development
+        }); // Get more models initially
         setModels(response.data.models);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch models');

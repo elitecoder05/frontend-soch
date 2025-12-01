@@ -222,6 +222,7 @@ export const modelsAPI = {
     search?: string;
     page?: number;
     limit?: number;
+    includePending?: string;
   }): Promise<AllModelsResponse> => {
     try {
       const queryParams = new URLSearchParams();
@@ -240,6 +241,9 @@ export const modelsAPI = {
       }
       if (params?.limit) {
         queryParams.append('limit', params.limit.toString());
+      }
+      if (params?.includePending) {
+        queryParams.append('includePending', params.includePending);
       }
 
       const url = `/api/models${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;

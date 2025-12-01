@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Sparkles, Eye, EyeOff, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Sparkles, Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const { login, updateAuthState } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
@@ -19,6 +20,22 @@ export const Login = () => {
     email: '',
     password: '',
   });
+
+  // Handle browser back button
+  useEffect(() => {
+    const handlePopState = () => {
+      // If user hits back button and there's no previous history, go to home
+      navigate('/', { replace: true });
+    };
+
+    // Add event listener for back button
+    window.addEventListener('popstate', handlePopState);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [navigate]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -66,7 +83,10 @@ export const Login = () => {
           title: 'Welcome back!',
           description: 'You have been logged in successfully.',
         });
-        navigate('/'); // Redirect to home page after successful login
+        
+        // Get the intended destination from location state, or default to home
+        const from = location.state?.from?.pathname || '/';
+        navigate(from, { replace: true });
       }
     } catch (error: any) {
       toast({
@@ -79,8 +99,28 @@ export const Login = () => {
     }
   };
 
+  const handleGoBack = () => {
+    // Check if there's history to go back to, otherwise go to home
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/', { replace: true });
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 px-4">
+      {/* Back Button */}
+      <Button
+        variant="ghost"
+        size="sm"
+        className="absolute top-4 left-4 flex items-center gap-2 text-muted-foreground hover:text-foreground"
+        onClick={handleGoBack}
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Back
+      </Button>
+      
       <Card className="w-full max-w-md shadow-2xl border-0 bg-white">
         <CardHeader className="text-center space-y-2">
           <div className="flex justify-center">

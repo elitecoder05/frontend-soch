@@ -2,7 +2,7 @@ import { Search, Sparkles, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { aiModels } from "@/data/models";
 
 interface HeroProps {
@@ -11,9 +11,14 @@ interface HeroProps {
 
 export const Hero = ({ onSearch }: HeroProps) => {
   const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   
   // Get latest 4 tools for the banner
   const latestTools = aiModels.slice(0, 4);
+
+  const handleSubmitModelClick = () => {
+    navigate('/upload-model');
+  };
   
   return (
     <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-hero-gradient-start to-hero-gradient-end border border-border mb-8">
@@ -41,11 +46,13 @@ export const Hero = ({ onSearch }: HeroProps) => {
 
             <div className="flex flex-col sm:flex-row gap-3 mb-8">
               {isAuthenticated ? (
-                <Link to="/upload-model">
-                  <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                    Submit Your Model
-                  </Button>
-                </Link>
+                <Button 
+                  size="lg" 
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                  onClick={handleSubmitModelClick}
+                >
+                  Submit Your Model
+                </Button>
               ) : (
                 <Link to="/login">
                   <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
