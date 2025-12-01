@@ -32,11 +32,11 @@ export const Navbar = ({ searchQuery, onSearchChange }: NavbarProps) => {
           </div>
         </Link>
 
-        <div className="hidden lg:flex flex-1 justify-center max-w-2xl">
+        <div className="hidden lg:flex flex-1 justify-center max-w-md">
           <SearchBar value={searchQuery} onChange={onSearchChange} />
         </div>
 
-        <div className="hidden md:flex items-center gap-4">
+        <div className="hidden md:flex items-center gap-3">
           <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
             Discover
           </Link>
@@ -44,10 +44,14 @@ export const Navbar = ({ searchQuery, onSearchChange }: NavbarProps) => {
             Categories
           </Link>
           <Link to="/upload-model" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-            Upload Your AI
+            Submit Your Tools
           </Link>
-          <Button variant="ghost" size="sm" className="text-sm">
-            For Teams
+          <Link to="/trending" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            Trending AI Tools
+          </Link>
+          <Link to="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            Privacy Policy
+          </Link>
           </Button>
           {isAuthenticated && currentUser ? (
             <UserAvatar user={currentUser} />
@@ -77,10 +81,13 @@ export const Navbar = ({ searchQuery, onSearchChange }: NavbarProps) => {
                   Categories
                 </Link>
                 <Link to="/upload-model" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Upload Your AI
+                  Submit Your Tools
                 </Link>
-                <Link to="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  For Teams
+                <Link to="/trending" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Trending AI Tools
+                </Link>
+                <Link to="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Privacy Policy
                 </Link>
                 {isAuthenticated && currentUser ? (
                   <div className="mt-4 pt-4 border-t border-border">

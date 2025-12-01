@@ -295,6 +295,35 @@ export const modelsAPI = {
         'Failed to upload model.'
       );
     }
+  },
+
+  // Update a model
+  updateModel: async (modelId: string, data: ModelUploadData): Promise<{success: boolean; message: string; data: {model: Model}}> => {
+    try {
+      const response = await apiClient.put(`/api/models/${modelId}`, data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || 
+        error.response?.data?.errors?.join(', ') ||
+        error.message || 
+        'Failed to update model.'
+      );
+    }
+  },
+
+  // Delete a model
+  deleteModel: async (modelId: string): Promise<{success: boolean; message: string}> => {
+    try {
+      const response = await apiClient.delete(`/api/models/${modelId}`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || 
+        error.message || 
+        'Failed to delete model.'
+      );
+    }
   }
 };
 

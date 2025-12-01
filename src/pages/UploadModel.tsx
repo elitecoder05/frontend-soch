@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,9 +18,14 @@ import { modelsAPI, ModelUploadData } from "@/api/api-methods";
 export default function UploadModel() {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, currentUser } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Check if we're in edit mode
+  const editMode = location.state?.editMode || false;
+  const modelData = location.state?.modelData || null;
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -32,6 +37,30 @@ export default function UploadModel() {
       navigate('/login');
     }
   }, [isAuthenticated, navigate, toast]);
+
+  // Populate form data when in edit mode
+  useEffect(() => {
+    if (editMode && modelData) {
+      setFormData({
+        name: modelData.name || "",
+        shortDescription: modelData.shortDescription || "",
+        longDescription: modelData.longDescription || "",
+        category: modelData.category || "",
+        provider: modelData.provider || "",
+        pricing: modelData.pricing || "freemium",
+        modelType: modelData.modelType || "",
+        externalUrl: modelData.externalUrl || "",
+        isApiAvailable: modelData.isApiAvailable || false,
+        isOpenSource: modelData.isOpenSource || false,
+      });
+      
+      setTags(modelData.tags || []);
+      setCapabilities(modelData.capabilities || []);
+      setBestFor(modelData.bestFor || []);
+      setFeatures(modelData.features || []);
+      setExamplePrompts(modelData.examplePrompts || []);
+    }
+  }, [editMode, modelData]);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -146,7 +175,7 @@ export default function UploadModel() {
     setIsLoading(true);
 
     try {
-      const modelData: ModelUploadData = {
+      const modelDataPayload: ModelUploadData = {
         ...formData,
         tags,
         capabilities,
@@ -155,42 +184,49 @@ export default function UploadModel() {
         examplePrompts,
       };
 
-      const response = await modelsAPI.uploadModel(modelData);
+      let response;
+      if (editMode && modelData) {
+        response = await modelsAPI.updateModel(modelData._id, modelDataPayload);
+      } else {
+        response = await modelsAPI.uploadModel(modelDataPayload);
+      }
       
       toast({
         title: "Success!",
-        description: response.message || "Your AI model has been submitted for review.",
+        description: response.message || (editMode ? "Your AI model has been updated successfully." : "Your AI model has been submitted for review."),
       });
 
-      // Reset form
-      setFormData({
-        name: "",
-        shortDescription: "",
-        longDescription: "",
-        category: "",
-        provider: "",
-        pricing: "freemium",
-        modelType: "",
-        externalUrl: "",
-        isApiAvailable: false,
-        isOpenSource: false,
-      });
-      setTags([]);
-      setCapabilities([]);
-      setBestFor([]);
-      setFeatures([]);
-      setExamplePrompts([]);
+      if (!editMode) {
+        // Reset form only if not in edit mode
+        setFormData({
+          name: "",
+          shortDescription: "",
+          longDescription: "",
+          category: "",
+          provider: "",
+          pricing: "freemium",
+          modelType: "",
+          externalUrl: "",
+          isApiAvailable: false,
+          isOpenSource: false,
+        });
+        setTags([]);
+        setCapabilities([]);
+        setBestFor([]);
+        setFeatures([]);
+        setExamplePrompts([]);
+      }
 
-      // Redirect to profile to see the uploaded model
+      // Redirect to profile to see the uploaded/updated model
       setTimeout(() => {
         navigate('/profile');
       }, 2000);
 
     } catch (error: any) {
-      console.error('Upload error:', error);
+      console.error(editMode ? 'Update error:' : 'Upload error:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to upload model. Please try again.",
+        description: error.message || (editMode ? "Failed to update model. Please try again." : "Failed to upload model. Please try again."),
         variant: "destructive",
       });
     } finally {
@@ -209,15 +245,33 @@ export default function UploadModel() {
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-blue-500 flex items-center justify-center">
                 <Upload className="w-6 h-6 text-white" />
               </div>
-              <h1 className="text-3xl font-bold">Upload Your AI Model</h1>
+              <h1 className="text-3xl font-bold">
+                {editMode ? "Edit Your AI Model" : "Upload Your AI Model"}
+              </h1>
             </div>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Share your AI model with the community. Fill out the form below with detailed information about your model to help users discover and understand its capabilities.
+              {editMode 
+                ? "Update your AI model details below. Changes will reset the model status to pending for review."
+                : "Share your AI model with the community. Fill out the form below with detailed information about your model to help users discover and understand its capabilities."
+              }
             </p>
             {currentUser && (
               <div className="mt-4 p-3 bg-muted/30 rounded-lg inline-flex items-center gap-2 text-sm">
                 <span className="text-muted-foreground">Uploading as:</span>
                 <span className="font-medium">{currentUser.firstName} {currentUser.lastName}</span>
+              </div>
+            )}
+            {editMode && modelData && (
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-start gap-2 text-sm">
+                  <div className="text-blue-600">ℹ️</div>
+                  <div>
+                    <p className="font-medium text-blue-900">Editing Model: {modelData.name}</p>
+                    <p className="text-blue-700 mt-1">
+                      Note: Only models with "pending" or "rejected" status can be edited. Approved models require contacting support for changes.
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -517,10 +571,10 @@ export default function UploadModel() {
                 {isLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Uploading...
+                    {editMode ? "Updating..." : "Uploading..."}
                   </>
                 ) : (
-                  "Submit for Review"
+                  editMode ? "Update Model" : "Submit for Review"
                 )}
               </Button>
             </div>

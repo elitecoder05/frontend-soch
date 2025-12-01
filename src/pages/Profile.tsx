@@ -1,12 +1,28 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, Calendar, Mail, Phone, Upload, Eye, Clock, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { User, Calendar, Mail, Phone, Upload, Eye, Clock, CheckCircle, XCircle, Loader2, Edit, Trash2, MoreVertical } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { modelsAPI, Model } from "@/api/api-methods";
 import { useToast } from "@/hooks/use-toast";
@@ -18,6 +34,9 @@ const Profile = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [userModels, setUserModels] = useState<Model[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [modelToDelete, setModelToDelete] = useState<Model | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -47,6 +66,49 @@ const Profile = () => {
 
   const getInitials = (firstName: string, lastName: string) => {
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+  };
+
+  const handleEditModel = (model: Model) => {
+    // Navigate to upload page with model data for editing
+    navigate('/upload-model', { state: { editMode: true, modelData: model } });
+  };
+
+  const handleDeleteModel = async (model: Model) => {
+    setModelToDelete(model);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteModel = async () => {
+    if (!modelToDelete) return;
+
+    try {
+      setIsDeleting(true);
+      await modelsAPI.deleteModel(modelToDelete._id);
+      
+      toast({
+        title: "Success",
+        description: "Model deleted successfully.",
+      });
+
+      // Refresh the models list
+      fetchUserModels();
+      
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete model. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+      setDeleteDialogOpen(false);
+      setModelToDelete(null);
+    }
+  };
+
+  const canEditModel = (model: Model) => {
+    // Only allow editing for pending or rejected models
+    return model.status === 'pending' || model.status === 'rejected';
   };
 
   const getStatusIcon = (status: string) => {
@@ -307,6 +369,39 @@ const Profile = () => {
                             {getStatusIcon(model.status)}
                             <span className="capitalize">{model.status}</span>
                           </Badge>
+                          
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem 
+                                onClick={() => navigate(`/model/${model.slug}`)}
+                                className="cursor-pointer"
+                              >
+                                <Eye className="w-4 h-4 mr-2" />
+                                View Details
+                              </DropdownMenuItem>
+                              {canEditModel(model) && (
+                                <DropdownMenuItem 
+                                  onClick={() => handleEditModel(model)}
+                                  className="cursor-pointer"
+                                >
+                                  <Edit className="w-4 h-4 mr-2" />
+                                  Edit Model
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem 
+                                onClick={() => handleDeleteModel(model)}
+                                className="cursor-pointer text-red-600 focus:text-red-600"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Delete Model
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </div>
                     </div>
@@ -317,6 +412,35 @@ const Profile = () => {
           </Card>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Model</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{modelToDelete?.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteModel}
+              className="bg-red-500 hover:bg-red-600"
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete Model'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
