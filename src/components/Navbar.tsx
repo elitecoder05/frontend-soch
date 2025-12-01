@@ -43,14 +43,11 @@ export const Navbar = ({ searchQuery, onSearchChange }: NavbarProps) => {
           <Link to="/categories" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
             Categories
           </Link>
+          <Link to="/subscription-plans" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            Subscription Plans
+          </Link>
           <Link to="/upload-model" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
             Submit Your Tools
-          </Link>
-          <Link to="/trending" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-            Trending AI Tools
-          </Link>
-          <Link to="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-            Privacy Policy
           </Link>
           {isAuthenticated && currentUser ? (
             <UserAvatar user={currentUser} />
@@ -79,14 +76,31 @@ export const Navbar = ({ searchQuery, onSearchChange }: NavbarProps) => {
                 <Link to="/categories" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Categories
                 </Link>
+                <Link to="/subscription-plans" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Subscription Plans
+                </Link>
+                <div className="border-t border-border pt-4 mt-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-3">About Soch AI</h3>
+                  <div className="flex flex-col gap-3 pl-2">
+                    <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                      About Us
+                    </Link>
+                    <Link to="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                      Privacy Policy
+                    </Link>
+                    <Link to="/refund-policy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                      Refund Policy
+                    </Link>
+                    <Link to="/data-safety" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                      User Data Safety
+                    </Link>
+                    <Link to="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                      Contact Us
+                    </Link>
+                  </div>
+                </div>
                 <Link to="/upload-model" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Submit Your Tools
-                </Link>
-                <Link to="/trending" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Trending AI Tools
-                </Link>
-                <Link to="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Privacy Policy
                 </Link>
                 {isAuthenticated && currentUser ? (
                   <div className="mt-4 pt-4 border-t border-border">

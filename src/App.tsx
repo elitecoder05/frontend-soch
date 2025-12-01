@@ -16,6 +16,11 @@ import { Login } from "./pages/Login";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import About from "./pages/About";
+import SubscriptionPlans from "./pages/SubscriptionPlans";
+import RefundPolicy from "./pages/RefundPolicy";
+import DataSafety from "./pages/DataSafety";
+import Contact from "./pages/Contact";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +43,11 @@ const App = () => (
             <Route path="/signup" element={<Signup />} />
             <Route path="/login" element={<Login />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/subscription-plans" element={<SubscriptionPlans />} />
+            <Route path="/refund-policy" element={<RefundPolicy />} />
+            <Route path="/data-safety" element={<DataSafety />} />
+            <Route path="/contact" element={<Contact />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

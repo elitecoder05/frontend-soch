@@ -1,16 +1,22 @@
 import { useState, useMemo, useEffect } from "react";
 import { Hero } from "@/components/Hero";
+import { IntroductionHero } from "@/components/IntroductionHero";
 import { HorizontalCarousel } from "@/components/HorizontalCarousel";
 import { ModelCard } from "@/components/ModelCard";
 import { FilterSidebar } from "@/components/FilterSidebar";
 import { CategoryChip } from "@/components/CategoryChip";
+import { SearchBar } from "@/components/SearchBar";
+import { Footer } from "@/components/Footer";
 import { categories } from "@/data/models";
 import { Navbar } from "@/components/Navbar";
 import { modelsAPI, Model } from "@/api/api-methods";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Home = () => {
+  const { isAuthenticated } = useAuth();
+  const [showMainStore, setShowMainStore] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedChip, setSelectedChip] = useState("All");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -22,27 +28,36 @@ const Home = () => {
 
   const chips = ["All", "Chatbots", "Agents", "Image", "Code", "Productivity", "Voice", "Research"];
 
+  // Check if user is authenticated or has clicked "Get Started"
+  useEffect(() => {
+    if (isAuthenticated) {
+      setShowMainStore(true);
+    }
+  }, [isAuthenticated]);
+
   // Fetch models from API
   useEffect(() => {
-    const fetchModels = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await modelsAPI.getAllModels({ 
-          limit: 100,
-          includePending: 'true' // Include pending models for development
-        }); // Get more models initially
-        setModels(response.data.models);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch models');
-        console.error('Error fetching models:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (showMainStore) {
+      const fetchModels = async () => {
+        try {
+          setLoading(true);
+          setError(null);
+          const response = await modelsAPI.getAllModels({ 
+            limit: 100,
+            includePending: 'true' // Include pending models for development
+          }); // Get more models initially
+          setModels(response.data.models);
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Failed to fetch models');
+          console.error('Error fetching models:', err);
+        } finally {
+          setLoading(false);
+        }
+      };
 
-    fetchModels();
-  }, []);
+      fetchModels();
+    }
+  }, [showMainStore]);
 
   // Transform Model to match AiModel structure
   const transformModel = (model: Model) => ({
@@ -160,12 +175,38 @@ const Home = () => {
     );
   };
 
+  const handleGetStarted = () => {
+    setShowMainStore(true);
+  };
+
+  // If user is not authenticated and hasn't clicked "Get Started", show introduction
+  if (!isAuthenticated && !showMainStore) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+        <IntroductionHero onGetStarted={handleGetStarted} />
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
 
       <main className="container mx-auto px-4 py-8">
         <Hero onSearch={setSearchQuery} />
+
+        {/* Search Bar in Main Store Section */}
+        <div className="mb-6">
+          <div className="max-w-2xl mx-auto">
+            <SearchBar 
+              value={searchQuery} 
+              onChange={setSearchQuery} 
+              placeholder="Search AI models, tools, agents…"
+            />
+          </div>
+        </div>
 
         {error && (
           <Alert className="mb-6 border-red-200 bg-red-50">
@@ -317,6 +358,8 @@ const Home = () => {
           </div>
         </div>
       </main>
+      
+      <Footer />
     </div>
   );
 };

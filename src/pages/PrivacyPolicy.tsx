@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Shield, Mail, RefreshCw, Users } from "lucide-react";
@@ -21,25 +22,32 @@ const PrivacyPolicy = () => {
               </div>
               <h1 className="text-3xl font-bold">Privacy Policy</h1>
             </div>
+            <p className="text-muted-foreground">Last updated: December 1, 2025</p>
           </div>
 
           <div className="space-y-8">
             {/* Privacy Policy */}
             <Card>
-              <CardContent className="pt-6 space-y-4">
-                <p className="text-muted-foreground">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-primary" />
+                  Privacy Policy
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 text-muted-foreground">
+                <p>
                   Your privacy matters to us. Soch AI Store is committed to protecting your personal information and ensuring a secure experience for every user.
                 </p>
-                <p className="text-muted-foreground">
-                  We collect basic information such as your name email device details and general usage patterns. This information helps us personalise your experience improve recommendations and maintain the platform. All data is stored securely using encrypted systems and restricted access controls.
+                <p>
+                  We collect basic information such as your name, email, device details, and general usage patterns. This data helps us personalize your experience, improve recommendations, and maintain the platform. All information is stored securely using encrypted systems and restricted access controls.
                 </p>
-                <p className="text-muted-foreground">
-                  We do not sell your data and we do not share personal information without your consent except in situations required by law or necessary for safety and security.
+                <p>
+                  We do not sell your data. We do not share personal information without your consent, unless required by law or necessary for safety and security.
                 </p>
-                <p className="text-muted-foreground">
-                  Some tools listed on our platform belong to third party providers. When you use those tools you may be subject to their individual privacy policies. Please review their policies for full clarity.
+                <p>
+                  Some tools listed on our platform belong to third-party providers. When you use those tools, you may be subject to their individual privacy policies. Please review those policies for complete clarity.
                 </p>
-                <p className="text-muted-foreground">
+                <p>
                   You may request data correction or deletion at any time by contacting the email below.
                 </p>
               </CardContent>
@@ -108,7 +116,16 @@ const PrivacyPolicy = () => {
                     <p className="text-muted-foreground">sochaicontact@gmail.com</p>
                   </div>
                 </div>
-                <p className="text-muted-foreground">
+                <div className="flex items-center gap-2 text-sm">
+                  <Mail className="w-4 h-4" />
+                  <a 
+                    href="mailto:sochaicontact@gmail.com" 
+                    className="text-primary hover:underline"
+                  >
+                    sochaicontact@gmail.com
+                  </a>
+                </div>
+                <p className="text-muted-foreground text-sm">
                   We respond as quickly as possible and will assist you with anything related to the Soch AI platform.
                 </p>
               </CardContent>
@@ -116,6 +133,8 @@ const PrivacyPolicy = () => {
           </div>
         </div>
       </div>
+      
+      <Footer />
     </div>
   );
 };
