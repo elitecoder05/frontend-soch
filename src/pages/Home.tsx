@@ -175,7 +175,7 @@ const Home = () => {
           </Alert>
         )}
 
-        <div className="mb-6 overflow-x-auto pb-2">
+        <div id="main-store" className="mb-6 overflow-x-auto pb-2">
           <div className="flex gap-2 min-w-max">
             {chips.map((chip) => (
               <CategoryChip

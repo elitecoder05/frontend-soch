@@ -52,7 +52,6 @@ export const Navbar = ({ searchQuery, onSearchChange }: NavbarProps) => {
           <Link to="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
             Privacy Policy
           </Link>
-          </Button>
           {isAuthenticated && currentUser ? (
             <UserAvatar user={currentUser} />
           ) : (

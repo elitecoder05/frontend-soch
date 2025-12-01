@@ -19,6 +19,14 @@ export const Hero = ({ onSearch }: HeroProps) => {
   const handleSubmitModelClick = () => {
     navigate('/upload-model');
   };
+
+  const handleStartExploring = () => {
+    // Scroll to the main store section
+    const storeSection = document.getElementById('main-store');
+    if (storeSection) {
+      storeSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
   
   return (
     <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-hero-gradient-start to-hero-gradient-end border border-border mb-8">
@@ -46,13 +54,23 @@ export const Hero = ({ onSearch }: HeroProps) => {
 
             <div className="flex flex-col sm:flex-row gap-3 mb-8">
               {isAuthenticated ? (
-                <Button 
-                  size="lg" 
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                  onClick={handleSubmitModelClick}
-                >
-                  Submit Your Model
-                </Button>
+                <>
+                  <Button 
+                    size="lg" 
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                    onClick={handleStartExploring}
+                  >
+                    Start Exploring
+                  </Button>
+                  <Button 
+                    size="lg" 
+                    variant="outline"
+                    className="border-primary/30 hover:bg-primary/10"
+                    onClick={handleSubmitModelClick}
+                  >
+                    Submit Your Model
+                  </Button>
+                </>
               ) : (
                 <Link to="/login">
                   <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
