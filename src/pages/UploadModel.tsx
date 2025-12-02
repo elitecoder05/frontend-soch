@@ -35,8 +35,19 @@ export default function UploadModel() {
         variant: "destructive",
       });
       navigate('/login');
+      return;
     }
-  }, [isAuthenticated, navigate, toast]);
+
+    // Check if user is a pro user
+    if (isAuthenticated && currentUser && !currentUser.isProUser) {
+      toast({
+        title: "Pro Subscription Required",
+        description: "You need to be a Pro user to upload models. Please upgrade your subscription to continue.",
+        variant: "destructive",
+      });
+      navigate('/pricing');
+    }
+  }, [isAuthenticated, currentUser, navigate, toast]);
 
   // Populate form data when in edit mode
   useEffect(() => {
@@ -152,6 +163,28 @@ export default function UploadModel() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Check for authentication
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to upload a model.",
+        variant: "destructive",
+      });
+      navigate('/login');
+      return;
+    }
+
+    // Check for pro subscription
+    if (!currentUser?.isProUser) {
+      toast({
+        title: "Pro Subscription Required",
+        description: "You need to be a Pro user to upload models. Please upgrade your subscription to continue.",
+        variant: "destructive",
+      });
+      navigate('/pricing');
+      return;
+    }
+    
     // Basic validation
     if (!formData.name || !formData.shortDescription || !formData.category || !formData.provider) {
       toast({
@@ -159,16 +192,6 @@ export default function UploadModel() {
         description: "Please fill in all required fields.",
         variant: "destructive",
       });
-      return;
-    }
-
-    if (!isAuthenticated) {
-      toast({
-        title: "Error",
-        description: "Please log in to upload a model.",
-        variant: "destructive",
-      });
-      navigate('/login');
       return;
     }
 

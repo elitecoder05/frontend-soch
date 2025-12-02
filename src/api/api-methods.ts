@@ -22,6 +22,9 @@ export interface User {
   email: string;
   mobileNumber: string;
   createdAt: string;
+  subscriptionType?: 'free' | 'pro' | 'enterprise';
+  subscriptionStatus?: 'active' | 'inactive' | 'cancelled' | 'trial';
+  isProUser?: boolean;
 }
 
 
@@ -408,6 +411,37 @@ export const adminAPI = {
         error.response?.data?.message || 
         error.message || 
         'Failed to fetch admin models.'
+      );
+    }
+  },
+
+  // Get all users for admin
+  getAllUsers: async (): Promise<{ success: boolean; data: { users: User[] } }> => {
+    try {
+      const response = await apiClient.get('/api/auth/admin/users');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || 
+        error.message || 
+        'Failed to fetch users.'
+      );
+    }
+  },
+
+  // Update user subscription status
+  updateUserSubscription: async (
+    userId: string, 
+    subscriptionData: { subscriptionType: 'free' | 'pro' | 'enterprise'; isProUser: boolean }
+  ): Promise<{ success: boolean; message: string; data: { user: User } }> => {
+    try {
+      const response = await apiClient.put(`/api/auth/admin/update-subscription/${userId}`, subscriptionData);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || 
+        error.message || 
+        'Failed to update user subscription.'
       );
     }
   }

@@ -18,6 +18,7 @@ import Admin from "./pages/Admin";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import About from "./pages/About";
 import SubscriptionPlans from "./pages/SubscriptionPlans";
+import PricingPage from "./pages/PricingPage";
 import RefundPolicy from "./pages/RefundPolicy";
 import DataSafety from "./pages/DataSafety";
 import Contact from "./pages/Contact";
@@ -46,6 +47,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/about" element={<About />} />
+            <Route path="/pricing" element={<PricingPage />} />
             <Route path="/subscription-plans" element={<SubscriptionPlans />} />
             <Route path="/refund-policy" element={<RefundPolicy />} />
             <Route path="/data-safety" element={<DataSafety />} />

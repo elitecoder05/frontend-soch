@@ -43,8 +43,8 @@ export const Navbar = ({ searchQuery = "", onSearchChange = () => {} }: NavbarPr
           <Link to="/categories" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
             Categories
           </Link>
-          <Link to="/subscription-plans" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-            Subscription Plans
+          <Link to="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            Pricing
           </Link>
           {isAuthenticated && currentUser ? (
             <UserAvatar user={currentUser} />
@@ -72,8 +72,8 @@ export const Navbar = ({ searchQuery = "", onSearchChange = () => {} }: NavbarPr
                 <Link to="/categories" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Categories
                 </Link>
-                <Link to="/subscription-plans" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Subscription Plans
+                <Link to="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Pricing
                 </Link>
                 <div className="border-t border-border pt-4 mt-4">
                   <h3 className="text-sm font-semibold text-foreground mb-3">About Soch AI</h3>
