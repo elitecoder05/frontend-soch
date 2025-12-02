@@ -100,13 +100,28 @@ export const IntroductionHero = ({ onGetStarted }: IntroductionHeroProps) => {
         <div className="relative container mx-auto px-4 py-16 lg:py-24">
           <div className="text-center max-w-4xl mx-auto">
             {/* Profile Section */}
-            <div className="flex items-center justify-center gap-4 mb-8">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-blue-500 flex items-center justify-center">
-                <span className="text-2xl font-bold text-white">S</span>
+            <div className="flex items-center justify-center gap-8 mb-8">
+              <div className="flex items-center gap-3">
+                <img 
+                  src="/src/assets/parash.jpg" 
+                  alt="Parash Pratim Bhardwaj" 
+                  className="w-16 h-16 rounded-full object-cover border-2 border-primary/20"
+                />
+                <div className="text-left">
+                  <p className="text-lg font-semibold text-foreground">Parash Pratim Bhardwaj</p>
+                  <p className="text-sm text-muted-foreground">Founder</p>
+                </div>
               </div>
-              <div className="text-left">
-                <p className="text-lg font-semibold text-foreground">Sidharth Varma</p>
-                <p className="text-sm text-muted-foreground">Founder, Soch AI Store</p>
+              <div className="flex items-center gap-3">
+                <img 
+                  src="/src/assets/krishna.jpg" 
+                  alt="Krishna Singh" 
+                  className="w-16 h-16 rounded-full object-cover border-2 border-primary/20"
+                />
+                <div className="text-left">
+                  <p className="text-lg font-semibold text-foreground">Krishna Singh</p>
+                  <p className="text-sm text-muted-foreground">Co-Founder</p>
+                </div>
               </div>
             </div>
 
