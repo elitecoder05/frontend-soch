@@ -2,6 +2,7 @@ import { Search, Sparkles, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
 import { aiModels } from "@/data/models";
 
@@ -10,13 +11,34 @@ interface HeroProps {
 }
 
 export const Hero = ({ onSearch }: HeroProps) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, currentUser } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   
   // Get latest 4 tools for the banner
   const latestTools = aiModels.slice(0, 4);
 
   const handleSubmitModelClick = () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to upload models.",
+        variant: "destructive",
+      });
+      navigate('/login');
+      return;
+    }
+
+    if (!currentUser?.isProUser) {
+      toast({
+        title: "Pro Subscription Required",
+        description: "You need to be a Pro user to upload models. Please upgrade your subscription to continue.",
+        variant: "destructive",
+      });
+      navigate('/pricing');
+      return;
+    }
+
     navigate('/upload-model');
   };
 

@@ -1,9 +1,10 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Sparkles, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SearchBar } from "@/components/SearchBar";
 import { UserAvatar } from "@/components/UserAvatar";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import {
   Sheet,
   SheetContent,
@@ -17,6 +18,33 @@ interface NavbarProps {
 
 export const Navbar = ({ searchQuery = "", onSearchChange = () => {} }: NavbarProps) => {
   const { isAuthenticated, currentUser, logout } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleSubmitToolsClick = () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to upload models.",
+        variant: "destructive",
+      });
+      navigate('/login');
+      return;
+    }
+
+    if (!currentUser?.isProUser) {
+      toast({
+        title: "Pro Subscription Required",
+        description: "You need to be a Pro user to upload models. Please upgrade your subscription to continue.",
+        variant: "destructive",
+      });
+      navigate('/pricing');
+      return;
+    }
+
+    navigate('/upload-model');
+  };
+
   return (
     <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
@@ -46,6 +74,12 @@ export const Navbar = ({ searchQuery = "", onSearchChange = () => {} }: NavbarPr
           <Link to="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
             Pricing
           </Link>
+          <button 
+            onClick={handleSubmitToolsClick} 
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Submit Your Tools
+          </button>
           {isAuthenticated && currentUser ? (
             <UserAvatar user={currentUser} />
           ) : (
@@ -95,9 +129,12 @@ export const Navbar = ({ searchQuery = "", onSearchChange = () => {} }: NavbarPr
                     </Link>
                   </div>
                 </div>
-                <Link to="/upload-model" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <button 
+                  onClick={() => handleSubmitToolsClick()} 
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors text-left"
+                >
                   Submit Your Tools
-                </Link>
+                </button>
                 {isAuthenticated && currentUser ? (
                   <div className="mt-4 pt-4 border-t border-border">
                     <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">

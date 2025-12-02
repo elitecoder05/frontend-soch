@@ -50,11 +50,14 @@ const Admin = () => {
 
   // Fetch data for models and users
   const fetchAdminModels = async (status?: string) => {
+    console.log('Fetching admin models with status:', status);
     setIsLoading(true);
     try {
       const response = await adminAPI.getAllModelsAdmin({ status: status === 'all' ? undefined : status });
+      console.log('Admin models response:', response);
       setModels(response.data.models || []);
     } catch (err: any) {
+      console.error('Failed to fetch admin models:', err);
       toast({ title: 'Failed to fetch models', description: err.message || String(err), variant: 'destructive' });
     } finally {
       setIsLoading(false);
@@ -62,24 +65,19 @@ const Admin = () => {
   };
 
   const fetchUsers = async () => {
+    console.log('Fetching users...');
     setIsUsersLoading(true);
     try {
       const response = await adminAPI.getAllUsers();
+      console.log('Users response:', response);
       setUsers(response.data.users || []);
     } catch (err: any) {
+      console.error('Failed to fetch users:', err);
       toast({ title: 'Failed to fetch users', description: err.message || String(err), variant: 'destructive' });
     } finally {
       setIsUsersLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchAdminModels(statusFilter);
-  }, [statusFilter]);
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
 
   // update model status
   const handleStatusUpdate = async (modelId: string, status: 'approved' | 'rejected' | 'pending') => {
@@ -103,20 +101,37 @@ const Admin = () => {
   };
 
   const handleUserSubscriptionToggle = async (userId: string, currentIsPro: boolean) => {
+    console.log('Toggling user subscription:', { userId, currentIsPro });
     setUpdatingUser(userId);
     try {
-      const subscriptionType = currentIsPro ? 'free' : 'pro';
-      const isProUser = !currentIsPro;
-      const response = await adminAPI.updateUserSubscription(userId, { subscriptionType: subscriptionType as any, isProUser });
+      const response = await adminAPI.toggleUserSubscription(userId);
       const updatedUser = response.data.user;
+      console.log('Toggle response:', response);
       setUsers((prev) => prev.map((u) => (u.id === userId ? updatedUser : u)));
-      toast({ title: 'User updated', description: `User subscription updated to ${subscriptionType}`, variant: 'default' });
+      toast({ 
+        title: 'User updated', 
+        description: response.message || `User subscription toggled successfully`, 
+        variant: 'default' 
+      });
     } catch (err: any) {
-      toast({ title: 'Failed to update user', description: err.message || String(err), variant: 'destructive' });
+      console.error('Toggle error:', err);
+      toast({ 
+        title: 'Failed to update user', 
+        description: err.message || String(err), 
+        variant: 'destructive' 
+      });
     } finally {
       setUpdatingUser(null);
     }
   };
+
+  useEffect(() => {
+    fetchAdminModels(statusFilter);
+  }, [statusFilter]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -125,7 +140,24 @@ const Admin = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold">Admin Panel</h1>
-          {/* Models Tab */}
+          
+          <div className="flex space-x-4 mb-6">
+            <Button
+              variant={activeTab === 'models' ? 'default' : 'outline'}
+              onClick={() => setActiveTab('models')}
+            >
+              Models
+            </Button>
+            <Button
+              variant={activeTab === 'users' ? 'default' : 'outline'}
+              onClick={() => setActiveTab('users')}
+            >
+              Users
+            </Button>
+          </div>
+        </div>
+
+        {/* Models Tab */}
           {activeTab === 'models' && (
             <>
               <div className="mb-6">
@@ -299,37 +331,6 @@ const Admin = () => {
               )}
             </>
           )}
-                      
-
-
-                    {updatingModel === model._id && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Updating...
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Rejection reason input for new rejections */}
-                  <div className="space-y-2">
-                    <label htmlFor={`rejection-${model._id}`} className="text-sm font-medium">
-                      Rejection Reason (required for rejection)
-                    </label>
-                    <Textarea
-                      id={`rejection-${model._id}`}
-                      placeholder="Provide a reason for rejecting this model..."
-                      value={rejectionReasons[model._id] || ''}
-                      onChange={(e) => handleRejectionReasonChange(model._id, e.target.value)}
-                      rows={3}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
-                </div>
-        </>
-        )}
 
         {/* Users Tab */}
         {activeTab === 'users' && (

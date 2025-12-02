@@ -106,6 +106,19 @@ const Profile = () => {
     }
   };
 
+  const handleUploadModelClick = () => {
+    if (!currentUser?.isProUser) {
+      toast({
+        title: "Pro Subscription Required",
+        description: "You need to be a Pro user to upload models. Please upgrade your subscription to continue.",
+        variant: "destructive",
+      });
+      navigate('/pricing');
+      return;
+    }
+    navigate('/upload-model');
+  };
+
   const canEditModel = (model: Model) => {
     // Only allow editing for pending or rejected models
     return model.status === 'pending' || model.status === 'rejected';
@@ -176,7 +189,7 @@ const Profile = () => {
                       <p className="text-muted-foreground mt-1">AI Model Developer</p>
                     </div>
                     <Button 
-                      onClick={() => navigate('/upload-model')} 
+                      onClick={handleUploadModelClick} 
                       className="bg-gradient-to-r from-primary to-blue-500 hover:from-primary/90 hover:to-blue-500/90"
                     >
                       <Upload className="w-4 h-4 mr-2" />
@@ -303,7 +316,7 @@ const Profile = () => {
                     Start by uploading your first AI model to share with the community.
                   </p>
                   <Button 
-                    onClick={() => navigate('/upload-model')}
+                    onClick={handleUploadModelClick}
                     className="bg-gradient-to-r from-primary to-blue-500 hover:from-primary/90 hover:to-blue-500/90"
                   >
                     <Upload className="w-4 h-4 mr-2" />

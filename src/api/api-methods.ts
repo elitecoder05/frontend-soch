@@ -444,5 +444,19 @@ export const adminAPI = {
         'Failed to update user subscription.'
       );
     }
+  },
+
+  // Toggle user subscription status (simple toggle between free and pro)
+  toggleUserSubscription: async (userId: string): Promise<{ success: boolean; message: string; data: { user: User } }> => {
+    try {
+      const response = await apiClient.put(`/api/auth/admin/toggle-subscription/${userId}`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || 
+        error.message || 
+        'Failed to toggle user subscription.'
+      );
+    }
   }
 };

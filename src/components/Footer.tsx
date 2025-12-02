@@ -1,8 +1,37 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Sparkles, Mail, Shield, Users, FileText, HelpCircle } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const { isAuthenticated, currentUser } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleSubmitToolClick = () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to upload models.",
+        variant: "destructive",
+      });
+      navigate('/login');
+      return;
+    }
+
+    if (!currentUser?.isProUser) {
+      toast({
+        title: "Pro Subscription Required",
+        description: "You need to be a Pro user to upload models. Please upgrade your subscription to continue.",
+        variant: "destructive",
+      });
+      navigate('/pricing');
+      return;
+    }
+
+    navigate('/upload-model');
+  };
 
   const footerSections = [
     {
@@ -37,7 +66,7 @@ export const Footer = () => {
       icon: <HelpCircle className="w-4 h-4" />,
       links: [
         { label: "Help Center", href: "/help" },
-        { label: "Submit Your Tool", href: "/upload-model" },
+        { label: "Submit Your Tool", href: "/upload-model", isSpecial: true },
         { label: "Community", href: "/community" }
       ]
     }
@@ -85,12 +114,21 @@ export const Footer = () => {
               <ul className="space-y-2">
                 {section.links.map((link, linkIndex) => (
                   <li key={linkIndex}>
-                    <Link 
-                      to={link.href} 
-                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      {link.label}
-                    </Link>
+                    {link.isSpecial ? (
+                      <button 
+                        onClick={handleSubmitToolClick}
+                        className="text-sm text-muted-foreground hover:text-primary transition-colors text-left"
+                      >
+                        {link.label}
+                      </button>
+                    ) : (
+                      <Link 
+                        to={link.href} 
+                        className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        {link.label}
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>
