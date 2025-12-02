@@ -109,8 +109,8 @@ const Profile = () => {
   const handleUploadModelClick = () => {
     if (!currentUser?.isProUser) {
       toast({
-        title: "Pro Subscription Required",
-        description: "You need to be a Pro user to upload models. Please upgrade your subscription to continue.",
+        title: "Upgrade Required",
+        description: "You need to be a Pro user to upload your model. Upgrade to Pro to share your AI models with the community!",
         variant: "destructive",
       });
       navigate('/pricing');

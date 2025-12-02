@@ -21,8 +21,8 @@ export const Hero = ({ onSearch }: HeroProps) => {
   const handleSubmitModelClick = () => {
     if (!isAuthenticated) {
       toast({
-        title: "Authentication Required",
-        description: "Please log in to upload models.",
+        title: "Please Login First",
+        description: "You need to be logged in to upload your model. Please sign in to continue.",
         variant: "destructive",
       });
       navigate('/login');
@@ -31,8 +31,8 @@ export const Hero = ({ onSearch }: HeroProps) => {
 
     if (!currentUser?.isProUser) {
       toast({
-        title: "Pro Subscription Required",
-        description: "You need to be a Pro user to upload models. Please upgrade your subscription to continue.",
+        title: "Upgrade Required",
+        description: "You need to be a Pro user to upload your model. Upgrade to Pro to share your AI models with the community!",
         variant: "destructive",
       });
       navigate('/pricing');
