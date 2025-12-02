@@ -116,6 +116,12 @@ const PrivacyPolicy = () => {
                     <p className="text-muted-foreground">sochaicontact@gmail.com</p>
                   </div>
                 </div>
+                <div className="space-y-2">
+                  <div>
+                    <h3 className="font-semibold mb-2">Address</h3>
+                    <p className="text-muted-foreground">Maj Jajori, 782142</p>
+                  </div>
+                </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Mail className="w-4 h-4" />
                   <a 

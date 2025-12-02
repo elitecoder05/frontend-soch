@@ -1,5 +1,4 @@
 import { useState, useMemo, useEffect } from "react";
-import { Hero } from "@/components/Hero";
 import { HorizontalCarousel } from "@/components/HorizontalCarousel";
 import { ModelCard } from "@/components/ModelCard";
 import { FilterSidebar } from "@/components/FilterSidebar";
@@ -166,8 +165,6 @@ const Explorer = () => {
       <Navbar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
 
       <main className="container mx-auto px-4 py-8">
-        <Hero onSearch={setSearchQuery} />
-
         {/* Search Bar in Main Store Section */}
         <div className="mb-6">
           <div className="max-w-2xl mx-auto">
