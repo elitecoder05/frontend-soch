@@ -5,8 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { authAPI } from '@/api/api-methods';
+import Cookies from 'js-cookie';
 
 const PricingPage = () => {
+  const { toast } = useToast();
+  const { currentUser, updateAuthState } = useAuth();
   const pricingPlans = [
     {
       id: 'free',
@@ -79,9 +85,121 @@ const PricingPage = () => {
     }
   ];
 
-  const handlePlanSelect = (planId: string) => {
-    // TODO: Implement subscription logic
-    console.log('Selected plan:', planId);
+  const loadRazorpayScript = () => {
+    return new Promise<boolean>((resolve) => {
+      if ((window as any).Razorpay) return resolve(true);
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  const handlePlanSelect = async (planId: string) => {
+    try {
+      // Call backend to create an order
+      const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+      const res = await fetch(`${apiBase}/api/payments/create-order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planId })
+      });
+
+      const data = await res.json();
+      if (!data || !data.success) {
+        console.error('Failed to create order', data);
+        alert('Failed to initialize payment. Please try again later.');
+        return;
+      }
+
+      const { order, key_id } = data;
+
+      const loaded = await loadRazorpayScript();
+      if (!loaded) {
+        alert('Could not load Razorpay SDK.');
+        return;
+      }
+
+      const options = {
+        key: key_id || import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: order.amount,
+        currency: order.currency,
+        name: 'SochAI',
+        description: `${planId} subscription`,
+        order_id: order.id,
+        handler: async function (response: any) {
+          // Payment successful — response contains razorpay_payment_id, razorpay_order_id, razorpay_signature
+          console.log('Payment successful', response);
+          
+            try {
+            // Call backend to complete subscription
+            const token = authAPI.getToken();
+            if (!token) {
+              throw new Error('Authentication required');
+            }
+            
+            const completeRes = await fetch(`${apiBase}/api/payments/complete-subscription`, {
+              method: 'POST',
+              headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({ 
+                planId,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature
+              })
+            });
+            
+            const completeData = await completeRes.json();
+            if (completeData.success) {
+              // Update user cookie and auth state with new user data
+              if (completeData.data?.user) {
+                Cookies.set('userData', JSON.stringify(completeData.data.user), { expires: 7 });
+                updateAuthState();
+              }
+              
+              // Show green success toast
+              toast({
+                title: "✅ Successfully Subscribed!",
+                description: `You are now subscribed to the ${planId.toUpperCase()} plan. Enjoy all the premium features!`,
+                variant: "default",
+                className: "bg-green-50 border-green-200 text-green-800"
+              });
+            } else {
+              throw new Error(completeData.message || 'Failed to complete subscription');
+            }
+          } catch (error: any) {
+            console.error('Error completing subscription:', error);
+            toast({
+              title: "⚠️ Payment Successful, Subscription Pending",
+              description: "Payment was successful but there was an issue updating your subscription. Please contact support.",
+              variant: "destructive"
+            });
+          }
+        },
+        modal: {
+          ondismiss: function () {
+            console.log('Checkout closed');
+          }
+        },
+        prefill: {
+          name: '',
+          email: ''
+        },
+        theme: {
+          color: '#0ea5a0'
+        }
+      } as any;
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      console.error('Error in handlePlanSelect', err);
+      alert('An error occurred while initiating payment.');
+    }
   };
 
   return (
