@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Star, Zap } from 'lucide-react';
+import { Check, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,81 +9,12 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { authAPI } from '@/api/api-methods';
 import Cookies from 'js-cookie';
+import subscriptionPlans from '@/data/subscriptionPlans';
 
 const PricingPage = () => {
   const { toast } = useToast();
   const { currentUser, updateAuthState } = useAuth();
-  const pricingPlans = [
-    {
-      id: 'free',
-      name: 'Free',
-      price: '$0',
-      period: '/month',
-      description: 'Perfect for exploring and getting started',
-      features: [
-        'Browse unlimited AI models',
-        'View model details and documentation', 
-        'Access basic model information',
-        'Community support',
-        'Basic search and filtering'
-      ],
-      limitations: [
-        'No model uploads',
-        'Limited API access',
-        'No priority support'
-      ],
-      buttonText: 'Get Started',
-      buttonVariant: 'outline' as const,
-      popular: false,
-      icon: Star
-    },
-    {
-      id: 'pro',
-      name: 'Pro',
-      price: '$19',
-      period: '/month',
-      description: 'Ideal for developers and content creators',
-      features: [
-        'Everything in Free plan',
-        'Upload your own AI models',
-        'Priority model review',
-        'Enhanced model analytics',
-        'API access tokens',
-        'Priority email support',
-        'Advanced search filters',
-        'Custom model categories'
-      ],
-      limitations: [],
-      buttonText: 'Start Pro Trial',
-      buttonVariant: 'default' as const,
-      popular: true,
-      icon: Zap
-    },
-    {
-      id: 'enterprise',
-      name: 'Enterprise',
-      price: '$99',
-      period: '/month',
-      description: 'For teams and organizations',
-      features: [
-        'Everything in Pro plan',
-        'Unlimited model uploads',
-        'White-label solutions',
-        'Custom integrations',
-        'Dedicated account manager',
-        '24/7 phone support',
-        'Advanced analytics dashboard',
-        'Team collaboration tools',
-        'Custom branding',
-        'SLA guarantee'
-      ],
-      limitations: [],
-      buttonText: 'Contact Sales',
-      buttonVariant: 'outline' as const,
-      popular: false,
-      icon: Star
-    }
-  ];
+  const pricingPlans = subscriptionPlans;
 
   const loadRazorpayScript = () => {
     return new Promise<boolean>((resolve) => {
@@ -220,7 +151,6 @@ const PricingPage = () => {
         {/* Pricing Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto">
           {pricingPlans.map((plan) => {
-            const IconComponent = plan.icon;
             
             return (
               <Card 
@@ -240,7 +170,7 @@ const PricingPage = () => {
                     <div className={`p-3 rounded-full ${
                       plan.popular ? 'bg-primary text-white' : 'bg-muted'
                     }`}>
-                      <IconComponent className="w-6 h-6" />
+                      <Star className="w-6 h-6" />
                     </div>
                   </div>
                   
@@ -251,7 +181,7 @@ const PricingPage = () => {
                   
                   <div className="mt-4">
                     <span className="text-4xl font-bold">{plan.price}</span>
-                    <span className="text-muted-foreground">{plan.period}</span>
+                    <span className="text-muted-foreground">{plan.duration}</span>
                   </div>
                 </CardHeader>
                 
@@ -272,7 +202,7 @@ const PricingPage = () => {
                   </div>
 
                   {/* Limitations (for free plan) */}
-                  {plan.limitations.length > 0 && (
+                  {plan.limitations && plan.limitations.length > 0 && (
                     <div className="space-y-3">
                       <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">
                         Limitations
@@ -290,7 +220,7 @@ const PricingPage = () => {
 
                   {/* Button */}
                   <Button
-                    variant={plan.buttonVariant}
+                    variant={plan.popular ? 'default' : 'outline'}
                     className={`w-full mt-8 ${
                       plan.popular 
                         ? 'bg-gradient-to-r from-primary to-blue-500 text-white hover:from-primary/90 hover:to-blue-500/90' 
@@ -298,7 +228,7 @@ const PricingPage = () => {
                     }`}
                     onClick={() => handlePlanSelect(plan.id)}
                   >
-                    {plan.buttonText}
+                    {plan.id === 'free' ? 'Start Free Trial' : plan.id === 'annual' ? 'Contact Sales' : 'Choose Plan'}
                   </Button>
                 </CardContent>
               </Card>

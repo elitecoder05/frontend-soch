@@ -2,6 +2,7 @@ import { Sparkles, Check, Star, Users, Shield, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import subscriptionPlans from "@/data/subscriptionPlans";
 
 interface IntroductionHeroProps {
   onGetStarted: () => void;
@@ -31,64 +32,6 @@ export const IntroductionHero = ({ onGetStarted }: IntroductionHeroProps) => {
     }
   ];
 
-  const subscriptionPlans = [
-    {
-      name: "Free Trial",
-      price: "₹0",
-      duration: "14 Days",
-      description: "Perfect for getting started",
-      features: [
-        "Access to all AI tools",
-        "Basic recommendations",
-        "Community support",
-        "No commitment"
-      ],
-      popular: false,
-      badge: "Try Free"
-    },
-    {
-      name: "Monthly",
-      price: "₹49",
-      duration: "per month",
-      description: "Flexible monthly access",
-      features: [
-        "Full platform access",
-        "Premium recommendations",
-        "Priority support",
-        "Advanced filters"
-      ],
-      popular: false,
-      badge: null
-    },
-    {
-      name: "6 Months",
-      price: "₹149",
-      duration: "6 months",
-      description: "Best value for regular users",
-      features: [
-        "Everything in Monthly",
-        "2 months free",
-        "Enhanced AI insights",
-        "Beta feature access"
-      ],
-      popular: true,
-      badge: "Most Popular"
-    },
-    {
-      name: "Annual",
-      price: "₹249",
-      duration: "12 months",
-      description: "Maximum savings",
-      features: [
-        "Everything in 6 months",
-        "5+ months free",
-        "Premium AI coaching",
-        "Priority feature requests"
-      ],
-      popular: false,
-      badge: "Best Value"
-    }
-  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
@@ -103,7 +46,7 @@ export const IntroductionHero = ({ onGetStarted }: IntroductionHeroProps) => {
             <div className="flex items-center justify-center gap-8 mb-8">
               <div className="flex items-center gap-3">
                 <img 
-                  src="/src/assets/parash.jpg" 
+                  src="https://firebasestorage.googleapis.com/v0/b/sochai-2025.firebasestorage.app/o/website-assets%2Fparash.jpg?alt=media&token=314721f6-c4d6-4d2e-939b-8cbfd3a2a203" 
                   alt="Parash Pratim Bhardwaj" 
                   className="w-16 h-16 rounded-full object-cover border-2 border-primary/20"
                 />
@@ -114,7 +57,7 @@ export const IntroductionHero = ({ onGetStarted }: IntroductionHeroProps) => {
               </div>
               <div className="flex items-center gap-3">
                 <img 
-                  src="/src/assets/krishna.jpg" 
+                  src="https://firebasestorage.googleapis.com/v0/b/sochai-2025.firebasestorage.app/o/website-assets%2Fkrishna.jpg?alt=media&token=e7d1d44c-75d5-4f63-a955-648c6f5dd238" 
                   alt="Krishna Singh" 
                   className="w-16 h-16 rounded-full object-cover border-2 border-primary/20"
                 />

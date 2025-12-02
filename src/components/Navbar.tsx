@@ -50,7 +50,7 @@ export const Navbar = ({ searchQuery = "", onSearchChange = () => {} }: NavbarPr
       <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
         <Link to="/" className="flex items-center gap-2 flex-shrink-0">
           <img 
-            src="/src/assets/sochailogo.jpg" 
+            src="https://firebasestorage.googleapis.com/v0/b/sochai-2025.firebasestorage.app/o/website-assets%2Fsochailogo.jpg?alt=media&token=3fda20fa-6dcd-41cc-b898-7b0e3f3c1ca7" 
             alt="Soch AI Logo" 
             className="w-8 h-8 rounded-lg object-cover"
           />

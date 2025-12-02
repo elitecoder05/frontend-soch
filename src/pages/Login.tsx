@@ -129,7 +129,7 @@ export const Login = () => {
         {/* Logo and Brand */}
         <Link to="/" className="absolute top-6 right-6 flex items-center gap-2">
           <img 
-            src="/src/assets/sochailogo.jpg" 
+            src="https://firebasestorage.googleapis.com/v0/b/sochai-2025.firebasestorage.app/o/website-assets%2Fsochailogo.jpg?alt=media&token=3fda20fa-6dcd-41cc-b898-7b0e3f3c1ca7" 
             alt="Soch AI Logo" 
             className="w-8 h-8 rounded-lg object-cover"
           />
