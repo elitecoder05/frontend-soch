@@ -119,7 +119,7 @@ export const IntroductionHero = ({ onGetStarted }: IntroductionHeroProps) => {
                   className="w-16 h-16 rounded-full object-cover border-2 border-primary/20"
                 />
                 <div className="text-left">
-                  <p className="text-lg font-semibold text-foreground">Krishna Singh</p>
+                  <p className="text-lg font-semibold text-foreground">Krishna Pal Singh Shekhawat</p>
                   <p className="text-sm text-muted-foreground">Co-Founder</p>
                 </div>
               </div>
