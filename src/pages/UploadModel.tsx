@@ -9,11 +9,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Plus, X, Upload, Sparkles, Loader2 } from "lucide-react";
+import { Plus, X, Upload, Sparkles, Loader2, Image as ImageIcon } from "lucide-react";
 import { categories } from "@/data/models";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { modelsAPI, ModelUploadData } from "@/api/api-methods";
+import { LogoUpload } from "@/components/ui/LogoUpload";
+import { ScreenshotsUpload } from "@/components/ui/ScreenshotsUpload";
 
 export default function UploadModel() {
   const { toast } = useToast();
@@ -70,6 +72,8 @@ export default function UploadModel() {
       setBestFor(modelData.bestFor || []);
       setFeatures(modelData.features || []);
       setExamplePrompts(modelData.examplePrompts || []);
+      setLogoUrl(modelData.iconUrl || "");
+      setScreenshotUrls(modelData.screenshots || []);
     }
   }, [editMode, modelData]);
   
@@ -86,6 +90,10 @@ export default function UploadModel() {
     isApiAvailable: false,
     isOpenSource: false,
   });
+
+  // Image upload states
+  const [logoUrl, setLogoUrl] = useState<string>("");
+  const [screenshotUrls, setScreenshotUrls] = useState<string[]>([]);
 
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState("");
@@ -205,6 +213,8 @@ export default function UploadModel() {
         bestFor,
         features,
         examplePrompts,
+        iconUrl: logoUrl,
+        screenshots: screenshotUrls,
       };
 
       let response;
@@ -238,6 +248,8 @@ export default function UploadModel() {
         setBestFor([]);
         setFeatures([]);
         setExamplePrompts([]);
+        setLogoUrl("");
+        setScreenshotUrls([]);
       }
 
       // Redirect to profile to see the uploaded/updated model
@@ -406,6 +418,34 @@ export default function UploadModel() {
                     placeholder="https://your-model-website.com"
                     value={formData.externalUrl}
                     onChange={(e) => handleInputChange("externalUrl", e.target.value)}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ImageIcon className="w-5 h-5" />
+                  Model Assets
+                </CardTitle>
+                <CardDescription>
+                  Upload visual assets to showcase your model.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <LogoUpload
+                    onUploadComplete={setLogoUrl}
+                    onRemove={() => setLogoUrl("")}
+                    initialUrl={logoUrl}
+                    disabled={isLoading}
+                  />
+                  <ScreenshotsUpload
+                    onUploadComplete={setScreenshotUrls}
+                    initialUrls={screenshotUrls}
+                    disabled={isLoading}
+                    maxImages={4}
                   />
                 </div>
               </CardContent>

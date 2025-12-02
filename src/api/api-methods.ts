@@ -107,6 +107,8 @@ export interface ModelUploadData {
   bestFor: string[];
   features: string[];
   examplePrompts: string[];
+  iconUrl?: string;
+  screenshots?: string[];
 }
 
 export interface ModelUploadResponse {

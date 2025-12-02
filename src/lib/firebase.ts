@@ -2,6 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 // NOTE: These values should be provided via Vite environment variables.
 // See `.env.example` for variable names and add a local `.env` in the root of frontend.
@@ -32,5 +33,6 @@ if (typeof window !== "undefined" && firebaseConfig.measurementId) {
 
 const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app);
 
-export { app, analytics, auth, db };
+export { app, analytics, auth, db, storage };
