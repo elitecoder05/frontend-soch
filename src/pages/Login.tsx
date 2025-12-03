@@ -252,7 +252,7 @@ export const Login = () => {
         {/* Logo and Brand */}
         <Link to="/" className="absolute top-6 right-6 flex items-center gap-2">
           <img 
-            src="https://firebasestorage.googleapis.com/v0/b/sochai-2025.firebasestorage.app/o/website-assets%2Fsochailogo.jpg?alt=media&token=3fda20fa-6dcd-41cc-b898-7b0e3f3c1ca7" 
+            src="https://www.sochai.store/sochailogo.jpg"
             alt="Soch AI Logo" 
             className="w-8 h-8 rounded-lg object-cover"
           />
@@ -268,13 +268,11 @@ export const Login = () => {
         <Card className="w-full max-w-md bg-card border-border shadow-2xl">
           <CardHeader className="text-center space-y-4">
             <div className="flex justify-center">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-blue-500 flex items-center justify-center shadow-lg">
-                <img 
-                  src="/src/assets/sochailogo.jpg" 
-                  alt="Soch AI Logo" 
-                  className="w-10 h-10 rounded-xl object-cover"
-                />
-              </div>
+              <img
+                src="https://www.sochai.store/sochailogo.jpg"
+                alt="Soch AI Logo"
+                className="w-16 h-16 object-contain"
+              />
             </div>
             <div className="space-y-2">
               <CardTitle className="text-2xl font-bold text-foreground">Welcome Back</CardTitle>
