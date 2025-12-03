@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronRight, MessageSquare, Image, Code, Zap, Mic, BookOpen, Bot, Palette } from "lucide-react";
+import { ChevronRight, MessageSquare, Image, Code, Zap, Mic, BookOpen, Bot, Palette, Video, Heart } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { categories } from "@/data/models";
+import { categories as defaultCategories } from "@/data/models";
+import type { Category } from "@/types/model";
+import { modelsAPI } from "@/api/api-methods";
 import { Navbar } from "@/components/Navbar";
 
 const iconMap: { [key: string]: any } = {
@@ -14,10 +16,27 @@ const iconMap: { [key: string]: any } = {
   BookOpen,
   Bot,
   Palette,
+  Video,
+  Heart,
 };
 
 const Categories = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [categoriesList, setCategoriesList] = useState<Category[]>(defaultCategories);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await modelsAPI.getCategories();
+        if (res?.data?.categories) {
+          setCategoriesList(res.data.categories);
+        }
+      } catch (err) {
+        console.error('Failed to fetch categories:', err);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -34,7 +53,7 @@ const Categories = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {categories.map((category) => {
+          {categoriesList.map((category) => {
             const IconComponent = iconMap[category.icon];
             return (
               <Link key={category.id} to={`/category/${category.slug}`}>

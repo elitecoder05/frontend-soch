@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Plus, X, Upload, Sparkles, Loader2, Image as ImageIcon } from "lucide-react";
-import { categories } from "@/data/models";
+import { categories as defaultCategories } from "@/data/models";
+import type { Category } from "@/types/model";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { modelsAPI, ModelUploadData } from "@/api/api-methods";
@@ -24,12 +25,27 @@ export default function UploadModel() {
   const { isAuthenticated, currentUser } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [categoriesList, setCategoriesList] = useState<Category[]>(defaultCategories);
   
   // Check if we're in edit mode
   const editMode = location.state?.editMode || false;
   const modelData = location.state?.modelData || null;
 
   useEffect(() => {
+    // Fetch categories from backend and populate categoriesList
+    const fetchCategories = async () => {
+      try {
+        const res = await modelsAPI.getCategories();
+        if (res?.data?.categories) {
+          setCategoriesList(res.data.categories);
+        }
+      } catch (err) {
+        console.error('Failed to fetch categories', err);
+        // fallback to defaultCategories (empty array) will keep UI safe
+      }
+    };
+    fetchCategories();
+
     if (!isAuthenticated) {
       toast({
         title: "Authentication Required",
@@ -376,7 +392,7 @@ export default function UploadModel() {
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent>
-                        {categories.map((category) => (
+                        {categoriesList.map((category) => (
                           <SelectItem key={category.id} value={category.slug}>
                             {category.name}
                           </SelectItem>

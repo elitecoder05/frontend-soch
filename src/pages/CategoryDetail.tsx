@@ -1,10 +1,12 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ModelCard } from "@/components/ModelCard";
 import { CategoryChip } from "@/components/CategoryChip";
-import { aiModels, categories } from "@/data/models";
+import { categories as defaultCategories } from "@/data/models";
+import { modelsAPI } from "@/api/api-methods";
+import type { AiModel, Category } from "@/types/model";
 import { Navbar } from "@/components/Navbar";
 
 const CategoryDetail = () => {
@@ -12,12 +14,14 @@ const CategoryDetail = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("popular");
 
-  const category = categories.find((c) => c.slug === slug);
+  const [categoriesList, setCategoriesList] = useState<Category[]>(defaultCategories);
+  const [modelsList, setModelsList] = useState<AiModel[]>([]);
+  const category = categoriesList.find((c) => c.slug === slug);
 
   const filteredModels = useMemo(() => {
     if (!category) return [];
 
-    let models = aiModels.filter((m) => m.category === category.slug);
+    let models = modelsList.filter((m) => m.category === category.slug);
 
     switch (sortBy) {
       case "popular":
@@ -36,6 +40,27 @@ const CategoryDetail = () => {
 
     return models;
   }, [category, sortBy]);
+
+  useEffect(() => {
+    const fetchCategoryAndModels = async () => {
+      try {
+        const res = await modelsAPI.getCategories();
+        if (res?.data?.categories) {
+          setCategoriesList(res.data.categories);
+        }
+        // fetch models for this category (approved only)
+        if (slug) {
+          const modelsRes = await modelsAPI.getAllModels({ category: slug, limit: 100 });
+          if (modelsRes?.data?.models) {
+            setModelsList(modelsRes.data.models);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch category/models:', err);
+      }
+    };
+    fetchCategoryAndModels();
+  }, [slug]);
 
   if (!category) {
     return (

@@ -261,7 +261,20 @@ export const modelsAPI = {
         'Failed to fetch models.'
       );
     }
-  },
+    },
+    // Get available categories from backend
+    getCategories: async (): Promise<{success: boolean; data: {categories: any[]}}> => {
+      try {
+        const response = await apiClient.get('/api/categories');
+        return response.data;
+      } catch (error: any) {
+        throw new Error(
+          error.response?.data?.message || 
+          error.message || 
+          'Failed to fetch categories.'
+        );
+      }
+    },
 
   // Get user's uploaded models
   getUserModels: async (): Promise<ModelsResponse> => {
