@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useLocation } from "react-router-dom";
 import { Star, ExternalLink, Clock, ChevronLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,7 @@ const ModelDetail = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const location: any = useLocation();
 
   useEffect(() => {
     if (!id) return;
@@ -158,7 +159,8 @@ const ModelDetail = () => {
       <Navbar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
 
       <main className="container mx-auto px-4 py-8">
-        <Link to="/">
+        {/* Use the `from` state (if present) to navigate back to the correct page (e.g., /explorer) */}
+        <Link to={location?.state?.from || "/explorer"}>
           <Button variant="ghost" size="sm" className="mb-6 -ml-2">
             <ChevronLeft className="w-4 h-4 mr-1" />
             Back to Store
@@ -342,6 +344,20 @@ const ModelDetail = () => {
                   <div className="text-foreground font-medium">{model.provider}</div>
                 </div>
                 <Separator />
+                {model.externalUrl && (
+                  <>
+                    <div>
+                      <div className="text-sm text-muted-foreground mb-1">Website</div>
+                      <div className="text-foreground font-medium break-words">
+                        <a href={model.externalUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-2">
+                          Visit Website
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                      </div>
+                    </div>
+                    <Separator />
+                  </>
+                )}
                 <div>
                   <div className="text-sm text-muted-foreground mb-1">Pricing</div>
                   <div className="text-foreground font-medium capitalize">

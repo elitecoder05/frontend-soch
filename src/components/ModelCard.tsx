@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Star, ExternalLink } from "lucide-react";
 import { AiModel } from "@/types/model";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,9 @@ interface ModelCardProps {
 }
 
 export const ModelCard = ({ model }: ModelCardProps) => {
+  const location = useLocation();
+  // If the user navigated here from another page that set a `from` in state, preserve it.
+  const fromState = (location.state && (location.state as any).from) ? (location.state as any).from : `${location.pathname}${location.search}`;
   const formatInstalls = (count?: number) => {
     if (!count) return "New";
     if (count >= 1000) return `${(count / 1000).toFixed(1)}K+`;
@@ -18,7 +21,7 @@ export const ModelCard = ({ model }: ModelCardProps) => {
 
   return (
     <Card className="group overflow-hidden border-card-border bg-card hover:bg-card-hover hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1">
-      <Link to={`/model/${model.id}`}>
+      <Link to={`/model/${model.id}`} state={{ from: fromState }}>
         <CardContent className="p-4">
           <div className="flex gap-3 mb-3">
             <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0 border border-primary/20">
