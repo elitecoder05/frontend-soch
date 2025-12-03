@@ -7,6 +7,7 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { authAPI } from '@/api/api-methods';
 import Cookies from 'js-cookie';
 import subscriptionPlans from '@/data/subscriptionPlans';
@@ -14,6 +15,7 @@ import subscriptionPlans from '@/data/subscriptionPlans';
 const PricingPage = () => {
   const { toast } = useToast();
   const { currentUser, updateAuthState } = useAuth();
+  const navigate = useNavigate();
   const pricingPlans = subscriptionPlans;
 
   const loadRazorpayScript = () => {
@@ -31,16 +33,65 @@ const PricingPage = () => {
     try {
       // Call backend to create an order
       const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+      // If plan requires sales contact (enterprise), go to Contact page instead of trying to process via payment SDK
+      if (planId === 'enterprise') {
+        toast({
+          title: 'Contact Sales',
+          description: 'For Enterprise/Annual plans, please contact our sales team for a custom quote.',
+        });
+        navigate('/contact');
+        return;
+      }
+
+      // Free trial: direct the user to signup (no payment required)
+      if (planId === 'free') {
+        toast({
+          title: 'Free Trial',
+          description: 'Start your free trial by creating an account. No payment needed.',
+        });
+        navigate('/signup');
+        return;
+      }
+
       const res = await fetch(`${apiBase}/api/payments/create-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ planId })
       });
 
+      // Ensure we got a valid 2xx response — otherwise show a helpful message
+      if (!res.ok) {
+        console.error('Failed to create order', res.status, res.statusText);
+        // 404 likely means that the backend route is not available or the API base URL is wrong
+        toast({
+          title: 'Payment Initialization Failed',
+          description: res.status === 404 ? 'Payment endpoint not found on the server. Please contact support or try again later.' : 'Failed to initialize payment. Please try again later.',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      // Check content type, avoid parsing HTML error pages as JSON
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        const text = await res.text();
+        console.error('Unexpected response (not JSON):', text.substring(0, 400));
+        toast({
+          title: 'Payment Error',
+          description: 'Unexpected server response while initializing payment. Please try again later.',
+          variant: 'destructive'
+        });
+        return;
+      }
+
       const data = await res.json();
       if (!data || !data.success) {
         console.error('Failed to create order', data);
-        alert('Failed to initialize payment. Please try again later.');
+        toast({
+          title: 'Payment Error',
+          description: data?.message || 'Failed to initialize payment. Please try again later.',
+          variant: 'destructive'
+        });
         return;
       }
 
@@ -83,7 +134,29 @@ const PricingPage = () => {
                 razorpay_signature: response.razorpay_signature
               })
             });
-            
+            // Ensure we got valid JSON and a 2xx response
+            if (!completeRes.ok) {
+              console.error('Failed to complete subscription', completeRes.status, completeRes.statusText);
+              toast({
+                title: 'Subscription Update Failed',
+                description: 'Payment succeeded but updating the subscription failed. Contact support if you continue to see this.',
+                variant: 'destructive'
+              });
+              return;
+            }
+
+            const completeContentType = completeRes.headers.get('content-type') || '';
+            if (!completeContentType.includes('application/json')) {
+              const txt = await completeRes.text();
+              console.error('Unexpected complete-subscription response (not JSON):', txt.substring(0, 400));
+              toast({
+                title: 'Subscription Update Failed',
+                description: 'Unexpected response from server. Please contact support.',
+                variant: 'destructive'
+              });
+              return;
+            }
+
             const completeData = await completeRes.json();
             if (completeData.success) {
               // Update user cookie and auth state with new user data
@@ -226,9 +299,9 @@ const PricingPage = () => {
                         ? 'bg-gradient-to-r from-primary to-blue-500 text-white hover:from-primary/90 hover:to-blue-500/90' 
                         : ''
                     }`}
-                    onClick={() => handlePlanSelect(plan.id)}
+                    onClick={() => handlePlanSelect(plan.apiPlanId || plan.id)}
                   >
-                    {plan.id === 'free' ? 'Start Free Trial' : plan.id === 'annual' ? 'Contact Sales' : 'Choose Plan'}
+                    {plan.id === 'free' ? 'Start Free Trial' : plan.apiPlanId === 'enterprise' ? 'Contact Sales' : 'Choose Plan'}
                   </Button>
                 </CardContent>
               </Card>

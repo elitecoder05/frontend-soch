@@ -1,6 +1,7 @@
 export const subscriptionPlans = [
   {
     id: 'free',
+    apiPlanId: 'free',
     name: 'Free Trial',
     price: '₹0',
     duration: '14 Days',
@@ -16,6 +17,7 @@ export const subscriptionPlans = [
   },
   {
     id: 'monthly',
+    apiPlanId: 'pro',
     name: 'Monthly',
     price: '₹49',
     duration: 'per month',
@@ -31,6 +33,7 @@ export const subscriptionPlans = [
   },
   {
     id: 'six_months',
+    apiPlanId: 'pro',
     name: '6 Months',
     price: '₹149',
     duration: '6 months',
@@ -46,6 +49,7 @@ export const subscriptionPlans = [
   },
   {
     id: 'annual',
+    apiPlanId: 'enterprise',
     name: 'Annual',
     price: '₹249',
     duration: '12 months',
