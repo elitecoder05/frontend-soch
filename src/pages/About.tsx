@@ -143,23 +143,43 @@ const About = () => {
             </CardContent>
           </Card>
 
-          {/* Founder Section */}
+          {/* Founders Section - show same founders as hero with images */}
           <Card className="mb-8">
             <CardHeader>
-              <CardTitle className="text-2xl">Meet Our Founder</CardTitle>
+              <CardTitle className="text-2xl">Meet Our Founders</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-6">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-blue-500 flex items-center justify-center flex-shrink-0">
-                  <span className="text-2xl font-bold text-white">S</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                <div className="flex items-start gap-4">
+                  <img
+                    src="https://firebasestorage.googleapis.com/v0/b/sochai-2025.firebasestorage.app/o/website-assets%2Fparash.jpg?alt=media&token=314721f6-c4d6-4d2e-939b-8cbfd3a2a203"
+                    alt="Parash Pratim Bhardwaj"
+                    className="w-24 h-24 rounded-full object-cover border-2 border-primary/20 flex-shrink-0"
+                  />
+                  <div>
+                    <h3 className="text-xl font-semibold text-foreground">Parash Pratim Bhardwaj</h3>
+                    <p className="text-sm text-primary font-medium mb-2">Founder</p>
+                    <p className="text-sm text-muted-foreground">
+                      Parash leads product and growth. He focuses on building delightful experiences and
+                      curating high-quality AI tools for creators and enterprises.
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-foreground">Sidharth Varma</h3>
-                  <p className="text-sm text-primary font-medium mb-2">Founder & CEO</p>
-                  <p className="text-sm text-muted-foreground">
-                    Passionate about making AI accessible to everyone. Building India's most trusted AI directory 
-                    to support creators, learners, and businesses in their AI journey.
-                  </p>
+
+                <div className="flex items-start gap-4">
+                  <img
+                    src="https://firebasestorage.googleapis.com/v0/b/sochai-2025.firebasestorage.app/o/website-assets%2Fkrishna.jpg?alt=media&token=e7d1d44c-75d5-4f63-a955-648c6f5dd238"
+                    alt="Krishna Pal Singh Shekhawat"
+                    className="w-24 h-24 rounded-full object-cover border-2 border-primary/20 flex-shrink-0"
+                  />
+                  <div>
+                    <h3 className="text-xl font-semibold text-foreground">Krishna Pal Singh Shekhawat</h3>
+                    <p className="text-sm text-primary font-medium mb-2">Co-Founder</p>
+                    <p className="text-sm text-muted-foreground">
+                      Krishna heads engineering and platform. He is passionate about scalable systems and
+                      ensuring Soch AI Store remains fast, reliable and secure.
+                    </p>
+                  </div>
                 </div>
               </div>
             </CardContent>
