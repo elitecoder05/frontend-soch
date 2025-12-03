@@ -1,5 +1,5 @@
-import React from 'react';
-import { Check, Star } from 'lucide-react';
+import React, { useState } from 'react';
+import { Check, Star, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +17,7 @@ const PricingPage = () => {
   const { currentUser, updateAuthState } = useAuth();
   const navigate = useNavigate();
   const pricingPlans = subscriptionPlans;
+  const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
 
   const loadRazorpayScript = () => {
     return new Promise<boolean>((resolve) => {
@@ -31,6 +32,8 @@ const PricingPage = () => {
 
   const handlePlanSelect = async (planId: string) => {
     try {
+      setLoadingPlanId(planId);
+      
       // Call backend to create an order
       const apiBase = import.meta.env.VITE_API_BASE_URL || '';
       // If plan requires sales contact (enterprise), go to Contact page instead of trying to process via payment SDK
@@ -200,9 +203,12 @@ const PricingPage = () => {
 
       const rzp = new (window as any).Razorpay(options);
       rzp.open();
+      setLoadingPlanId(null); // Clear loading state when Razorpay opens
     } catch (err) {
       console.error('Error in handlePlanSelect', err);
       alert('An error occurred while initiating payment.');
+    } finally {
+      setLoadingPlanId(null); // Ensure loading state is cleared
     }
   };
 
@@ -300,8 +306,16 @@ const PricingPage = () => {
                         : ''
                     }`}
                     onClick={() => handlePlanSelect(plan.apiPlanId || plan.id)}
+                    disabled={loadingPlanId === (plan.apiPlanId || plan.id)}
                   >
-                    {plan.id === 'free' ? 'Start Free Trial' : plan.apiPlanId === 'enterprise' ? 'Contact Sales' : 'Choose Plan'}
+                    {loadingPlanId === (plan.apiPlanId || plan.id) ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Loading...
+                      </>
+                    ) : (
+                      plan.id === 'free' ? 'Start Free Trial' : plan.apiPlanId === 'enterprise' ? 'Contact Sales' : 'Choose Plan'
+                    )}
                   </Button>
                 </CardContent>
               </Card>

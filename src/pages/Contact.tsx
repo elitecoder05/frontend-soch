@@ -1,20 +1,35 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Mail, MessageCircle, Clock, MapPin, Phone } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Mail, MessageCircle, Clock, MapPin, Phone, Key } from "lucide-react";
 
 const Contact = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchParams] = useSearchParams();
+  const [showPasswordResetMessage, setShowPasswordResetMessage] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     subject: "",
     message: ""
   });
+
+  useEffect(() => {
+    if (searchParams.get('from') === 'forgot-password') {
+      setShowPasswordResetMessage(true);
+      setFormData(prev => ({
+        ...prev,
+        subject: "Password Reset Request",
+        message: "Hi, I need help resetting my password for my Soch AI account. Please assist me with this request.\n\nAccount email: [Please provide your registered email here]"
+      }));
+    }
+  }, [searchParams]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({
@@ -73,6 +88,19 @@ const Contact = () => {
               For any questions, support requests, or privacy concerns, you may contact us anytime.
             </p>
           </div>
+
+          {/* Password Reset Message */}
+          {showPasswordResetMessage && (
+            <div className="mb-8">
+              <Alert className="border-primary/20 bg-primary/5">
+                <Key className="h-4 w-4 text-primary" />
+                <AlertDescription className="text-primary">
+                  <strong>Password Reset Request:</strong> Please contact us using the form below to reset your password. 
+                  Make sure to include your registered email address in your message.
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Contact Methods */}

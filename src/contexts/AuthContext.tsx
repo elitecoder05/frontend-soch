@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import Cookies from 'js-cookie';
 import { authAPI, User } from '@/api/api-methods';
 
 interface AuthContextType {
@@ -36,6 +37,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const login = (user: User, token: string) => {
+    // Store token and user data in cookies
+    Cookies.set('authToken', token, { expires: 7 }); // 7 days
+    Cookies.set('userData', JSON.stringify(user), { expires: 7 });
+    
     setIsAuthenticated(true);
     setCurrentUser(user);
   };
@@ -48,6 +53,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     updateAuthState();
+    
+    // Also listen for storage events in case another tab logs in/out
+    const handleStorageChange = () => {
+      updateAuthState();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const value: AuthContextType = {
