@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Sparkles, Mail, Shield, Users, FileText, HelpCircle } from "lucide-react";
+import { Mail, Shield, Users, FileText, HelpCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -79,9 +79,11 @@ export const Footer = () => {
           {/* Brand Section */}
           <div className="lg:col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-blue-500 flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
+              <img
+                src="https://firebasestorage.googleapis.com/v0/b/sochai-2025.firebasestorage.app/o/website-assets%2Fsochailogo.jpg?alt=media&token=3fda20fa-6dcd-41cc-b898-7b0e3f3c1ca7"
+                alt="Soch AI Logo"
+                className="w-8 h-8 rounded-lg object-cover"
+              />
               <div className="flex items-center gap-2">
                 <span className="text-xl font-bold text-foreground">Soch AI</span>
                 <span className="px-2 py-0.5 text-xs font-medium bg-primary/10 text-primary rounded-full border border-primary/20">
@@ -144,7 +146,15 @@ export const Footer = () => {
             
             <div className="flex items-center gap-6 text-sm">
               <div className="flex items-center gap-4">
-                <span className="text-muted-foreground">Made with ❤️ in India</span>
+                <span className="text-muted-foreground flex items-center gap-2">
+                  <span>Made with</span>
+                  <img
+                    src="https://firebasestorage.googleapis.com/v0/b/sochai-2025.firebasestorage.app/o/website-assets%2Fsochailogo.jpg?alt=media&token=3fda20fa-6dcd-41cc-b898-7b0e3f3c1ca7"
+                    alt="Soch AI Logo"
+                    className="w-4 h-4 inline-block rounded-sm"
+                  />
+                  <span>in India</span>
+                </span>
                 <span className="text-muted-foreground">•</span>
                 <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors">
                   About
