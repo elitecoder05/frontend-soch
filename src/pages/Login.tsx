@@ -30,23 +30,14 @@ export const Login = () => {
       // Get Firebase ID token
       const idToken = await user.getIdToken();
       
-      // Send to backend for user creation/login
-      const apiBase = import.meta.env.VITE_API_BASE_URL || '';
-      const response = await fetch(`${apiBase}/api/auth/google-signin`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${idToken}`
-        },
-        body: JSON.stringify({
-          displayName: user.displayName,
-          email: user.email,
-          photoURL: user.photoURL,
-          uid: user.uid
-        })
+      // Use the configured API client instead of direct fetch
+      const data = await authAPI.googleSignIn({
+        idToken,
+        displayName: user.displayName,
+        email: user.email,
+        photoURL: user.photoURL,
+        uid: user.uid
       });
-      
-      const data = await response.json();
       
       if (data.success && data.data.user && data.data.token) {
         // Update auth context

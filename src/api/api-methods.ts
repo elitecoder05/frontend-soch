@@ -201,6 +201,42 @@ export const authAPI = {
       }
     }
     return null;
+  },
+
+  // Google Sign-In method
+  googleSignIn: async (data: {
+    idToken: string;
+    displayName: string;
+    email: string;
+    photoURL: string;
+    uid: string;
+  }): Promise<AuthResponse> => {
+    try {
+      const response = await apiClient.post('/api/auth/google-signin', {
+        displayName: data.displayName,
+        email: data.email,
+        photoURL: data.photoURL,
+        uid: data.uid
+      }, {
+        headers: {
+          'Authorization': `Bearer ${data.idToken}`
+        }
+      });
+      
+      // Store token and user data in cookies if login successful
+      if (response.data.success && response.data.data.token) {
+        Cookies.set('authToken', response.data.data.token, { expires: 7 }); // 7 days
+        Cookies.set('userData', JSON.stringify(response.data.data.user), { expires: 7 });
+      }
+      
+      return response.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || 
+        error.message || 
+        'Google sign-in failed. Please try again.'
+      );
+    }
   }
 };
 

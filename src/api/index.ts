@@ -3,11 +3,12 @@ import Cookies from 'js-cookie';
 
 // Create axios instance with base configuration
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://backend-soch-production.up.railway.app',
   headers: {
     'Content-Type': 'application/json',
   },
   timeout: 100000, // 100 seconds timeout
+  withCredentials: false, // Don't include credentials initially - let CORS handle it
 });
 
 // Request interceptor to add auth token if needed
