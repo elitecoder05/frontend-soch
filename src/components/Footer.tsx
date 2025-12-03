@@ -10,13 +10,13 @@ export const Footer = () => {
   const { toast } = useToast();
 
   const handleSubmitToolClick = () => {
-    if (!isAuthenticated) {
+      if (!isAuthenticated) {
       toast({
         title: "Please Login First",
         description: "You need to be logged in to upload your model. Please sign in to continue.",
         variant: "destructive",
       });
-      navigate('/login');
+      navigate('/login', { state: { from: { pathname: '/upload-model' } } });
       return;
     }
 

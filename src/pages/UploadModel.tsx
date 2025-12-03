@@ -36,7 +36,7 @@ export default function UploadModel() {
         description: "Please log in to upload a model.",
         variant: "destructive",
       });
-      navigate('/login');
+      navigate('/login', { state: { from: { pathname: '/upload-model' } } });
       return;
     }
 
@@ -178,7 +178,7 @@ export default function UploadModel() {
         description: "Please log in to upload a model.",
         variant: "destructive",
       });
-      navigate('/login');
+      navigate('/login', { state: { from: { pathname: '/upload-model' } } });
       return;
     }
 

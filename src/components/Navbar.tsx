@@ -28,7 +28,7 @@ export const Navbar = ({ searchQuery = "", onSearchChange = () => {} }: NavbarPr
         description: "You need to be logged in to upload your model. Please sign in to continue.",
         variant: "destructive",
       });
-      navigate('/login');
+      navigate('/login', { state: { from: { pathname: '/upload-model' } } });
       return;
     }
 

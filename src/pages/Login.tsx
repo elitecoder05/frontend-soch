@@ -85,7 +85,13 @@ export const Login = () => {
         });
         
         // Get the intended destination from location state, or default to home
-        const from = location.state?.from?.pathname || '/';
+        const stateFrom = location.state?.from;
+        let from = '/';
+        if (typeof stateFrom === 'string') {
+          from = stateFrom;
+        } else if (stateFrom?.pathname) {
+          from = stateFrom.pathname;
+        }
         navigate(from, { replace: true });
       }
     } catch (error: any) {

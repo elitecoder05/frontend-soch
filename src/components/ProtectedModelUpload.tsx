@@ -19,7 +19,7 @@ export const ProtectedModelUpload = ({ children }: ProtectedModelUploadProps) =>
         description: "Please log in to upload models.",
         variant: "destructive",
       });
-      navigate('/login');
+      navigate('/login', { state: { from: { pathname: '/upload-model' } } });
       return;
     }
 
