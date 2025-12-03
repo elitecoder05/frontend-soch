@@ -8,7 +8,7 @@ const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
   timeout: 100000, // 100 seconds timeout
-  withCredentials: false, // Don't include credentials initially - let CORS handle it
+  withCredentials: true, // Include credentials for CORS requests
 });
 
 // Request interceptor to add auth token if needed
