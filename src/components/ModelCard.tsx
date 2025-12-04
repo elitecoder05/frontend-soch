@@ -24,10 +24,20 @@ export const ModelCard = ({ model }: ModelCardProps) => {
       <Link to={`/model/${model.id}`} state={{ from: fromState }}>
         <CardContent className="p-4">
           <div className="flex gap-3 mb-3">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0 border border-primary/20">
-              <span className="text-2xl font-bold text-primary">
-                {model.name.charAt(0)}
-              </span>
+            <div className="w-14 h-14 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0 border border-primary/20 bg-gradient-to-br from-primary/20 to-primary/5">
+              {model.iconUrl ? (
+                // show logo image when available
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={model.iconUrl}
+                  alt={model.name}
+                  className="object-cover w-full h-full"
+                />
+              ) : (
+                <span className="text-2xl font-bold text-primary">
+                  {model.name.charAt(0)}
+                </span>
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-foreground mb-1 line-clamp-1 group-hover:text-primary transition-colors">
