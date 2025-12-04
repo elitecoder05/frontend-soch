@@ -168,20 +168,20 @@ const ModelDetail = () => {
           </Button>
         </Link>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
-            <div className="flex gap-6">
-              <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0 border border-primary/20">
+            <div className="flex flex-col sm:flex-row gap-6">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0 border border-primary/20">
                 {model.iconUrl ? (
-                  <img src={model.iconUrl} alt={model.name} className="w-20 h-20 rounded-xl object-cover" />
+                  <img src={model.iconUrl} alt={model.name} className="w-full h-full rounded-xl object-cover" />
                 ) : (
-                  <span className="text-5xl font-bold text-primary">
+                  <span className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary">
                     {model.name.charAt(0)}
                   </span>
                 )}
               </div>
 
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap gap-2 mb-2">
                   <Badge variant="secondary">{model.category}</Badge>
                   {model.pricing === "free" && (
@@ -247,7 +247,7 @@ const ModelDetail = () => {
             {model.screenshots && model.screenshots.length > 0 && (
               <HorizontalCarousel title="Screenshots" description="Preview screenshots and examples">
                 {model.screenshots.map((src, idx) => (
-                  <div key={idx} className="min-w-[280px] h-44 rounded-md overflow-hidden shadow-sm bg-card/50">
+                  <div key={idx} className="min-w-[180px] sm:min-w-[240px] md:min-w-[320px] h-36 sm:h-44 md:h-48 rounded-md overflow-hidden shadow-sm bg-card/50">
                     <img
                       src={src}
                       alt={`${model.name} screenshot ${idx + 1}`}
@@ -259,7 +259,7 @@ const ModelDetail = () => {
               </HorizontalCarousel>
             )}
 
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               {model.externalUrl && (
                 <Button size="lg" className="bg-primary hover:bg-primary/90" asChild>
                   <a href={model.externalUrl} target="_blank" rel="noopener noreferrer">
@@ -344,7 +344,7 @@ const ModelDetail = () => {
             </div>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-6 lg:col-span-1">
             <Card>
               <CardHeader>
                 <CardTitle>Model Details</CardTitle>
@@ -410,11 +410,13 @@ const ModelDetail = () => {
                   <CardTitle>Similar Models</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {similarModels.map((similar) => (
-                    <div key={similar._id}>
-                      <ModelCard model={transformModelForCard(similar)} />
-                    </div>
-                  ))}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {similarModels.map((similar) => (
+                      <div key={similar._id}>
+                        <ModelCard model={transformModelForCard(similar)} />
+                      </div>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             )}
