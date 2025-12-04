@@ -262,7 +262,7 @@ const PricingPage = () => {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto">
-                    {pricingPlans.map((plan) => {
+                    {pricingPlans.filter(p => p.id !== 'free').map((plan) => {
               
                       return (
                         <Card 

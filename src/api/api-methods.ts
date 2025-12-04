@@ -26,6 +26,7 @@ export interface User {
   subscriptionStatus?: 'active' | 'inactive' | 'cancelled' | 'trial';
   subscriptionStartDate?: string | null;
   subscriptionEndDate?: string | null;
+  subscriptionPlanId?: string | null;
   isProUser?: boolean;
 }
 

@@ -374,7 +374,7 @@ export const IntroductionHero = ({ onGetStarted }: IntroductionHeroProps) => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
-              {subscriptionPlans.map((plan, index) => (
+              {subscriptionPlans.filter(p => p.id !== 'free').map((plan, index) => (
                 <Card key={index} className={`relative ${plan.popular ? 'ring-2 ring-primary shadow-xl scale-105' : ''} hover:shadow-lg transition-all duration-300`}>
                   {plan.badge && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2">

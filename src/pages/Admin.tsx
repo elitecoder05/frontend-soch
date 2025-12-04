@@ -406,6 +406,28 @@ const Admin = () => {
                             </Badge>
                           </div>
                           <div className="flex items-center gap-2">
+                            <span className="font-medium">Plan Purchased:</span>
+                            <span className="text-sm">
+                              {(() => {
+                                const pid = user.subscriptionPlanId;
+                                switch (pid) {
+                                  case 'monthly': return 'Monthly';
+                                  case 'six_months': return '6 Months';
+                                  case 'annual': return 'Annual';
+                                  case 'pro': return 'Monthly (Pro)';
+                                  case 'enterprise': return 'Annual (Enterprise)';
+                                  case 'free': return 'Free';
+                                  case 'trial': return '14-day Trial';
+                                  default: return pid || 'N/A';
+                                }
+                              })()}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">Expires:</span>
+                            <span>{user.subscriptionEndDate ? formatDate(user.subscriptionEndDate) : 'N/A'}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
                             <span className="font-medium">Status:</span>
                             <Badge variant={user.subscriptionStatus === 'active' ? 'default' : 'secondary'}>
                               {user.subscriptionStatus?.toUpperCase() || 'ACTIVE'}
