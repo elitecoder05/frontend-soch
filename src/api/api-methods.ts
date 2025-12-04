@@ -84,6 +84,7 @@ export interface Model {
   };
   createdAt: string;
   updatedAt: string;
+  clicks?: number;
 }
 
 export interface ModelsResponse {
@@ -394,6 +395,25 @@ export const modelsAPI = {
         error.message || 
         'Failed to delete model.'
       );
+    }
+  }
+  ,
+  // Record a click/view for a model (calls protected endpoint if token present)
+  recordClick: async (modelId: string): Promise<{success: boolean; data?: any}> => {
+    try {
+      const response = await apiClient.post(`/api/models/${modelId}/click`);
+      return response.data;
+    } catch (error: any) {
+      // If protected endpoint fails due to lack of auth, fallback to anonymous endpoint
+      if (error.response?.status === 401) {
+        try {
+          const anonResp = await apiClient.post(`/api/models/${modelId}/click/anon`);
+          return anonResp.data;
+        } catch (err: any) {
+          throw new Error(err.response?.data?.message || err.message || 'Failed to record click');
+        }
+      }
+      throw new Error(error.response?.data?.message || error.message || 'Failed to record click');
     }
   }
 };

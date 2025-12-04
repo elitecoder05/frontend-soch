@@ -303,9 +303,9 @@ const Profile = () => {
                   </div>
                   <div>
                     <p className="text-2xl font-bold">
-                      {userModels.reduce((total, model) => total + (model.installsCount || 0), 0)}
+                      {userModels.reduce((total, model) => total + (model.clicks || 0), 0)}
                     </p>
-                    <p className="text-sm text-muted-foreground">Total Views</p>
+                      <p className="text-sm text-muted-foreground">Total Clicks</p>
                   </div>
                 </div>
               </CardContent>
@@ -386,7 +386,7 @@ const Profile = () => {
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
                             <span>Created: {formatDate(model.createdAt)}</span>
                             {model.installsCount && (
-                              <span>{model.installsCount} views</span>
+                              <span>{model.clicks ?? 0} clicks</span>
                             )}
                             <div className="flex items-center gap-1">
                               <span>Rating:</span> 

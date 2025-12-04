@@ -1,5 +1,5 @@
 import { useParams, Link, useLocation } from "react-router-dom";
-import { Star, ExternalLink, Clock, ChevronLeft, Loader2 } from "lucide-react";
+import { ExternalLink, Clock, ChevronLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -224,18 +224,6 @@ const ModelDetail = () => {
                 </p>
 
                 <div className="flex items-center gap-4 text-sm">
-                  <div className="flex items-center gap-1">
-                    <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
-                    <span className="font-medium">{model.rating}</span>
-                    <span className="text-muted-foreground">
-                      ({model.reviewsCount.toLocaleString()} reviews)
-                    </span>
-                  </div>
-                  {model.installsCount !== undefined && (
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <span>{model.installsCount.toLocaleString()} installs</span>
-                    </div>
-                  )}
                   <div className="flex items-center gap-1 text-muted-foreground">
                     <Clock className="w-4 h-4" />
                     <span>Updated {formatDate(model.updatedAt)}</span>

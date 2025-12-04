@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
-import { Star, ExternalLink, Share2 } from "lucide-react";
+import { ExternalLink, Share2 } from "lucide-react";
+import { modelsAPI } from '@/api/api-methods';
 import { AiModel } from "@/types/model";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,16 +16,23 @@ export const ModelCard = ({ model }: ModelCardProps) => {
   const location = useLocation();
   // If the user navigated here from another page that set a `from` in state, preserve it.
   const fromState = (location.state && (location.state as any).from) ? (location.state as any).from : `${location.pathname}${location.search}`;
-  const formatInstalls = (count?: number) => {
-    if (!count) return "New";
-    if (count >= 1000) return `${(count / 1000).toFixed(1)}K+`;
-    return `${count}+`;
+
+  const recordClickIfNeeded = async () => {
+    try {
+      if (typeof window === 'undefined') return;
+      const key = `model_clicked_${model.id}`;
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(key, '1');
+      await modelsAPI.recordClick(model.id);
+    } catch (err) {
+      console.error('Error recording model click', err);
+    }
   };
 
   return (
     <Card className="group overflow-hidden border-card-border bg-card hover:bg-card-hover hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1">
       <CardContent className="p-4">
-        <Link to={`/model/${model.id}`} state={{ from: fromState }} className="block text-inherit">
+        <Link to={`/model/${model.id}`} state={{ from: fromState }} className="block text-inherit" onClick={recordClickIfNeeded}>
           <div className="flex gap-3 mb-3">
             <div className="w-14 h-14 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0 border border-primary/20 bg-gradient-to-br from-primary/20 to-primary/5">
               {model.iconUrl ? (
@@ -77,18 +85,13 @@ export const ModelCard = ({ model }: ModelCardProps) => {
             </div>
 
             <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Star className="w-3.5 h-3.5 fill-yellow-500 text-yellow-500" />
-              <span className="font-medium text-foreground">{model.rating}</span>
-              <span>({model.reviewsCount.toLocaleString()})</span>
+              <div />
             </div>
-            <div>{formatInstalls(model.installsCount)} uses</div>
-          </div>
         </Link>
       </CardContent>
 
       <CardFooter className="p-4 pt-0 flex gap-2 items-center">
-        <Link to={`/model/${model.id}`} state={{ from: fromState }} className="flex-1">
+        <Link to={`/model/${model.id}`} state={{ from: fromState }} className="flex-1" onClick={recordClickIfNeeded}>
           <Button
             variant="outline"
             size="sm"
