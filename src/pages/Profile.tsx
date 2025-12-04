@@ -187,6 +187,27 @@ const Profile = () => {
                         {currentUser.firstName} {currentUser.lastName}
                       </h1>
                       <p className="text-muted-foreground mt-1">AI Model Developer</p>
+                      <div className="mt-2 flex items-center gap-3 text-sm">
+                        <Badge variant={currentUser.isProUser ? 'secondary' : 'outline'}>
+                          {currentUser.subscriptionType ? currentUser.subscriptionType.toUpperCase() : 'FREE'}
+                        </Badge>
+                        <div className="text-muted-foreground">
+                          <span className="text-sm">Subscription expires on: </span>
+                          <span className="font-medium">
+                            {currentUser.subscriptionEndDate ? formatDate(currentUser.subscriptionEndDate) : 'N/A'}
+                          </span>
+                        </div>
+                        {currentUser.subscriptionType === 'trial' && currentUser.subscriptionEndDate && (
+                          <div className="text-sm text-foreground/80">
+                            {(() => {
+                              const end = new Date(currentUser.subscriptionEndDate!);
+                              const now = new Date();
+                              const diff = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                              return diff > 0 ? `${diff} day${diff > 1 ? 's' : ''} left` : 'Trial expired';
+                            })()}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <Button 
                       onClick={handleUploadModelClick} 
@@ -326,7 +347,7 @@ const Profile = () => {
               ) : (
                 <div className="space-y-4">
                   {userModels.map((model) => (
-                    <div key={model.id} className="border border-border rounded-lg p-4 hover:bg-muted/30 transition-colors">
+                    <div key={model._id} className="border border-border rounded-lg p-4 hover:bg-muted/30 transition-colors">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
@@ -391,7 +412,7 @@ const Profile = () => {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem 
-                                onClick={() => navigate(`/model/${model.slug}`)}
+                                onClick={() => navigate(`/model/${model._id}`)}
                                 className="cursor-pointer"
                               >
                                 <Eye className="w-4 h-4 mr-2" />

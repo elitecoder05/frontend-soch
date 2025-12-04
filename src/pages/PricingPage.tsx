@@ -217,147 +217,144 @@ const PricingPage = () => {
       <Navbar />
       
       <main className="container mx-auto px-4 py-12">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">
-            Choose Your Perfect Plan
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Whether you're exploring AI models or building the next big thing, we have a plan that fits your needs.
-          </p>
-        </div>
+        {/* Pricing Cards or Paid-user view */}
+                {currentUser && currentUser.isProUser ? (
+                  <div className="max-w-3xl mx-auto">
+                    <Card className="mb-8">
+                      <CardHeader>
+                        <CardTitle className="text-center">You have an active plan</CardTitle>
+                        <CardDescription className="text-center">
+                          {`Your current plan: ${currentUser.subscriptionType?.toUpperCase() || 'PRO'}`}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="text-center">
+                        <p className="mb-4">You have an active subscription valid until:</p>
+                        <p className="font-medium mb-4">{currentUser.subscriptionEndDate ? new Date(currentUser.subscriptionEndDate).toLocaleDateString() : 'N/A'}</p>
+                        <div className="flex justify-center gap-4">
+                          <Button onClick={() => navigate('/profile')}>Manage Subscription</Button>
+                          <Button onClick={() => navigate('/pricing?show=upgrade')} className="bg-gradient-to-r from-primary to-blue-500 text-white">Upgrade</Button>
+                        </div>
+                      </CardContent>
+                    </Card>
 
-        {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto">
-          {pricingPlans.map((plan) => {
-            
-            return (
-              <Card 
-                key={plan.id} 
-                className={`relative overflow-hidden transition-all duration-300 hover:shadow-2xl ${
-                  plan.popular ? 'border-primary shadow-xl scale-105' : 'hover:scale-105'
-                }`}
-              >
-                {plan.popular && (
-                  <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-primary to-blue-500 text-white text-center py-2 text-sm font-medium">
-                    Most Popular
+                    {/* Show upgrade cards separately */}
+                    <div className="text-center mb-6">
+                      <h3 className="text-lg font-semibold mb-2">Upgrade Options</h3>
+                      <p className="text-sm text-muted-foreground">Choose an upgrade if you want extended benefits or enterprise features.</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                      {pricingPlans.filter(p => p.id !== 'free').map(plan => (
+                        <Card key={plan.id} className="hover:shadow-lg transition">
+                          <CardHeader className="text-center">
+                            <CardTitle>{plan.name}</CardTitle>
+                            <CardDescription>{plan.description}</CardDescription>
+                            <div className="mt-2 text-2xl font-bold">{plan.price} <span className="text-sm text-muted-foreground">{plan.duration}</span></div>
+                          </CardHeader>
+                          <CardContent>
+                            <ul className="space-y-2 mb-4">
+                              {plan.features.map((f, i) => <li key={i} className="text-sm">{f}</li>)}
+                            </ul>
+                            <Button className="w-full" onClick={() => handlePlanSelect(plan.apiPlanId || plan.id)}>Upgrade to {plan.name}</Button>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto">
+                    {pricingPlans.map((plan) => {
+              
+                      return (
+                        <Card 
+                          key={plan.id} 
+                          className={`relative overflow-hidden transition-all duration-300 hover:shadow-2xl ${
+                            plan.popular ? 'border-primary shadow-xl scale-105' : 'hover:scale-105'
+                          }`}>
+                          {plan.popular && (
+                            <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-primary to-blue-500 text-white text-center py-2 text-sm font-medium">
+                              Most Popular
+                            </div>
+                          )}
+                  
+                          <CardHeader className={`text-center ${plan.popular ? 'pt-12' : ''}`}>
+                            <div className="flex justify-center mb-4">
+                              <div className={`p-3 rounded-full ${
+                                plan.popular ? 'bg-primary text-white' : 'bg-muted'
+                              }`}>
+                                <Star className="w-6 h-6" />
+                              </div>
+                            </div>
+                    
+                            <CardTitle className="text-2xl font-bold">{plan.name}</CardTitle>
+                            <CardDescription className="text-muted-foreground">
+                              {plan.description}
+                            </CardDescription>
+                    
+                            <div className="mt-4">
+                              <span className="text-4xl font-bold">{plan.price}</span>
+                              <span className="text-muted-foreground">{plan.duration}</span>
+                            </div>
+                          </CardHeader>
+                  
+                          <CardContent className="space-y-6">
+                            {/* Features */}
+                            <div className="space-y-3">
+                              <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">
+                                Included Features
+                              </h4>
+                              <ul className="space-y-2">
+                                {plan.features.map((feature, index) => (
+                                  <li key={index} className="flex items-start gap-3">
+                                    <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                                    <span className="text-sm">{feature}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+
+                            {/* Limitations (for free plan) */}
+                            {plan.limitations && plan.limitations.length > 0 && (
+                              <div className="space-y-3">
+                                <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">
+                                  Limitations
+                                </h4>
+                                <ul className="space-y-2">
+                                  {plan.limitations.map((limitation, index) => (
+                                    <li key={index} className="flex items-start gap-3">
+                                      <div className="w-4 h-4 border border-muted-foreground rounded-full mt-0.5 flex-shrink-0" />
+                                      <span className="text-sm text-muted-foreground">{limitation}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {/* Button */}
+                            <Button
+                              variant={plan.popular ? 'default' : 'outline'}
+                              className={`w-full mt-8 ${
+                                plan.popular 
+                                  ? 'bg-gradient-to-r from-primary to-blue-500 text-white hover:from-primary/90 hover:to-blue-500/90' 
+                                  : ''
+                              }`}
+                              onClick={() => handlePlanSelect(plan.apiPlanId || plan.id)}
+                              disabled={loadingPlanId === (plan.apiPlanId || plan.id)}
+                            >
+                              {loadingPlanId === (plan.apiPlanId || plan.id) ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  Loading...
+                                </>
+                              ) : (
+                                plan.id === 'free' ? 'Start Free Trial' : plan.apiPlanId === 'enterprise' ? 'Contact Sales' : 'Choose Plan'
+                              )}
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
                 )}
-                
-                <CardHeader className={`text-center ${plan.popular ? 'pt-12' : ''}`}>
-                  <div className="flex justify-center mb-4">
-                    <div className={`p-3 rounded-full ${
-                      plan.popular ? 'bg-primary text-white' : 'bg-muted'
-                    }`}>
-                      <Star className="w-6 h-6" />
-                    </div>
-                  </div>
-                  
-                  <CardTitle className="text-2xl font-bold">{plan.name}</CardTitle>
-                  <CardDescription className="text-muted-foreground">
-                    {plan.description}
-                  </CardDescription>
-                  
-                  <div className="mt-4">
-                    <span className="text-4xl font-bold">{plan.price}</span>
-                    <span className="text-muted-foreground">{plan.duration}</span>
-                  </div>
-                </CardHeader>
-                
-                <CardContent className="space-y-6">
-                  {/* Features */}
-                  <div className="space-y-3">
-                    <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">
-                      Included Features
-                    </h4>
-                    <ul className="space-y-2">
-                      {plan.features.map((feature, index) => (
-                        <li key={index} className="flex items-start gap-3">
-                          <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                          <span className="text-sm">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {/* Limitations (for free plan) */}
-                  {plan.limitations && plan.limitations.length > 0 && (
-                    <div className="space-y-3">
-                      <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">
-                        Limitations
-                      </h4>
-                      <ul className="space-y-2">
-                        {plan.limitations.map((limitation, index) => (
-                          <li key={index} className="flex items-start gap-3">
-                            <div className="w-4 h-4 border border-muted-foreground rounded-full mt-0.5 flex-shrink-0" />
-                            <span className="text-sm text-muted-foreground">{limitation}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* Button */}
-                  <Button
-                    variant={plan.popular ? 'default' : 'outline'}
-                    className={`w-full mt-8 ${
-                      plan.popular 
-                        ? 'bg-gradient-to-r from-primary to-blue-500 text-white hover:from-primary/90 hover:to-blue-500/90' 
-                        : ''
-                    }`}
-                    onClick={() => handlePlanSelect(plan.apiPlanId || plan.id)}
-                    disabled={loadingPlanId === (plan.apiPlanId || plan.id)}
-                  >
-                    {loadingPlanId === (plan.apiPlanId || plan.id) ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Loading...
-                      </>
-                    ) : (
-                      plan.id === 'free' ? 'Start Free Trial' : plan.apiPlanId === 'enterprise' ? 'Contact Sales' : 'Choose Plan'
-                    )}
-                  </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-
-        {/* FAQ or Additional Info */}
-        <div className="mt-16 text-center">
-          <div className="max-w-3xl mx-auto">
-            <h2 className="text-2xl font-bold mb-6">Frequently Asked Questions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
-              <div className="space-y-3">
-                <h3 className="font-semibold">Can I upgrade or downgrade anytime?</h3>
-                <p className="text-sm text-muted-foreground">
-                  Yes! You can change your plan at any time. Changes take effect immediately and we'll prorate any charges.
-                </p>
-              </div>
-              
-              <div className="space-y-3">
-                <h3 className="font-semibold">What payment methods do you accept?</h3>
-                <p className="text-sm text-muted-foreground">
-                  We accept all major credit cards, PayPal, and bank transfers for enterprise customers.
-                </p>
-              </div>
-              
-              <div className="space-y-3">
-                <h3 className="font-semibold">Is there a free trial for Pro plan?</h3>
-                <p className="text-sm text-muted-foreground">
-                  Yes! We offer a 14-day free trial for the Pro plan. No credit card required to start.
-                </p>
-              </div>
-              
-              <div className="space-y-3">
-                <h3 className="font-semibold">Do you offer refunds?</h3>
-                <p className="text-sm text-muted-foreground">
-                  We offer a 30-day money-back guarantee for all paid plans if you're not satisfied.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
       </main>
       
       <Footer />

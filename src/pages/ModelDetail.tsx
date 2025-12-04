@@ -11,6 +11,7 @@ import { useState, useEffect } from "react";
 import { modelsAPI, Model } from "@/api/api-methods";
 import { useToast } from "@/hooks/use-toast";
 import { AiModel } from "@/types/model";
+import { HorizontalCarousel } from "@/components/HorizontalCarousel";
 
 const ModelDetail = () => {
   const { id } = useParams();
@@ -242,6 +243,21 @@ const ModelDetail = () => {
                 </div>
               </div>
             </div>
+
+            {model.screenshots && model.screenshots.length > 0 && (
+              <HorizontalCarousel title="Screenshots" description="Preview screenshots and examples">
+                {model.screenshots.map((src, idx) => (
+                  <div key={idx} className="min-w-[280px] h-44 rounded-md overflow-hidden shadow-sm bg-card/50">
+                    <img
+                      src={src}
+                      alt={`${model.name} screenshot ${idx + 1}`}
+                      className="w-full h-full object-cover cursor-pointer"
+                      onClick={() => window.open(src, '_blank')}
+                    />
+                  </div>
+                ))}
+              </HorizontalCarousel>
+            )}
 
             <div className="flex gap-3">
               {model.externalUrl && (

@@ -29,11 +29,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   const updateAuthState = () => {
-    const authStatus = authAPI.isAuthenticated();
-    const user = authAPI.getCurrentUser();
-    
-    setIsAuthenticated(authStatus);
-    setCurrentUser(user);
+    (async () => {
+      const authStatus = authAPI.isAuthenticated();
+      const token = authAPI.getToken();
+
+      if (!token) {
+        setIsAuthenticated(false);
+        setCurrentUser(null);
+        return;
+      }
+
+      try {
+        const res = await authAPI.getProfile();
+        const user = res.data.user;
+        // store updated user data in cookies
+        Cookies.set('userData', JSON.stringify(user), { expires: 7 });
+        setIsAuthenticated(true);
+        setCurrentUser(user);
+      } catch (err) {
+        // fallback to cookie-based user if profile fetch fails
+        const user = authAPI.getCurrentUser();
+        setIsAuthenticated(!!user && authStatus);
+        setCurrentUser(user);
+      }
+    })();
   };
 
   const login = (user: User, token: string) => {

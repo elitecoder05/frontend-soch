@@ -22,8 +22,10 @@ export interface User {
   email: string;
   mobileNumber: string;
   createdAt: string;
-  subscriptionType?: 'free' | 'pro' | 'enterprise';
+  subscriptionType?: 'free' | 'trial' | 'pro' | 'enterprise';
   subscriptionStatus?: 'active' | 'inactive' | 'cancelled' | 'trial';
+  subscriptionStartDate?: string | null;
+  subscriptionEndDate?: string | null;
   isProUser?: boolean;
 }
 
@@ -201,6 +203,16 @@ export const authAPI = {
       }
     }
     return null;
+  },
+
+  // Get current user profile from backend (will auto-handle expiry on server)
+  getProfile: async (): Promise<{ success: boolean; data: { user: User } }> => {
+    try {
+      const response = await apiClient.get('/api/auth/me');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || error.message || 'Failed to fetch profile');
+    }
   },
 
   // Google Sign-In method

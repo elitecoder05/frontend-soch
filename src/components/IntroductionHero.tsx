@@ -355,63 +355,81 @@ export const IntroductionHero = ({ onGetStarted }: IntroductionHeroProps) => {
               Start with our free trial and upgrade when you're ready. All plans include full access to our AI directory.
             </p>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
-            {subscriptionPlans.map((plan, index) => (
-              <Card key={index} className={`relative ${plan.popular ? 'ring-2 ring-primary shadow-xl scale-105' : ''} hover:shadow-lg transition-all duration-300`}>
-                {plan.badge && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className={`${
-                      plan.popular 
-                        ? 'bg-primary text-primary-foreground' 
-                        : plan.badge === 'Try Free' 
-                        ? 'bg-green-500 text-white'
-                        : 'bg-orange-500 text-white'
-                    } px-3 py-1`}>
-                      {plan.badge}
-                    </Badge>
-                  </div>
-                )}
-                <CardHeader className="text-center pb-4">
-                  <CardTitle className="text-lg font-semibold">{plan.name}</CardTitle>
-                  <div className="mt-2">
-                    <span className="text-3xl font-bold text-foreground">{plan.price}</span>
-                    <span className="text-sm text-muted-foreground">/{plan.duration}</span>
-                  </div>
-                  <CardDescription className="text-sm">{plan.description}</CardDescription>
+          {currentUser && currentUser.isProUser ? (
+            <div className="max-w-3xl mx-auto">
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle className="text-center">You are on a paid plan</CardTitle>
+                  <CardDescription className="text-center">{`Plan: ${currentUser.subscriptionType?.toUpperCase() || 'PRO'}`}</CardDescription>
                 </CardHeader>
-                <CardContent className="pt-0">
-                  <ul className="space-y-2 mb-6">
-                    {plan.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-center gap-2 text-sm">
-                        <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
-                        <span className="text-muted-foreground">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button 
-                    className={`w-full ${
-                      plan.popular 
-                        ? 'bg-primary hover:bg-primary/90' 
-                        : 'bg-secondary hover:bg-secondary/80'
-                    }`}
-                    variant={plan.popular ? "default" : "secondary"}
-                    onClick={() => handlePlanSelect(plan)}
-                    disabled={loadingPlanId === plan.id}
-                  >
-                    {loadingPlanId === plan.id ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Loading...
-                      </>
-                    ) : (
-                      plan.badge === 'Try Free' ? 'Start Free Trial' : 'Choose Plan'
-                    )}
-                  </Button>
+                <CardContent className="text-center">
+                  <p className="mb-2">Your subscription is valid until:</p>
+                  <p className="font-medium mb-4">{currentUser.subscriptionEndDate ? new Date(currentUser.subscriptionEndDate).toLocaleDateString() : 'N/A'}</p>
+                  <div className="flex justify-center gap-4">
+                    <Button onClick={() => navigate('/profile')}>Manage</Button>
+                    <Button onClick={() => navigate('/pricing?show=upgrade')} className="bg-gradient-to-r from-primary to-blue-500 text-white">Upgrade</Button>
+                  </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
+              {subscriptionPlans.map((plan, index) => (
+                <Card key={index} className={`relative ${plan.popular ? 'ring-2 ring-primary shadow-xl scale-105' : ''} hover:shadow-lg transition-all duration-300`}>
+                  {plan.badge && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                      <Badge className={`${
+                        plan.popular 
+                          ? 'bg-primary text-primary-foreground' 
+                          : plan.badge === 'Try Free' 
+                          ? 'bg-green-500 text-white'
+                          : 'bg-orange-500 text-white'
+                      } px-3 py-1`}>
+                        {plan.badge}
+                      </Badge>
+                    </div>
+                  )}
+                  <CardHeader className="text-center pb-4">
+                    <CardTitle className="text-lg font-semibold">{plan.name}</CardTitle>
+                    <div className="mt-2">
+                      <span className="text-3xl font-bold text-foreground">{plan.price}</span>
+                      <span className="text-sm text-muted-foreground">/{plan.duration}</span>
+                    </div>
+                    <CardDescription className="text-sm">{plan.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <ul className="space-y-2 mb-6">
+                      {plan.features.map((feature, featureIndex) => (
+                        <li key={featureIndex} className="flex items-center gap-2 text-sm">
+                          <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                          <span className="text-muted-foreground">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <Button 
+                      className={`w-full ${
+                        plan.popular 
+                          ? 'bg-primary hover:bg-primary/90' 
+                          : 'bg-secondary hover:bg-secondary/80'
+                      }`}
+                      variant={plan.popular ? "default" : "secondary"}
+                      onClick={() => handlePlanSelect(plan)}
+                      disabled={loadingPlanId === plan.id}
+                    >
+                      {loadingPlanId === plan.id ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Loading...
+                        </>
+                      ) : (
+                        plan.badge === 'Try Free' ? 'Start Free Trial' : 'Choose Plan'
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
