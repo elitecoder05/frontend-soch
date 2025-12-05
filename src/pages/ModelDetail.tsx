@@ -1,5 +1,5 @@
 import { useParams, Link, useLocation } from "react-router-dom";
-import { ExternalLink, Clock, ChevronLeft, Loader2 } from "lucide-react";
+import { ExternalLink, Clock, ChevronLeft, Loader2, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +12,8 @@ import { modelsAPI, Model } from "@/api/api-methods";
 import { useToast } from "@/hooks/use-toast";
 import { AiModel } from "@/types/model";
 import { HorizontalCarousel } from "@/components/HorizontalCarousel";
+import { ShareDialog } from "@/components/ui/share-dialog";
+import { getModelUrl } from "@/lib/utils";
 
 const ModelDetail = () => {
   const { id } = useParams();
@@ -211,9 +213,19 @@ const ModelDetail = () => {
                   )}
                 </div>
 
-                <h1 className="text-3xl font-bold text-foreground mb-2">
-                  {model.name}
-                </h1>
+                <div className="flex items-start gap-4 mb-2">
+                  <h1 className="text-3xl font-bold text-foreground truncate">
+                    {model.name}
+                  </h1>
+
+                  <div className="ml-auto">
+                    <ShareDialog url={getModelUrl(model._id)} title={model.name}>
+                      <Button variant="ghost" size="sm" aria-label={`Share ${model.name}`}>
+                        <Share2 className="w-5 h-5" />
+                      </Button>
+                    </ShareDialog>
+                  </div>
+                </div>
                 <p className="text-muted-foreground mb-3">
                   by {model.provider}
                   {model.uploadedBy && (

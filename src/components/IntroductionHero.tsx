@@ -1,4 +1,4 @@
-import { Sparkles, Check, Star, Users, Shield, Zap, Loader2 } from "lucide-react";
+import { Sparkles, Check, Star, Users, Shield, Zap } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -247,31 +247,7 @@ export const IntroductionHero = ({ onGetStarted }: IntroductionHeroProps) => {
         
         <div className="relative container mx-auto px-4 py-16 lg:py-24">
           <div className="text-center max-w-4xl mx-auto">
-            {/* Profile Section */}
-            <div className="flex items-center justify-center gap-8 mb-8">
-              <div className="flex items-center gap-3">
-                <img 
-                  src="https://firebasestorage.googleapis.com/v0/b/sochai-2025.firebasestorage.app/o/website-assets%2Fparash.jpg?alt=media&token=314721f6-c4d6-4d2e-939b-8cbfd3a2a203" 
-                  alt="Parash Pratim Bhardwaj" 
-                  className="w-16 h-16 rounded-full object-cover border-2 border-primary/20"
-                />
-                <div className="text-left">
-                  <p className="text-lg font-semibold text-foreground">Parash Pratim Bhardwaj</p>
-                  <p className="text-sm text-muted-foreground">Founder</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <img 
-                  src="https://firebasestorage.googleapis.com/v0/b/sochai-2025.firebasestorage.app/o/website-assets%2Fkrishna.jpg?alt=media&token=e7d1d44c-75d5-4f63-a955-648c6f5dd238" 
-                  alt="Krishna Singh" 
-                  className="w-16 h-16 rounded-full object-cover border-2 border-primary/20"
-                />
-                <div className="text-left">
-                  <p className="text-lg font-semibold text-foreground">Krishna Pal Singh Shekhawat</p>
-                  <p className="text-sm text-muted-foreground">Co-Founder</p>
-                </div>
-              </div>
-            </div>
+            {/* Founders removed from hero as requested */}
 
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
               <Sparkles className="w-4 h-4 text-primary" />
