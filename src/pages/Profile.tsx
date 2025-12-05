@@ -120,8 +120,8 @@ const Profile = () => {
   };
 
   const canEditModel = (model: Model) => {
-    // Only allow editing for pending or rejected models
-    return model.status === 'pending' || model.status === 'rejected';
+    // Allow editing for all user's models
+    return true;
   };
 
   const getStatusIcon = (status: string) => {
@@ -303,9 +303,9 @@ const Profile = () => {
                   </div>
                   <div>
                     <p className="text-2xl font-bold">
-                      {userModels.reduce((total, model) => total + (model.clicks || 0), 0)}
+                      {userModels.filter(m => m.status === 'approved').length}
                     </p>
-                      <p className="text-sm text-muted-foreground">Total Clicks</p>
+                    <p className="text-sm text-muted-foreground">Published</p>
                   </div>
                 </div>
               </CardContent>
@@ -385,13 +385,7 @@ const Profile = () => {
                           
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
                             <span>Created: {formatDate(model.createdAt)}</span>
-                            {model.installsCount && (
-                              <span>{model.clicks ?? 0} clicks</span>
-                            )}
-                            <div className="flex items-center gap-1">
-                              <span>Rating:</span> 
-                              <span className="font-medium">{model.rating}/5</span>
-                            </div>
+                            <span>Views: {model.clicks || 0}</span>
                           </div>
                         </div>
                         
@@ -418,15 +412,13 @@ const Profile = () => {
                                 <Eye className="w-4 h-4 mr-2" />
                                 View Details
                               </DropdownMenuItem>
-                              {canEditModel(model) && (
-                                <DropdownMenuItem 
-                                  onClick={() => handleEditModel(model)}
-                                  className="cursor-pointer"
-                                >
-                                  <Edit className="w-4 h-4 mr-2" />
-                                  Edit Model
-                                </DropdownMenuItem>
-                              )}
+                              <DropdownMenuItem 
+                                onClick={() => handleEditModel(model)}
+                                className="cursor-pointer"
+                              >
+                                <Edit className="w-4 h-4 mr-2" />
+                                Edit Model
+                              </DropdownMenuItem>
                               <DropdownMenuItem 
                                 onClick={() => handleDeleteModel(model)}
                                 className="cursor-pointer text-red-600 focus:text-red-600"

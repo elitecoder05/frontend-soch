@@ -319,7 +319,7 @@ export default function UploadModel() {
                   <div>
                     <p className="font-medium text-blue-900">Editing Model: {modelData.name}</p>
                     <p className="text-blue-700 mt-1">
-                      Note: Only models with "pending" or "rejected" status can be edited. Approved models require contacting support for changes.
+                      Note: You can edit any of your uploaded models. Changes to approved models will reset the status to "pending" for re-review.
                     </p>
                   </div>
                 </div>
@@ -650,10 +650,10 @@ export default function UploadModel() {
                 {isLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    {editMode ? "Updating..." : "Uploading..."}
+                    {editMode ? "Saving Changes..." : "Uploading..."}
                   </>
                 ) : (
-                  editMode ? "Update Model" : "Submit for Review"
+                  editMode ? "Save Changes" : "Submit for Review"
                 )}
               </Button>
             </div>
