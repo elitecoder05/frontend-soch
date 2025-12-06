@@ -268,9 +268,6 @@ const ModelDetail = () => {
                   </a>
                 </Button>
               )}
-              <Button size="lg" variant="outline">
-                Add to Workspace
-              </Button>
             </div>
 
             <Separator />
