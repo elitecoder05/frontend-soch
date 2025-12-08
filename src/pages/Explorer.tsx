@@ -1,26 +1,23 @@
 import { useState, useMemo, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { HorizontalCarousel } from "@/components/HorizontalCarousel";
 import { ModelCard } from "@/components/ModelCard";
-import { FilterSidebar } from "@/components/FilterSidebar";
-import { CategoryChip } from "@/components/CategoryChip";
 import { SearchBar } from "@/components/SearchBar";
 import { Footer } from "@/components/Footer";
 import { Navbar } from "@/components/Navbar";
 import { modelsAPI, Model } from "@/api/api-methods";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { ChevronRight, TrendingUp, Sparkles, Zap } from "lucide-react";
 
 const Explorer = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedChip, setSelectedChip] = useState("All");
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedPricing, setSelectedPricing] = useState<string[]>([]);
-  const [selectedCapabilities, setSelectedCapabilities] = useState<string[]>([]);
   const [models, setModels] = useState<Model[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const chips = ["All", "Chatbots", "Agents", "Image", "Code", "Productivity", "Voice", "Research"];
+  const [showAllModels, setShowAllModels] = useState(false);
 
   // Fetch models from API
   useEffect(() => {
@@ -29,9 +26,8 @@ const Explorer = () => {
         setLoading(true);
         setError(null);
         const response = await modelsAPI.getAllModels({ 
-          limit: 100,
-          includePending: 'true' // Include pending models for development
-        }); // Get more models initially
+          limit: 200
+        });
         setModels(response.data.models);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch models');
@@ -73,100 +69,63 @@ const Explorer = () => {
     examplePrompts: model.examplePrompts
   });
 
-  const filteredModels = useMemo(() => {
-    return models.filter((model) => {
-      const matchesSearch =
-        model.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        model.shortDescription.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        model.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+  // Category-wise models
+  const categoryGroups = useMemo(() => {
+    const categories = [
+      { slug: 'video', name: 'Video Generation Tools', icon: '🎥', description: 'Create stunning videos' },
+      { slug: 'image', name: 'Image Generation Tools', icon: '🎨', description: 'AI-powered image creation' },
+      { slug: 'research', name: 'Research Tools', icon: '🔬', description: 'Advanced research assistants' },
+      { slug: 'marketing', name: 'Marketing Tools', icon: '📈', description: 'Boost your marketing' },
+      { slug: 'code', name: 'Code Generation Tools', icon: '💻', description: 'AI coding assistants' },
+      { slug: 'writing', name: 'Writing Tools', icon: '✍️', description: 'Content creation made easy' },
+      { slug: 'chatbots', name: 'Chatbots & Assistants', icon: '💬', description: 'Conversational AI' },
+      { slug: 'agents', name: 'AI Agents', icon: '🤖', description: 'Autonomous AI agents' },
+      { slug: 'audio', name: 'Audio Tools', icon: '🎵', description: 'Audio generation & processing' },
+      { slug: 'productivity', name: 'Productivity Tools', icon: '⚡', description: 'Get more done faster' },
+    ];
 
-      const matchesChip =
-        selectedChip === "All" ||
-        model.category.toLowerCase() === selectedChip.toLowerCase();
+    return categories.map(cat => ({
+      ...cat,
+      models: models
+        .filter(m => m.category === cat.slug)
+        .slice(0, 10)
+        .map(transformModel)
+    })).filter(cat => cat.models.length > 0);
+  }, [models]);
 
-      const matchesCategory =
-        selectedCategories.length === 0 ||
-        selectedCategories.includes(model.category);
-
-      const matchesPricing =
-        selectedPricing.length === 0 || selectedPricing.includes(model.pricing);
-
-      const matchesCapabilities =
-        selectedCapabilities.length === 0 ||
-        selectedCapabilities.some((cap) => model.capabilities.includes(cap as any));
-
-      return (
-        matchesSearch &&
-        matchesChip &&
-        matchesCategory &&
-        matchesPricing &&
-        matchesCapabilities
-      );
-    });
-  }, [models, searchQuery, selectedChip, selectedCategories, selectedPricing, selectedCapabilities]);
-
+  // Trending models
   const trendingModels = useMemo(
     () =>
       [...models]
-        .filter((m) => m.trendingScore)
+        .filter((m) => m.trendingScore && m.trendingScore > 0)
         .sort((a, b) => (b.trendingScore || 0) - (a.trendingScore || 0))
-        .slice(0, 6)
+        .slice(0, 10)
         .map(transformModel),
     [models]
   );
 
-  const newModels = useMemo(
-    () =>
-      [...models]
-        .sort(
-          (a, b) =>
-            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-        )
-        .slice(0, 6)
-        .map(transformModel),
-    [models]
-  );
-
-  const featuredModels = useMemo(
-    () => models.filter((m) => m.featured).slice(0, 6).map(transformModel),
-    [models]
-  );
-
-  const handleClearFilters = () => {
-    setSelectedCategories([]);
-    setSelectedPricing([]);
-    setSelectedCapabilities([]);
-  };
-
-  const toggleCategory = (category: string) => {
-    setSelectedCategories((prev) =>
-      prev.includes(category)
-        ? prev.filter((c) => c !== category)
-        : [...prev, category]
-    );
-  };
-
-  const togglePricing = (pricing: string) => {
-    setSelectedPricing((prev) =>
-      prev.includes(pricing) ? prev.filter((p) => p !== pricing) : [...prev, pricing]
-    );
-  };
-
-  const toggleCapability = (capability: string) => {
-    setSelectedCapabilities((prev) =>
-      prev.includes(capability)
-        ? prev.filter((c) => c !== capability)
-        : [...prev, capability]
-    );
-  };
+  // Search filtered models
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    
+    return models.filter((model) => {
+      const query = searchQuery.toLowerCase();
+      return (
+        model.name.toLowerCase().includes(query) ||
+        model.shortDescription.toLowerCase().includes(query) ||
+        model.tags.some((tag) => tag.toLowerCase().includes(query)) ||
+        model.category.toLowerCase().includes(query)
+      );
+    }).map(transformModel);
+  }, [models, searchQuery]);
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
 
       <main className="container mx-auto px-4 py-8">
-        {/* Search Bar in Main Store Section */}
-        <div className="mb-6">
+        {/* Search Bar */}
+        <div className="mb-8">
           <div className="max-w-2xl mx-auto">
             <SearchBar 
               value={searchQuery} 
@@ -184,147 +143,164 @@ const Explorer = () => {
           </Alert>
         )}
 
-        <div id="main-store" className="mb-6 overflow-x-auto pb-2">
-          <div className="flex gap-2 min-w-max">
-            {chips.map((chip) => (
-              <CategoryChip
-                key={chip}
-                label={chip}
-                isActive={selectedChip === chip}
-                onClick={() => setSelectedChip(chip)}
-              />
-            ))}
-          </div>
-        </div>
-
-        {!searchQuery && selectedChip === "All" && (
-          <div className="mb-12 space-y-8">
-            {loading ? (
-              // Loading skeletons
-              <div className="space-y-8">
-                <div>
-                  <Skeleton className="h-8 w-64 mb-2" />
-                  <Skeleton className="h-4 w-40 mb-4" />
-                  <div className="flex gap-4 overflow-x-hidden">
-                    {[...Array(6)].map((_, i) => (
-                      <div key={i} className="w-80 flex-shrink-0">
-                        <Skeleton className="h-48 w-full rounded-lg" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <Skeleton className="h-8 w-64 mb-2" />
-                  <Skeleton className="h-4 w-40 mb-4" />
-                  <div className="flex gap-4 overflow-x-hidden">
-                    {[...Array(6)].map((_, i) => (
-                      <div key={i} className="w-80 flex-shrink-0">
-                        <Skeleton className="h-48 w-full rounded-lg" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <Skeleton className="h-8 w-64 mb-2" />
-                  <Skeleton className="h-4 w-40 mb-4" />
-                  <div className="flex gap-4 overflow-x-hidden">
-                    {[...Array(6)].map((_, i) => (
-                      <div key={i} className="w-80 flex-shrink-0">
-                        <Skeleton className="h-48 w-full rounded-lg" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
+        {/* Search Results */}
+        {searchQuery && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold">
+                Search Results ({searchResults.length})
+              </h2>
+            </div>
+            {searchResults.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {searchResults.map((model) => (
+                  <ModelCard key={model.id} model={model} />
+                ))}
               </div>
             ) : (
-              <>
-                <HorizontalCarousel
-                  title="🔥 Trending AI Models"
-                  description="Most popular models this week"
-                >
-                  {trendingModels.map((model) => (
-                    <div key={model._id} className="w-80 flex-shrink-0 snap-start">
-                      <ModelCard model={model} />
-                    </div>
-                  ))}
-                </HorizontalCarousel>
-
-                <HorizontalCarousel
-                  title="✨ New & Noteworthy"
-                  description="Recently added and updated"
-                >
-                  {newModels.map((model) => (
-                    <div key={model._id} className="w-80 flex-shrink-0 snap-start">
-                      <ModelCard model={model} />
-                    </div>
-                  ))}
-                </HorizontalCarousel>
-
-                <HorizontalCarousel
-                  title="⭐ Featured Models"
-                  description="Hand-picked by our team"
-                >
-                  {featuredModels.map((model) => (
-                    <div key={model._id} className="w-80 flex-shrink-0 snap-start">
-                      <ModelCard model={model} />
-                    </div>
-                  ))}
-                </HorizontalCarousel>
-              </>
+              <div className="text-center py-16">
+                <p className="text-muted-foreground text-lg mb-2">
+                  No models found for "{searchQuery}"
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Try different keywords or browse categories below
+                </p>
+              </div>
             )}
           </div>
         )}
 
-        <div className="flex gap-6">
-          <div className="hidden lg:block">
-            <FilterSidebar
-              selectedCategories={selectedCategories}
-              selectedPricing={selectedPricing}
-              selectedCapabilities={selectedCapabilities}
-              onCategoryChange={toggleCategory}
-              onPricingChange={togglePricing}
-              onCapabilityChange={toggleCapability}
-              onClearAll={handleClearFilters}
-            />
-          </div>
-
-          <div className="flex-1">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-foreground">
-                {searchQuery
-                  ? `Search Results (${filteredModels.length})`
-                  : "All Models"}
-              </h2>
-            </div>
-
+        {/* Main Store - Category Sections (Only show when not searching) */}
+        {!searchQuery && (
+          <div className="space-y-12">
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
-                {[...Array(12)].map((_, i) => (
-                  <Skeleton key={i} className="h-48 w-full rounded-lg" />
+              // Loading skeletons
+              <div className="space-y-12">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i}>
+                    <div className="flex items-center justify-between mb-6">
+                      <div>
+                        <Skeleton className="h-8 w-64 mb-2" />
+                        <Skeleton className="h-4 w-48" />
+                      </div>
+                      <Skeleton className="h-10 w-32" />
+                    </div>
+                    <div className="flex gap-4 overflow-x-hidden">
+                      {[...Array(6)].map((_, j) => (
+                        <div key={j} className="w-80 flex-shrink-0">
+                          <Skeleton className="h-48 w-full rounded-lg" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
-                  {filteredModels.map((model) => (
-                    <ModelCard key={model._id} model={transformModel(model)} />
-                  ))}
-                </div>
+                {/* Trending Section */}
+                {trendingModels.length > 0 && (
+                  <section>
+                    <div className="flex items-center justify-between mb-6">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <TrendingUp className="w-6 h-6 text-orange-500" />
+                          <h2 className="text-2xl font-bold">Trending AI Tools</h2>
+                        </div>
+                        <p className="text-muted-foreground">Most popular tools this week</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        className="gap-2"
+                        onClick={() => navigate('/categories/trending')}
+                      >
+                        View All
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
+                      {trendingModels.map((model) => (
+                        <div key={model.id} className="w-80 flex-shrink-0 snap-start">
+                          <ModelCard model={model} />
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
 
-                {filteredModels.length === 0 && !loading && (
+                {/* Category-wise Sections */}
+                {categoryGroups.map((category) => (
+                  <section key={category.slug}>
+                    <div className="flex items-center justify-between mb-6">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-2xl">{category.icon}</span>
+                          <h2 className="text-2xl font-bold">{category.name}</h2>
+                        </div>
+                        <p className="text-muted-foreground">{category.description}</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        className="gap-2"
+                        onClick={() => navigate(`/categories/${category.slug}`)}
+                      >
+                        View All
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
+                      {category.models.map((model) => (
+                        <div key={model.id} className="w-80 flex-shrink-0 snap-start">
+                          <ModelCard model={model} />
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                ))}
+
+                {/* All Models Section */}
+                {!showAllModels && models.length > 0 && (
+                  <div className="text-center py-8">
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="gap-2"
+                      onClick={() => setShowAllModels(true)}
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      Explore All {models.length} AI Tools
+                    </Button>
+                  </div>
+                )}
+
+                {showAllModels && (
+                  <section>
+                    <div className="mb-6">
+                      <h2 className="text-2xl font-bold mb-1">All AI Tools</h2>
+                      <p className="text-muted-foreground">Browse our complete collection</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                      {models.map((model) => (
+                        <ModelCard key={model._id} model={transformModel(model)} />
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* Empty State */}
+                {!loading && models.length === 0 && (
                   <div className="text-center py-16">
                     <p className="text-muted-foreground text-lg mb-2">
-                      No models found
+                      No AI tools available yet
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      Try adjusting your filters or search query
+                      Check back soon for new tools!
                     </p>
                   </div>
                 )}
               </>
             )}
           </div>
-        </div>
+        )}
       </main>
       
       <Footer />
