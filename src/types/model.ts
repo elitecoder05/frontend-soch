@@ -21,6 +21,7 @@ export type AiModel = {
   screenshots?: string[];
   featured?: boolean;
   trendingScore?: number;
+  categoryTrendingScore?: number;
   bestFor?: string[];
   features?: string[];
   examplePrompts?: string[];

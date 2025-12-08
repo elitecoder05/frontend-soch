@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { adminAPI, Model, User } from '@/api/api-methods';
 import { Loader2, Eye, Calendar, User as UserIcon, Tag, ExternalLink, Users } from 'lucide-react';
@@ -21,6 +22,8 @@ const Admin = () => {
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState('pending');
   const [rejectionReasons, setRejectionReasons] = useState<{[key: string]: string}>({});
+  const [trendingEdits, setTrendingEdits] = useState<Record<string, { trendingScore?: number; categoryTrendingScore?: number; featured?: boolean }>>({});
+  const [trendingUpdating, setTrendingUpdating] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Format a date string nicely
@@ -98,6 +101,42 @@ const Admin = () => {
 
   const handleRejectionReasonChange = (modelId: string, reason: string) => {
     setRejectionReasons((prev) => ({ ...prev, [modelId]: reason }));
+  };
+
+  const handleTrendingFieldChange = (
+    modelId: string,
+    field: 'trendingScore' | 'categoryTrendingScore' | 'featured',
+    value: number | boolean
+  ) => {
+    setTrendingEdits((prev) => ({
+      ...prev,
+      [modelId]: {
+        ...prev[modelId],
+        [field]: value
+      }
+    }));
+  };
+
+  const handleTrendingUpdate = async (modelId: string) => {
+    const payload = trendingEdits[modelId] ?? {};
+
+    // Avoid sending empty payload
+    if (Object.keys(payload).length === 0) {
+      toast({ title: 'No changes to save', description: 'Adjust trending values before saving.', variant: 'secondary' });
+      return;
+    }
+
+    setTrendingUpdating(modelId);
+    try {
+      const response = await adminAPI.updateModelTrending(modelId, payload);
+      const updatedModel = response.data.model;
+      setModels((prev) => prev.map((m) => (m._id === modelId ? updatedModel : m)));
+      toast({ title: 'Trending updated', description: 'Trending values saved successfully.' });
+    } catch (err: any) {
+      toast({ title: 'Failed to update trending', description: err.message || String(err), variant: 'destructive' });
+    } finally {
+      setTrendingUpdating(null);
+    }
   };
 
   const handleUserSubscriptionToggle = async (userId: string, currentIsPro: boolean) => {
@@ -308,6 +347,61 @@ const Admin = () => {
                                 Updating...
                               </div>
                             )}
+                          </div>
+
+                          {/* Trending controls */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium" htmlFor={`trending-${model._id}`}>
+                                Trending score (0-100)
+                              </label>
+                              <Input
+                                id={`trending-${model._id}`}
+                                type="number"
+                                min={0}
+                                max={100}
+                                value={(trendingEdits[model._id]?.trendingScore ?? model.trendingScore ?? 0).toString()}
+                                onChange={(e) => handleTrendingFieldChange(model._id, 'trendingScore', Number(e.target.value))}
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium" htmlFor={`cat-trending-${model._id}`}>
+                                Category trending (0-100)
+                              </label>
+                              <Input
+                                id={`cat-trending-${model._id}`}
+                                type="number"
+                                min={0}
+                                max={100}
+                                value={(trendingEdits[model._id]?.categoryTrendingScore ?? model.categoryTrendingScore ?? 0).toString()}
+                                onChange={(e) => handleTrendingFieldChange(model._id, 'categoryTrendingScore', Number(e.target.value))}
+                              />
+                            </div>
+
+                            <div className="flex items-center gap-3 pt-6">
+                              <Switch
+                                id={`featured-${model._id}`}
+                                checked={Boolean(trendingEdits[model._id]?.featured ?? model.featured)}
+                                onCheckedChange={(checked) => handleTrendingFieldChange(model._id, 'featured', checked)}
+                              />
+                              <label htmlFor={`featured-${model._id}`} className="text-sm font-medium">Featured</label>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              disabled={trendingUpdating === model._id}
+                              onClick={() => handleTrendingUpdate(model._id)}
+                            >
+                              {trendingUpdating === model._id && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                              Save trending
+                            </Button>
+                            <p className="text-xs text-muted-foreground">
+                              Global trending feeds Explorer; category trending feeds the category page.
+                            </p>
                           </div>
 
                           {/* Rejection reason input for new rejections */}

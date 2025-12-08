@@ -64,6 +64,7 @@ const Explorer = () => {
     screenshots: model.screenshots,
     featured: model.featured,
     trendingScore: model.trendingScore,
+    categoryTrendingScore: (model as any).categoryTrendingScore,
     bestFor: model.bestFor,
     features: model.features,
     examplePrompts: model.examplePrompts
@@ -211,7 +212,7 @@ const Explorer = () => {
                       <Button
                         variant="ghost"
                         className="gap-2"
-                        onClick={() => navigate('/categories/trending')}
+                        onClick={() => navigate('/explorer')}
                       >
                         View All
                         <ChevronRight className="w-4 h-4" />
@@ -241,7 +242,7 @@ const Explorer = () => {
                       <Button
                         variant="ghost"
                         className="gap-2"
-                        onClick={() => navigate(`/categories/${category.slug}`)}
+                        onClick={() => navigate(`/category/${category.slug}`)}
                       >
                         View All
                         <ChevronRight className="w-4 h-4" />

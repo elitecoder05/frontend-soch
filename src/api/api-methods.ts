@@ -77,6 +77,7 @@ export interface Model {
   rejectionReason?: string;
   featured?: boolean;
   trendingScore?: number;
+  categoryTrendingScore?: number;
   uploadedBy: {
     _id: string;
     firstName: string;
@@ -542,6 +543,23 @@ export const adminAPI = {
         error.response?.data?.message || 
         error.message || 
         'Failed to toggle user subscription.'
+      );
+    }
+  },
+
+  // Update trending / featured metadata for a model
+  updateModelTrending: async (
+    modelId: string,
+    data: { trendingScore?: number; categoryTrendingScore?: number; featured?: boolean }
+  ): Promise<{ success: boolean; message: string; data: { model: Model } }> => {
+    try {
+      const response = await apiClient.put(`/api/models/admin/${modelId}/trending`, data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message ||
+        error.message ||
+        'Failed to update trending settings.'
       );
     }
   }
