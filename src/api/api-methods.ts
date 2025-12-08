@@ -360,12 +360,13 @@ export const modelsAPI = {
       const response = await apiClient.post('/api/models', data);
       return response.data;
     } catch (error: any) {
-      throw new Error(
-        error.response?.data?.message || 
-        error.response?.data?.errors?.join(', ') ||
-        error.message || 
-        'Failed to upload model.'
-      );
+      const message = error.response?.data?.message ||
+        (error.response?.data?.errors ? error.response?.data?.errors.join(', ') : undefined) ||
+        error.message ||
+        'Failed to upload model.';
+      const err: any = new Error(message);
+      err.details = error.response?.data || null;
+      throw err;
     }
   },
 
@@ -375,12 +376,13 @@ export const modelsAPI = {
       const response = await apiClient.put(`/api/models/${modelId}`, data);
       return response.data;
     } catch (error: any) {
-      throw new Error(
-        error.response?.data?.message || 
-        error.response?.data?.errors?.join(', ') ||
-        error.message || 
-        'Failed to update model.'
-      );
+      const message = error.response?.data?.message ||
+        (error.response?.data?.errors ? error.response?.data?.errors.join(', ') : undefined) ||
+        error.message ||
+        'Failed to update model.';
+      const err: any = new Error(message);
+      err.details = error.response?.data || null;
+      throw err;
     }
   },
 

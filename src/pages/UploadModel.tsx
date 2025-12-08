@@ -209,13 +209,30 @@ export default function UploadModel() {
       return;
     }
     
-    // Basic validation
-    if (!formData.name || !formData.shortDescription || !formData.category || !formData.provider) {
+    // Basic validation - show specific, actionable messages
+    const requiredFields = [
+      { key: 'name', label: 'Model Name' },
+      { key: 'provider', label: 'Provider' },
+      { key: 'shortDescription', label: 'Short Description' },
+      { key: 'category', label: 'Category' },
+    ];
+
+    const missing = requiredFields.filter(f => {
+      const value = (formData as any)[f.key];
+      return value === undefined || value === null || (typeof value === 'string' && value.trim() === '');
+    });
+
+    if (missing.length > 0) {
+      const description = missing.length === 1
+        ? `${missing[0].label} is required.`
+        : `Please fill: ${missing.map(m => m.label).join(', ')}.`;
+
       toast({
-        title: "Error",
-        description: "Please fill in all required fields.",
+        title: "Missing required fields",
+        description,
         variant: "destructive",
       });
+
       return;
     }
 
@@ -275,9 +292,21 @@ export default function UploadModel() {
 
     } catch (error: any) {
       console.error(editMode ? 'Update error:' : 'Upload error:', error);
+
+      // Prefer server-provided validation errors when available
+      let message = error?.message || (editMode ? "Failed to update model. Please try again." : "Failed to upload model. Please try again.");
+      const details = (error as any)?.details;
+      if (details) {
+        if (details.errors) {
+          message = Array.isArray(details.errors) ? details.errors.join(', ') : String(details.errors);
+        } else if (details.message) {
+          message = details.message;
+        }
+      }
+
       toast({
         title: "Error",
-        description: error.message || (editMode ? "Failed to update model. Please try again." : "Failed to upload model. Please try again."),
+        description: message,
         variant: "destructive",
       });
     } finally {
