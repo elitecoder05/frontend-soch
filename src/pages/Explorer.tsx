@@ -9,7 +9,8 @@ import { modelsAPI, Model } from "@/api/api-methods";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, TrendingUp, Sparkles, Zap } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ChevronRight, TrendingUp, Sparkles, Zap, Home, Image, Video, Megaphone, Palette, Code2 } from "lucide-react";
 
 const Explorer = () => {
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ const Explorer = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAllModels, setShowAllModels] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>("home");
 
   // Fetch models from API
   useEffect(() => {
@@ -105,6 +107,30 @@ const Explorer = () => {
     [models]
   );
 
+  // Category filter chips
+  const categoryFilters = [
+    { id: 'home', label: 'Home', icon: Home },
+    { id: 'trending', label: 'Trending', icon: TrendingUp },
+    { id: 'image', label: 'Image', icon: Image },
+    { id: 'video', label: 'Video', icon: Video },
+    { id: 'marketing', label: 'Marketing', icon: Megaphone },
+    { id: 'design', label: 'Design', icon: Palette },
+    { id: 'code', label: 'Code', icon: Code2 },
+  ];
+
+  // Filtered models based on selected category
+  const filteredModelsByCategory = useMemo(() => {
+    if (selectedCategory === 'home') {
+      return models.map(transformModel);
+    }
+    if (selectedCategory === 'trending') {
+      return trendingModels;
+    }
+    return models
+      .filter((m) => m.category === selectedCategory)
+      .map(transformModel);
+  }, [models, selectedCategory, trendingModels]);
+
   // Search filtered models
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return [];
@@ -135,6 +161,33 @@ const Explorer = () => {
             />
           </div>
         </div>
+
+        {/* Category Filter Chips - Only show when not searching */}
+        {!searchQuery && (
+          <div className="mb-8">
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              {categoryFilters.map((filter) => {
+                const IconComponent = filter.icon;
+                const isActive = selectedCategory === filter.id;
+                return (
+                  <Badge
+                    key={filter.id}
+                    variant={isActive ? "default" : "outline"}
+                    className={`cursor-pointer px-4 py-2.5 text-sm font-medium transition-all hover:scale-105 flex items-center gap-2 whitespace-nowrap ${
+                      isActive
+                        ? "bg-primary text-primary-foreground shadow-md"
+                        : "border-border hover:border-primary/50 hover:bg-primary/10"
+                    }`}
+                    onClick={() => setSelectedCategory(filter.id)}
+                  >
+                    <IconComponent className="w-4 h-4" />
+                    {filter.label}
+                  </Badge>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {error && (
           <Alert className="mb-6 border-red-200 bg-red-50">
@@ -198,92 +251,125 @@ const Explorer = () => {
               </div>
             ) : (
               <>
-                {/* Trending Section */}
-                {trendingModels.length > 0 && (
-                  <section>
-                    <div className="flex items-center justify-between mb-6">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <TrendingUp className="w-6 h-6 text-orange-500" />
-                          <h2 className="text-2xl font-bold">Trending AI Tools</h2>
+                {/* Show filtered models by category */}
+                {selectedCategory === 'home' ? (
+                  <>
+                    {/* Trending Section */}
+                    {trendingModels.length > 0 && (
+                      <section>
+                        <div className="flex items-center justify-between mb-6">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <TrendingUp className="w-6 h-6 text-orange-500" />
+                              <h2 className="text-2xl font-bold">Trending AI Tools</h2>
+                            </div>
+                            <p className="text-muted-foreground">Most popular tools this week</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            className="gap-2"
+                            onClick={() => setSelectedCategory('trending')}
+                          >
+                            View All
+                            <ChevronRight className="w-4 h-4" />
+                          </Button>
                         </div>
-                        <p className="text-muted-foreground">Most popular tools this week</p>
+                        <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
+                          {trendingModels.map((model) => (
+                            <div key={model.id} className="w-80 flex-shrink-0 snap-start">
+                              <ModelCard model={model} />
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+                    )}
+
+                    {/* Category-wise Sections */}
+                    {categoryGroups.map((category) => (
+                      <section key={category.slug}>
+                        <div className="flex items-center justify-between mb-6">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-2xl">{category.icon}</span>
+                              <h2 className="text-2xl font-bold">{category.name}</h2>
+                            </div>
+                            <p className="text-muted-foreground">{category.description}</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            className="gap-2"
+                            onClick={() => navigate(`/category/${category.slug}`)}
+                          >
+                            View All
+                            <ChevronRight className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
+                          {category.models.map((model) => (
+                            <div key={model.id} className="w-80 flex-shrink-0 snap-start">
+                              <ModelCard model={model} />
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+                    ))}
+
+                    {/* All Models Section */}
+                    {!showAllModels && models.length > 0 && (
+                      <div className="text-center py-8">
+                        <Button
+                          size="lg"
+                          variant="outline"
+                          className="gap-2"
+                          onClick={() => setShowAllModels(true)}
+                        >
+                          <Sparkles className="w-4 h-4" />
+                          Explore All {models.length} AI Tools
+                        </Button>
                       </div>
-                      <Button
-                        variant="ghost"
-                        className="gap-2"
-                        onClick={() => navigate('/explorer')}
-                      >
-                        View All
-                        <ChevronRight className="w-4 h-4" />
-                      </Button>
-                    </div>
-                    <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
-                      {trendingModels.map((model) => (
-                        <div key={model.id} className="w-80 flex-shrink-0 snap-start">
-                          <ModelCard model={model} />
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-                )}
+                    )}
 
-                {/* Category-wise Sections */}
-                {categoryGroups.map((category) => (
-                  <section key={category.slug}>
-                    <div className="flex items-center justify-between mb-6">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-2xl">{category.icon}</span>
-                          <h2 className="text-2xl font-bold">{category.name}</h2>
+                    {showAllModels && (
+                      <section>
+                        <div className="mb-6">
+                          <h2 className="text-2xl font-bold mb-1">All AI Tools</h2>
+                          <p className="text-muted-foreground">Browse our complete collection</p>
                         </div>
-                        <p className="text-muted-foreground">{category.description}</p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        className="gap-2"
-                        onClick={() => navigate(`/category/${category.slug}`)}
-                      >
-                        View All
-                        <ChevronRight className="w-4 h-4" />
-                      </Button>
-                    </div>
-                    <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
-                      {category.models.map((model) => (
-                        <div key={model.id} className="w-80 flex-shrink-0 snap-start">
-                          <ModelCard model={model} />
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                          {models.map((model) => (
+                            <ModelCard key={model._id} model={transformModel(model)} />
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  </section>
-                ))}
-
-                {/* All Models Section */}
-                {!showAllModels && models.length > 0 && (
-                  <div className="text-center py-8">
-                    <Button
-                      size="lg"
-                      variant="outline"
-                      className="gap-2"
-                      onClick={() => setShowAllModels(true)}
-                    >
-                      <Sparkles className="w-4 h-4" />
-                      Explore All {models.length} AI Tools
-                    </Button>
-                  </div>
-                )}
-
-                {showAllModels && (
+                      </section>
+                    )}
+                  </>
+                ) : (
+                  // Show filtered models in grid view for specific categories
                   <section>
                     <div className="mb-6">
-                      <h2 className="text-2xl font-bold mb-1">All AI Tools</h2>
-                      <p className="text-muted-foreground">Browse our complete collection</p>
+                      <h2 className="text-2xl font-bold mb-1 capitalize">
+                        {selectedCategory === 'trending' ? 'Trending AI Tools' : `${selectedCategory} Models`}
+                      </h2>
+                      <p className="text-muted-foreground">
+                        {filteredModelsByCategory.length} models available
+                      </p>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                      {models.map((model) => (
-                        <ModelCard key={model._id} model={transformModel(model)} />
-                      ))}
-                    </div>
+                    {filteredModelsByCategory.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {filteredModelsByCategory.map((model) => (
+                          <ModelCard key={model.id} model={model} />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-16">
+                        <p className="text-muted-foreground text-lg mb-2">
+                          No models found in this category
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Check back soon for new tools!
+                        </p>
+                      </div>
+                    )}
                   </section>
                 )}
 
