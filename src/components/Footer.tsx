@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Mail, Shield, Users, FileText, HelpCircle } from "lucide-react";
+import { Mail, Shield, Users, FileText, HelpCircle, Facebook, Instagram, Twitter, Linkedin } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -167,6 +167,22 @@ export const Footer = () => {
                 <Link to="/contact" className="text-muted-foreground hover:text-primary transition-colors">
                   Contact
                 </Link>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span className="sr-only">Follow our socials</span>
+                <a href="https://www.instagram.com/sochaistore?igsh=bjdqeWxia2J2aGoz" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                  <Instagram className="w-5 h-5" />
+                </a>
+                <a href="https://www.facebook.com/share/16bFxc2ZTw" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                  <Facebook className="w-5 h-5" />
+                </a>
+                <a href="https://x.com/SochAistore/status/1952185899355410484" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                  <Twitter className="w-5 h-5" />
+                </a>
+                <a href="https://www.linkedin.com/in/soch-ai-805759378" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                  <Linkedin className="w-5 h-5" />
+                </a>
               </div>
             </div>
           </div>

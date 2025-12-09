@@ -89,6 +89,8 @@ export const Navbar = ({ searchQuery = "", onSearchChange = () => {} }: NavbarPr
               </Button>
             </Link>
           )}
+
+          
         </div>
 
         <Sheet>
@@ -161,6 +163,7 @@ export const Navbar = ({ searchQuery = "", onSearchChange = () => {} }: NavbarPr
                     </Button>
                   </Link>
                 )}
+                
               </nav>
             </div>
           </SheetContent>
