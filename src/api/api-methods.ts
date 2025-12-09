@@ -269,6 +269,26 @@ export interface AllModelsResponse {
   };
 }
 
+// Search suggestion type for quick search results
+export interface SearchSuggestion {
+  id: string;
+  name: string;
+  slug: string;
+  iconUrl: string | null;
+  shortDescription: string;
+  category: string;
+  provider: string;
+  pricing: 'free' | 'freemium' | 'paid';
+}
+
+export interface SearchSuggestionsResponse {
+  success: boolean;
+  data: {
+    suggestions: SearchSuggestion[];
+    query: string;
+  };
+}
+
 // Models API methods
 export const modelsAPI = {
   // Get all approved models (public)
@@ -337,6 +357,25 @@ export const modelsAPI = {
         error.response?.data?.message || 
         error.message || 
         'Failed to fetch user models.'
+      );
+    }
+  },
+
+  // Get search suggestions for quick search dropdown
+  getSearchSuggestions: async (query: string, limit?: number): Promise<SearchSuggestionsResponse> => {
+    try {
+      const params = new URLSearchParams();
+      params.append('q', query);
+      if (limit) {
+        params.append('limit', limit.toString());
+      }
+      const response = await apiClient.get(`/api/models/search/suggestions?${params.toString()}`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || 
+        error.message || 
+        'Failed to fetch search suggestions.'
       );
     }
   },

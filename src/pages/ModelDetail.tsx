@@ -8,7 +8,8 @@ import { Navbar } from "@/components/Navbar";
 import { ModelCard } from "@/components/ModelCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useEffect } from "react";
-import { modelsAPI, Model } from "@/api/api-methods";
+import { Model } from "@/api/api-methods";
+import { useModelById, useSimilarModels } from "@/hooks/useModels";
 import { useToast } from "@/hooks/use-toast";
 import { AiModel } from "@/types/model";
 import { HorizontalCarousel } from "@/components/HorizontalCarousel";
@@ -18,49 +19,29 @@ import { getModelUrl } from "@/lib/utils";
 const ModelDetail = () => {
   const { id } = useParams();
   const [searchQuery, setSearchQuery] = useState("");
-  const [model, setModel] = useState<Model | null>(null);
-  const [similarModels, setSimilarModels] = useState<Model[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const location: any = useLocation();
 
+  // Use React Query for caching model data
+  const { data: modelData, isLoading, error: modelError } = useModelById(id);
+  const model = modelData?.data?.model || null;
+  
+  // Use React Query for similar models with caching
+  const { data: similarData } = useSimilarModels(model?.category, model?._id);
+  const similarModels = similarData?.data?.models || [];
+  
+  const error = modelError?.message || null;
+
+  // Show toast on error
   useEffect(() => {
-    if (!id) return;
-
-    const fetchModelDetails = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        // Fetch the specific model
-        const modelResponse = await modelsAPI.getModelById(id);
-        setModel(modelResponse.data.model);
-
-        // Fetch similar models from the same category
-        const similarResponse = await modelsAPI.getAllModels({
-          category: modelResponse.data.model.category,
-          limit: 4
-        });
-        
-        // Filter out the current model and limit to 3
-        const filtered = similarResponse.data.models
-          .filter(m => m._id !== modelResponse.data.model._id)
-          .slice(0, 3);
-        setSimilarModels(filtered);
-      } catch (error: any) {
-        setError(error.message);
-        toast({
-          title: 'Error',
-          description: error.message,
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchModelDetails();
-  }, [id, toast]);
+    if (error) {
+      toast({
+        title: 'Error',
+        description: error,
+        variant: 'destructive',
+      });
+    }
+  }, [error, toast]);
 
   if (isLoading) {
     return (

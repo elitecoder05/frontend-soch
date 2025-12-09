@@ -1,11 +1,12 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { HorizontalCarousel } from "@/components/HorizontalCarousel";
 import { ModelCard } from "@/components/ModelCard";
 import { SearchBar } from "@/components/SearchBar";
 import { Footer } from "@/components/Footer";
 import { Navbar } from "@/components/Navbar";
-import { modelsAPI, Model } from "@/api/api-methods";
+import { Model } from "@/api/api-methods";
+import { useAllModels } from "@/hooks/useModels";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -15,32 +16,14 @@ import { ChevronRight, TrendingUp, Sparkles, Zap, Home, Image, Video, Megaphone,
 const Explorer = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [models, setModels] = useState<Model[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [showAllModels, setShowAllModels] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("home");
 
-  // Fetch models from API
-  useEffect(() => {
-    const fetchModels = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await modelsAPI.getAllModels({ 
-          limit: 200
-        });
-        setModels(response.data.models);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch models');
-        console.error('Error fetching models:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchModels();
-  }, []);
+  // Use React Query for fetching and caching models
+  const { data: modelsData, isLoading: loading, error: queryError } = useAllModels({ limit: 200 });
+  
+  const models = modelsData?.data?.models || [];
+  const error = queryError?.message || null;
 
   // Transform Model to match AiModel structure
   const transformModel = (model: Model) => ({
