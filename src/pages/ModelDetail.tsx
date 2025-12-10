@@ -8,6 +8,7 @@ import { Navbar } from "@/components/Navbar";
 import { ModelCard } from "@/components/ModelCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useEffect } from "react";
+import React from "react";
 import { Model } from "@/api/api-methods";
 import { useModelById, useSimilarModels } from "@/hooks/useModels";
 import { useToast } from "@/hooks/use-toast";
@@ -30,6 +31,8 @@ const ModelDetail = () => {
   const { data: similarData } = useSimilarModels(model?.category, model?._id);
   const similarModels = similarData?.data?.models || [];
   
+  const [screenshotOrientations, setScreenshotOrientations] = useState<Record<number, 'landscape' | 'portrait' | 'square'>>({});
+
   const error = modelError?.message || null;
 
   // Show toast on error
@@ -227,16 +230,33 @@ const ModelDetail = () => {
 
             {model.screenshots && model.screenshots.length > 0 && (
               <HorizontalCarousel title="Screenshots" description="Preview screenshots and examples">
-                {model.screenshots.map((src, idx) => (
-                  <div key={idx} className="min-w-[180px] sm:min-w-[240px] md:min-w-[320px] h-36 sm:h-44 md:h-48 rounded-md overflow-hidden shadow-sm bg-card/50">
-                    <img
-                      src={src}
-                      alt={`${model.name} screenshot ${idx + 1}`}
-                      className="w-full h-full object-cover cursor-pointer"
-                      onClick={() => window.open(src, '_blank')}
-                    />
-                  </div>
-                ))}
+                {model.screenshots.map((src, idx) => {
+                  const orientation = screenshotOrientations[idx] || 'landscape';
+
+                  const containerClass = orientation === 'portrait'
+                    ? 'min-w-[140px] sm:min-w-[180px] md:min-w-[220px] h-52 sm:h-64 md:h-80 rounded-md overflow-hidden shadow-sm bg-card/50 flex items-center justify-center'
+                    : 'min-w-[180px] sm:min-w-[240px] md:min-w-[320px] h-36 sm:h-44 md:h-48 rounded-md overflow-hidden shadow-sm bg-card/50 flex items-center justify-center';
+
+                  const imgClass = orientation === 'portrait' || orientation === 'square'
+                    ? 'max-w-full max-h-full object-contain cursor-pointer'
+                    : 'w-full h-full object-cover cursor-pointer';
+
+                  return (
+                    <div key={idx} className={containerClass}>
+                      <img
+                        src={src}
+                        alt={`${model.name} screenshot ${idx + 1}`}
+                        className={imgClass}
+                        onClick={() => window.open(src, '_blank')}
+                        onLoad={(e) => {
+                          const img = e.currentTarget as HTMLImageElement;
+                          const o = img.naturalWidth > img.naturalHeight ? 'landscape' : (img.naturalWidth < img.naturalHeight ? 'portrait' : 'square');
+                          setScreenshotOrientations(prev => ({ ...prev, [idx]: o }));
+                        }}
+                      />
+                    </div>
+                  );
+                })}
               </HorizontalCarousel>
             )}
 
