@@ -216,7 +216,7 @@ const PricingPage = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      <main className="container mx-auto px-4 py-12">
+      <main className="container mx-auto px-4 py-12 pt-32">
         {/* Pricing Cards or Paid-user view */}
                 {currentUser && currentUser.isProUser ? (
                   <div className="max-w-3xl mx-auto">

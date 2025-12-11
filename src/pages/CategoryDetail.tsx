@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ModelCard } from "@/components/ModelCard";
 import { CategoryChip } from "@/components/CategoryChip";
@@ -8,16 +8,19 @@ import { categories as defaultCategories } from "@/data/models";
 import { modelsAPI } from "@/api/api-methods";
 import type { AiModel, Category } from "@/types/model";
 import { Navbar } from "@/components/Navbar";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const CategoryDetail = () => {
   const { slug } = useParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("popular");
+  const [isLoading, setIsLoading] = useState(true);
 
   const [categoriesList, setCategoriesList] = useState<Category[]>(defaultCategories);
   const [modelsList, setModelsList] = useState<AiModel[]>([]);
   const category = categoriesList.find((c) => c.slug === slug);
 
+  // Normalization logic
   const normalizeModel = (model: any): AiModel => ({
     id: model._id || model.id,
     slug: model.slug,
@@ -49,49 +52,40 @@ const CategoryDetail = () => {
 
   const filteredModels = useMemo(() => {
     if (!category) return [];
-
     let models = modelsList.filter((m) => m.category === category.slug);
-
+    
     switch (sortBy) {
       case "popular":
         models = models.sort((a, b) => (b.installsCount || 0) - (a.installsCount || 0));
         break;
       case "newest":
-        models = models.sort(
-          (a, b) =>
-            new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime()
-        );
+        models = models.sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
         break;
       case "rating":
         models = models.sort((a, b) => b.rating - a.rating);
         break;
     }
-
     return models;
   }, [category, sortBy, modelsList]);
 
   const trendingInCategory = useMemo(() => {
     if (!category) return [];
-
     return modelsList
       .filter((m) => m.category === category.slug)
       .filter((m) => (m.categoryTrendingScore ?? m.trendingScore ?? 0) > 0)
-      .sort(
-        (a, b) =>
-          (b.categoryTrendingScore ?? b.trendingScore ?? 0) -
-          (a.categoryTrendingScore ?? a.trendingScore ?? 0)
-      )
+      .sort((a, b) => (b.categoryTrendingScore ?? b.trendingScore ?? 0) - (a.categoryTrendingScore ?? a.trendingScore ?? 0))
       .slice(0, 8);
   }, [category, modelsList]);
 
   useEffect(() => {
     const fetchCategoryAndModels = async () => {
+      setIsLoading(true);
       try {
         const res = await modelsAPI.getCategories();
         if (res?.data?.categories) {
           setCategoriesList(res.data.categories);
         }
-        // fetch models for this category (approved only)
+        
         if (slug) {
           const modelsRes = await modelsAPI.getAllModels({ category: slug, limit: 100 });
           if (modelsRes?.data?.models) {
@@ -100,14 +94,22 @@ const CategoryDetail = () => {
         }
       } catch (err) {
         console.error('Failed to fetch category/models:', err);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchCategoryAndModels();
   }, [slug]);
 
-  if (!category) {
+  const sortOptions = [
+    { value: "popular", label: "Popular" },
+    { value: "newest", label: "Newest" },
+    { value: "rating", label: "Top Rated" },
+  ];
+
+  if (!isLoading && !category) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background pt-28 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-2">Category not found</h1>
           <Link to="/categories">
@@ -118,14 +120,9 @@ const CategoryDetail = () => {
     );
   }
 
-  const sortOptions = [
-    { value: "popular", label: "Popular" },
-    { value: "newest", label: "Newest" },
-    { value: "rating", label: "Top Rated" },
-  ];
-
   return (
-    <div className="min-h-screen bg-background">
+    // FIX: Added pt-28
+    <div className="min-h-screen bg-background pt-28">
       <Navbar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
 
       <main className="container mx-auto px-4 py-8">
@@ -137,16 +134,26 @@ const CategoryDetail = () => {
         </Link>
 
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-3 capitalize">
-            {category.name}
-          </h1>
-          <p className="text-lg text-muted-foreground">{category.description}</p>
-          <p className="text-sm text-muted-foreground mt-2">
-            {filteredModels.length} models available
-          </p>
+          {isLoading ? (
+            <div className="space-y-4">
+              <Skeleton className="h-12 w-64" />
+              <Skeleton className="h-6 w-full max-w-lg" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+          ) : (
+            <>
+              <h1 className="text-4xl font-bold text-foreground mb-3 capitalize">
+                {category?.name}
+              </h1>
+              <p className="text-lg text-muted-foreground">{category?.description}</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                {filteredModels.length} models available
+              </p>
+            </>
+          )}
         </div>
 
-        {trendingInCategory.length > 0 && (
+        {!isLoading && trendingInCategory.length > 0 && (
           <div className="mb-10">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-semibold">Trending in this category</h2>
@@ -162,25 +169,35 @@ const CategoryDetail = () => {
           </div>
         )}
 
-        <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
-          <span className="text-sm text-muted-foreground mr-2">Sort by:</span>
-          {sortOptions.map((option) => (
-            <CategoryChip
-              key={option.value}
-              label={option.label}
-              isActive={sortBy === option.value}
-              onClick={() => setSortBy(option.value)}
-            />
-          ))}
-        </div>
+        {!isLoading && filteredModels.length > 0 && (
+          <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
+            <span className="text-sm text-muted-foreground mr-2">Sort by:</span>
+            {sortOptions.map((option) => (
+              <CategoryChip
+                key={option.value}
+                label={option.label}
+                isActive={sortBy === option.value}
+                onClick={() => setSortBy(option.value)}
+              />
+            ))}
+          </div>
+        )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredModels.map((model) => (
-            <ModelCard key={model.id} model={model} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {[...Array(8)].map((_, i) => (
+              <Skeleton key={i} className="h-[280px] w-full rounded-xl" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredModels.map((model) => (
+              <ModelCard key={model.id} model={model} />
+            ))}
+          </div>
+        )}
 
-        {filteredModels.length === 0 && (
+        {!isLoading && filteredModels.length === 0 && (
           <div className="text-center py-16">
             <p className="text-muted-foreground text-lg">
               No models found in this category

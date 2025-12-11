@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { HorizontalCarousel } from "@/components/HorizontalCarousel";
 import { ModelCard } from "@/components/ModelCard";
 import { SearchBar } from "@/components/SearchBar";
 import { Footer } from "@/components/Footer";
@@ -11,7 +10,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronRight, TrendingUp, Sparkles, Zap, Home, Image, Video, Megaphone, Palette, Code2 } from "lucide-react";
+// ADDED: ChevronRight and Sparkles to imports
+import { TrendingUp, Home, Image, Video, Megaphone, Palette, Code2, ChevronRight, Sparkles } from "lucide-react";
 
 const Explorer = () => {
   const navigate = useNavigate();
@@ -55,7 +55,7 @@ const Explorer = () => {
     examplePrompts: model.examplePrompts
   });
 
-  // Category-wise models
+  // Category-wise models logic
   const categoryGroups = useMemo(() => {
     const categories = [
       { slug: 'video', name: 'Video Generation Tools', icon: '🎥', description: 'Create stunning videos' },
@@ -79,7 +79,7 @@ const Explorer = () => {
     })).filter(cat => cat.models.length > 0);
   }, [models]);
 
-  // Trending models
+  // Trending models logic
   const trendingModels = useMemo(
     () =>
       [...models]
@@ -130,7 +130,7 @@ const Explorer = () => {
   }, [models, searchQuery]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pt-24">
       <Navbar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
 
       <main className="container mx-auto px-4 py-8">
@@ -148,7 +148,7 @@ const Explorer = () => {
         {/* Category Filter Chips - Only show when not searching */}
         {!searchQuery && (
           <div className="mb-8">
-            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide justify-center">
               {categoryFilters.map((filter) => {
                 const IconComponent = filter.icon;
                 const isActive = selectedCategory === filter.id;
@@ -181,7 +181,7 @@ const Explorer = () => {
         )}
 
         {/* Search Results */}
-        {searchQuery && (
+        {searchQuery ? (
           <div className="mb-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold">
@@ -189,7 +189,7 @@ const Explorer = () => {
               </h2>
             </div>
             {searchResults.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {searchResults.map((model) => (
                   <ModelCard key={model.id} model={model} />
                 ))}
@@ -205,30 +205,15 @@ const Explorer = () => {
               </div>
             )}
           </div>
-        )}
-
-        {/* Main Store - Category Sections (Only show when not searching) */}
-        {!searchQuery && (
+        ) : (
+          /* Main Store - Category Sections (Only show when not searching) */
           <div className="space-y-12">
             {loading ? (
               // Loading skeletons
-              <div className="space-y-12">
-                {[...Array(4)].map((_, i) => (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[...Array(8)].map((_, i) => (
                   <div key={i}>
-                    <div className="flex items-center justify-between mb-6">
-                      <div>
-                        <Skeleton className="h-8 w-64 mb-2" />
-                        <Skeleton className="h-4 w-48" />
-                      </div>
-                      <Skeleton className="h-10 w-32" />
-                    </div>
-                    <div className="flex gap-4 overflow-x-hidden">
-                      {[...Array(6)].map((_, j) => (
-                        <div key={j} className="w-80 flex-shrink-0">
-                          <Skeleton className="h-48 w-full rounded-lg" />
-                        </div>
-                      ))}
-                    </div>
+                    <Skeleton className="h-[280px] rounded-xl" />
                   </div>
                 ))}
               </div>
