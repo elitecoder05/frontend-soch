@@ -1,4 +1,274 @@
-import { useState, useEffect } from "react";
+// import { useState, useEffect } from "react";
+// import { useSearchParams } from "react-router-dom";
+// import { Navbar } from "@/components/Navbar";
+// import { Footer } from "@/components/Footer";
+// import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+// import { Button } from "@/components/ui/button";
+// import { Input } from "@/components/ui/input";
+// import { Textarea } from "@/components/ui/textarea";
+// import { Alert, AlertDescription } from "@/components/ui/alert";
+// import { Mail, MessageCircle, Clock, MapPin, Phone, Key } from "lucide-react";
+
+// const Contact = () => {
+//   const [searchQuery, setSearchQuery] = useState("");
+//   const [searchParams] = useSearchParams();
+//   const [showPasswordResetMessage, setShowPasswordResetMessage] = useState(false);
+//   const [formData, setFormData] = useState({
+//     name: "",
+//     email: "",
+//     subject: "",
+//     message: ""
+//   });
+
+//   useEffect(() => {
+//     if (searchParams.get('from') === 'forgot-password') {
+//       setShowPasswordResetMessage(true);
+//       setFormData(prev => ({
+//         ...prev,
+//         subject: "Password Reset Request",
+//         message: "Hi, I need help resetting my password for my Soch AI account. Please assist me with this request.\n\nAccount email: [Please provide your registered email here]"
+//       }));
+//     }
+//   }, [searchParams]);
+
+//   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+//     setFormData({
+//       ...formData,
+//       [e.target.name]: e.target.value
+//     });
+//   };
+
+//   const handleSubmit = (e: React.FormEvent) => {
+//     e.preventDefault();
+//     // Create mailto link with form data
+//     const subject = encodeURIComponent(formData.subject || "Contact from Soch AI Store");
+//     const body = encodeURIComponent(`Name: ${formData.name}\nEmail: ${formData.email}\n\nMessage:\n${formData.message}`);
+//     window.location.href = `mailto:sochaicontact@gmail.com?subject=${subject}&body=${body}`;
+//   };
+
+//   const contactMethods = [
+//     {
+//       icon: <Mail className="w-6 h-6 text-blue-500" />,
+//       title: "Email Support",
+//       description: "Send us an email for any questions or support requests",
+//       contact: "sochaicontact@gmail.com",
+//       action: "Send Email"
+//     },
+//     {
+//       icon: <Clock className="w-6 h-6 text-green-500" />,
+//       title: "Response Time",
+//       description: "We typically respond within 24-48 hours",
+//       contact: "Fast & Reliable",
+//       action: null
+//     },
+//     {
+//       icon: <MessageCircle className="w-6 h-6 text-purple-500" />,
+//       title: "Support Topics",
+//       description: "Platform questions, tool submissions, technical issues",
+//       contact: "All inquiries welcome",
+//       action: null
+//     }
+//   ];
+
+//   return (
+//     <div className="min-h-screen bg-background">
+//       <Navbar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+      
+//       <div className="container mx-auto px-4 py-8">
+//         <div className="max-w-6xl mx-auto">
+//           {/* Header */}
+//           <div className="text-center mb-12">
+//             <div className="flex items-center justify-center gap-3 mb-6">
+//               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-blue-500 flex items-center justify-center">
+//                 <Mail className="w-6 h-6 text-white" />
+//               </div>
+//               <h1 className="text-3xl lg:text-4xl font-bold text-foreground">Contact Us</h1>
+//             </div>
+//             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+//               For any questions, support requests, or privacy concerns, you may contact us anytime.
+//             </p>
+//           </div>
+
+//           {/* Password Reset Message */}
+//           {showPasswordResetMessage && (
+//             <div className="mb-8">
+//               <Alert className="border-primary/20 bg-primary/5">
+//                 <Key className="h-4 w-4 text-primary" />
+//                 <AlertDescription className="text-primary">
+//                   <strong>Password Reset Request:</strong> Please contact us using the form below to reset your password. 
+//                   Make sure to include your registered email address in your message.
+//                 </AlertDescription>
+//               </Alert>
+//             </div>
+//           )}
+
+//           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+//             {/* Contact Methods */}
+//             <div className="space-y-6">
+//               {contactMethods.map((method, index) => (
+//                 <Card key={index}>
+//                   <CardContent className="pt-6">
+//                     <div className="flex items-start gap-4">
+//                       <div className="flex-shrink-0">
+//                         {method.icon}
+//                       </div>
+//                       <div className="flex-1">
+//                         <h3 className="text-lg font-semibold text-foreground mb-2">
+//                           {method.title}
+//                         </h3>
+//                         <p className="text-sm text-muted-foreground mb-3">
+//                           {method.description}
+//                         </p>
+//                         <p className="text-sm font-medium text-foreground">
+//                           {method.contact}
+//                         </p>
+//                         {method.action && (
+//                           <Button
+//                             variant="outline"
+//                             size="sm"
+//                             className="mt-3"
+//                             onClick={() => window.location.href = 'mailto:sochaicontact@gmail.com'}
+//                           >
+//                             {method.action}
+//                           </Button>
+//                         )}
+//                       </div>
+//                     </div>
+//                   </CardContent>
+//                 </Card>
+//               ))}
+//             </div>
+
+//             {/* Contact Form */}
+//             <div className="lg:col-span-2">
+//               <Card>
+//                 <CardHeader>
+//                   <CardTitle className="text-2xl">Send us a Message</CardTitle>
+//                   <p className="text-muted-foreground">
+//                     Fill out the form below and we'll get back to you as soon as possible.
+//                   </p>
+//                 </CardHeader>
+//                 <CardContent>
+//                   <form onSubmit={handleSubmit} className="space-y-6">
+//                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+//                       <div>
+//                         <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
+//                           Your Name *
+//                         </label>
+//                         <Input
+//                           id="name"
+//                           name="name"
+//                           type="text"
+//                           required
+//                           value={formData.name}
+//                           onChange={handleInputChange}
+//                           placeholder="Enter your full name"
+//                         />
+//                       </div>
+//                       <div>
+//                         <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
+//                           Email Address *
+//                         </label>
+//                         <Input
+//                           id="email"
+//                           name="email"
+//                           type="email"
+//                           required
+//                           value={formData.email}
+//                           onChange={handleInputChange}
+//                           placeholder="Enter your email address"
+//                         />
+//                       </div>
+//                     </div>
+//                     <div>
+//                       <label htmlFor="subject" className="block text-sm font-medium text-foreground mb-2">
+//                         Subject
+//                       </label>
+//                       <Input
+//                         id="subject"
+//                         name="subject"
+//                         type="text"
+//                         value={formData.subject}
+//                         onChange={handleInputChange}
+//                         placeholder="What is this about?"
+//                       />
+//                     </div>
+//                     <div>
+//                       <label htmlFor="message" className="block text-sm font-medium text-foreground mb-2">
+//                         Message *
+//                       </label>
+//                       <Textarea
+//                         id="message"
+//                         name="message"
+//                         required
+//                         value={formData.message}
+//                         onChange={handleInputChange}
+//                         placeholder="Tell us how we can help you..."
+//                         className="min-h-[120px]"
+//                       />
+//                     </div>
+//                     <Button type="submit" size="lg" className="w-full">
+//                       <Mail className="w-4 h-4 mr-2" />
+//                       Send Message
+//                     </Button>
+//                   </form>
+//                 </CardContent>
+//               </Card>
+//             </div>
+//           </div>
+
+//           {/* Additional Information */}
+//           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12">
+//             <Card>
+//               <CardHeader>
+//                 <CardTitle>What to Expect</CardTitle>
+//               </CardHeader>
+//               <CardContent className="space-y-4 text-muted-foreground">
+//                 <div>
+//                   <h3 className="font-medium text-foreground mb-1">📧 Email Response</h3>
+//                   <p className="text-sm">We'll respond to your email within 24-48 hours during business days.</p>
+//                 </div>
+//                 <div>
+//                   <h3 className="font-medium text-foreground mb-1">🎯 Personalized Support</h3>
+//                   <p className="text-sm">Each inquiry receives individual attention from our team.</p>
+//                 </div>
+//                 <div>
+//                   <h3 className="font-medium text-foreground mb-1">🚀 Quick Solutions</h3>
+//                   <p className="text-sm">We provide clear, actionable solutions to your questions.</p>
+//                 </div>
+//               </CardContent>
+//             </Card>
+
+//             <Card>
+//               <CardHeader>
+//                 <CardTitle>Common Topics</CardTitle>
+//               </CardHeader>
+//               <CardContent className="space-y-4 text-muted-foreground">
+//                 <div>
+//                   <h3 className="font-medium text-foreground mb-1">🔧 Platform Support</h3>
+//                   <p className="text-sm">Account issues, subscription questions, technical problems</p>
+//                 </div>
+//                 <div>
+//                   <h3 className="font-medium text-foreground mb-1">📤 Tool Submissions</h3>
+//                   <p className="text-sm">Add your AI tool to our directory, submission guidelines</p>
+//                 </div>
+//                 <div>
+//                   <h3 className="font-medium text-foreground mb-1">🤝 Partnerships</h3>
+//                   <p className="text-sm">Business partnerships, collaborations, media inquiries</p>
+//                 </div>
+//               </CardContent>
+//             </Card>
+//           </div>
+//         </div>
+//       </div>
+      
+//       <Footer />
+//     </div>
+//   );
+// };
+
+// export default Contact;
+import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -7,12 +277,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Mail, MessageCircle, Clock, MapPin, Phone, Key } from "lucide-react";
+import { Mail, MessageCircle, Clock, Key, Loader2, Send } from "lucide-react";
+import api from '../lib/api'; // Ensure this path matches where you created the axios helper
 
 const Contact = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchParams] = useSearchParams();
   const [showPasswordResetMessage, setShowPasswordResetMessage] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -38,12 +311,35 @@ const Contact = () => {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Create mailto link with form data
-    const subject = encodeURIComponent(formData.subject || "Contact from Soch AI Store");
-    const body = encodeURIComponent(`Name: ${formData.name}\nEmail: ${formData.email}\n\nMessage:\n${formData.message}`);
-    window.location.href = `mailto:sochaicontact@gmail.com?subject=${subject}&body=${body}`;
+    setIsSubmitting(true);
+
+    try {
+      // Send the actual form data to the backend
+      await api.post('/contact', {
+        name: formData.name,
+        email: formData.email,
+        subject: formData.subject || 'General Inquiry',
+        message: formData.message
+      });
+
+      alert('Message sent successfully! We will get back to you soon.');
+      
+      // Reset form
+      setFormData({
+        name: "",
+        email: "",
+        subject: "",
+        message: ""
+      });
+      
+    } catch (err: any) {
+      console.error(err);
+      alert(err.response?.data?.message || 'Failed to send message. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const contactMethods = [
@@ -74,7 +370,7 @@ const Contact = () => {
     <div className="min-h-screen bg-background">
       <Navbar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
       
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 pt-24">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
@@ -207,57 +503,21 @@ const Contact = () => {
                         className="min-h-[120px]"
                       />
                     </div>
-                    <Button type="submit" size="lg" className="w-full">
-                      <Mail className="w-4 h-4 mr-2" />
-                      Send Message
+                    <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+                      {isSubmitting ? (
+                        <>
+                           <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4 mr-2" /> Send Message
+                        </>
+                      )}
                     </Button>
                   </form>
                 </CardContent>
               </Card>
             </div>
-          </div>
-
-          {/* Additional Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12">
-            <Card>
-              <CardHeader>
-                <CardTitle>What to Expect</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 text-muted-foreground">
-                <div>
-                  <h3 className="font-medium text-foreground mb-1">📧 Email Response</h3>
-                  <p className="text-sm">We'll respond to your email within 24-48 hours during business days.</p>
-                </div>
-                <div>
-                  <h3 className="font-medium text-foreground mb-1">🎯 Personalized Support</h3>
-                  <p className="text-sm">Each inquiry receives individual attention from our team.</p>
-                </div>
-                <div>
-                  <h3 className="font-medium text-foreground mb-1">🚀 Quick Solutions</h3>
-                  <p className="text-sm">We provide clear, actionable solutions to your questions.</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Common Topics</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 text-muted-foreground">
-                <div>
-                  <h3 className="font-medium text-foreground mb-1">🔧 Platform Support</h3>
-                  <p className="text-sm">Account issues, subscription questions, technical problems</p>
-                </div>
-                <div>
-                  <h3 className="font-medium text-foreground mb-1">📤 Tool Submissions</h3>
-                  <p className="text-sm">Add your AI tool to our directory, submission guidelines</p>
-                </div>
-                <div>
-                  <h3 className="font-medium text-foreground mb-1">🤝 Partnerships</h3>
-                  <p className="text-sm">Business partnerships, collaborations, media inquiries</p>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </div>

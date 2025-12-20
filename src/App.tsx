@@ -1,8 +1,9 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
+import AdminRoute from './components/AdminRoute';
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Home from "./pages/Home";
@@ -23,7 +24,8 @@ import RefundPolicy from "./pages/RefundPolicy";
 import DataSafety from "./pages/DataSafety";
 import Contact from "./pages/Contact";
 import Explorer from "./pages/Explorer";
-
+import { MobileNav } from "./components/MobileNav";
+import {LaunchPage} from "./pages/LaunchPage";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -57,13 +59,19 @@ const App = () => (
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/about" element={<About />} />
             <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/launch" element={<LaunchPage />} />
             <Route path="/subscription-plans" element={<SubscriptionPlans />} />
             <Route path="/refund-policy" element={<RefundPolicy />} />
             <Route path="/data-safety" element={<DataSafety />} />
             <Route path="/contact" element={<Contact />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
+
+            <Route element={<AdminRoute />}>
+        <Route path="/admin" element={<Admin />} />
+      </Route>
           </Routes>
+          <MobileNav />
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>

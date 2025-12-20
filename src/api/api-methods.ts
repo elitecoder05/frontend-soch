@@ -28,6 +28,7 @@ export interface User {
   subscriptionEndDate?: string | null;
   subscriptionPlanId?: string | null;
   isProUser?: boolean;
+  role?: 'user' | 'admin';
 }
 
 

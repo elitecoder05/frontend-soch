@@ -8,16 +8,7 @@ import { modelsAPI } from "@/api/api-methods";
 import { Navbar } from "@/components/Navbar";
 
 const iconMap: { [key: string]: any } = {
-  MessageSquare,
-  Image,
-  Code,
-  Zap,
-  Mic,
-  BookOpen,
-  Bot,
-  Palette,
-  Video,
-  Heart,
+  MessageSquare, Image, Code, Zap, Mic, BookOpen, Bot, Palette, Video, Heart,
 };
 
 const Categories = () => {
@@ -39,12 +30,13 @@ const Categories = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
+    // FIX: Added pt-28
+    <div className="min-h-screen bg-background pt-28">
       <Navbar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
 
-      <main className="container mx-auto px-4 py-12">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-3">
+      <main className="container mx-auto px-4 py-8">
+        <div className="mb-12 text-center">
+          <h1 className="text-4xl font-bold text-foreground mb-4">
             Browse by Category
           </h1>
           <p className="text-lg text-muted-foreground">
@@ -71,7 +63,7 @@ const Categories = () => {
                     <h3 className="text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors">
                       {category.name}
                     </h3>
-                    <p className="text-sm text-muted-foreground mb-4">
+                    <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
                       {category.description}
                     </p>
 

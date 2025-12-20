@@ -1,15 +1,191 @@
-import { Link, useNavigate } from "react-router-dom";
-import { Sparkles, Menu } from "lucide-react";
+// import { Link, useNavigate, useLocation } from "react-router-dom";
+// import { Menu, Plus, X, ChevronRight, Sparkles } from "lucide-react";
+// import { Button } from "@/components/ui/button";
+// import { UserAvatar } from "@/components/UserAvatar";
+// import { useAuth } from "@/contexts/AuthContext";
+// import { useToast } from "@/hooks/use-toast";
+// import { useState, useEffect } from "react";
+// import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
+// import { cn } from "@/lib/utils";
+
+// interface NavbarProps {
+//   searchQuery?: string;
+//   onSearchChange?: (query: string) => void;
+// }
+
+// export const Navbar = ({ searchQuery = "", onSearchChange = () => {} }: NavbarProps) => {
+//   const { isAuthenticated, currentUser, logout } = useAuth();
+//   const navigate = useNavigate();
+//   const location = useLocation();
+//   const { toast } = useToast();
+//   const [scrolled, setScrolled] = useState(false);
+
+//   useEffect(() => {
+//     const handleScroll = () => setScrolled(window.scrollY > 10);
+//     window.addEventListener("scroll", handleScroll);
+//     return () => window.removeEventListener("scroll", handleScroll);
+//   }, []);
+
+//   const handleSubmitToolsClick = () => {
+//     if (!isAuthenticated) {
+//       toast({ title: "Login Required", description: "Please login to submit tools.", variant: "destructive" });
+//       navigate('/login', { state: { from: { pathname: '/upload-model' } } });
+//       return;
+//     }
+//     if (!currentUser?.isProUser) {
+//       toast({ title: "Pro Required", description: "Upgrade to Pro to submit tools.", variant: "destructive" });
+//       navigate('/pricing');
+//       return;
+//     }
+//     navigate('/upload-model');
+//   };
+
+//   const NavLink = ({ to, children }: { to: string; children: React.ReactNode }) => {
+//     const isActive = location.pathname === to;
+//     return (
+//       <Link 
+//         to={to} 
+//         className={cn(
+//           "relative px-5 py-2 rounded-full text-sm font-medium transition-all duration-300",
+//           isActive 
+//             ? "text-primary bg-primary/10 shadow-[0_0_15px_-3px_rgba(var(--primary),0.3)]" 
+//             : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+//         )}
+//       >
+//         {children}
+//       </Link>
+//     );
+//   };
+
+//   return (
+//     <header
+//       className={cn(
+//         "fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b",
+//         "bg-background/80 backdrop-blur-xl border-primary/20", // Always visible base
+//         "hover:bg-background/95 hover:border-primary/50 hover:shadow-[0_0_30px_-5px_rgba(var(--primary),0.2)]", // Enhanced hover
+//         scrolled && "shadow-lg shadow-black/20"
+//       )}
+//     >
+//       <div className="container mx-auto px-4 h-20 flex items-center justify-between relative">
+        
+//         {/* LEFT: LOGO */}
+//         <Link to="/" className="flex items-center gap-3 z-20 group">
+//           <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-lg border border-white/10 group-hover:border-primary/50 transition-all duration-500">
+//             <img 
+//               src="https://firebasestorage.googleapis.com/v0/b/sochai-2025.firebasestorage.app/o/website-assets%2Fsochailogo.jpg?alt=media&token=3fda20fa-6dcd-41cc-b898-7b0e3f3c1ca7" 
+//               alt="Soch AI Logo" 
+//               className="object-cover w-full h-full transform group-hover:scale-110 transition-transform duration-500"
+//             />
+//           </div>
+//           <div className="hidden md:flex flex-col justify-center">
+//             <span className="text-xl font-bold text-foreground leading-none tracking-tight">
+//               Soch AI
+//             </span>
+//             <span className="text-[10px] font-bold text-primary uppercase tracking-[0.2em]">
+//               Store
+//             </span>
+//           </div>
+//         </Link>
+
+//         {/* CENTER: CYLINDER NAVIGATION */}
+//         <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+//           <nav className="flex items-center p-1.5 gap-1 bg-black/40 border border-white/10 rounded-full shadow-inner ring-1 ring-white/5">
+//             <NavLink to="/explorer">Explorer</NavLink>
+//             <NavLink to="/categories">Categories</NavLink>
+//             <NavLink to="/pricing">Pricing</NavLink>
+//           </nav>
+//         </div>
+
+//         {/* RIGHT: ACTIONS */}
+//         <div className="hidden md:flex items-center gap-4 z-20">
+//           <button 
+//             onClick={handleSubmitToolsClick}
+//             className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-muted-foreground hover:text-primary hover:bg-primary/5 border border-transparent hover:border-primary/20 transition-all duration-300"
+//           >
+//             <Plus className="w-4 h-4" />
+//             <span>Submit Tool</span>
+//           </button>
+
+//           <div className="h-6 w-px bg-border/50" />
+
+//           {isAuthenticated && currentUser ? (
+//             <UserAvatar user={currentUser} />
+//           ) : (
+//             <Link to="/signup">
+//               <Button className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 px-6">
+//                 Get Started
+//                 <Sparkles className="w-3.5 h-3.5 ml-2 opacity-70" />
+//               </Button>
+//             </Link>
+//           )}
+//         </div>
+
+//         {/* MOBILE MENU */}
+//         <div className="flex md:hidden items-center gap-4">
+//           {isAuthenticated && currentUser && <UserAvatar user={currentUser} />}
+//           <Sheet>
+//             <SheetTrigger asChild>
+//               <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
+//                 <Menu className="w-6 h-6" />
+//               </Button>
+//             </SheetTrigger>
+//             <SheetContent side="right" className="w-[300px] border-l border-border/50 bg-background/95 backdrop-blur-xl p-6">
+//               <div className="flex flex-col h-full">
+//                 <div className="flex items-center justify-between mb-8">
+//                   <span className="text-lg font-bold">Menu</span>
+//                   <SheetClose asChild>
+//                     <Button variant="ghost" size="icon"><X className="w-5 h-5" /></Button>
+//                   </SheetClose>
+//                 </div>
+                
+//                 <div className="flex flex-col gap-2">
+//                   <Link to="/explorer" className="flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors">
+//                     <span className="font-medium">Explorer</span>
+//                     <ChevronRight className="w-4 h-4 text-muted-foreground" />
+//                   </Link>
+//                   <Link to="/categories" className="flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors">
+//                     <span className="font-medium">Categories</span>
+//                     <ChevronRight className="w-4 h-4 text-muted-foreground" />
+//                   </Link>
+//                   <Link to="/pricing" className="flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors">
+//                     <span className="font-medium">Pricing</span>
+//                     <ChevronRight className="w-4 h-4 text-muted-foreground" />
+//                   </Link>
+//                   <div className="h-px bg-border my-2" />
+//                   <button onClick={handleSubmitToolsClick} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors text-left text-primary">
+//                     <span className="font-medium">Submit Tool</span>
+//                     <Plus className="w-4 h-4" />
+//                   </button>
+//                 </div>
+
+//                 <div className="mt-auto pt-6 border-t border-border">
+//                   {!isAuthenticated && (
+//                     <Link to="/signup">
+//                       <Button className="w-full rounded-full">Get Started</Button>
+//                     </Link>
+//                   )}
+//                   {isAuthenticated && (
+//                     <Button variant="outline" className="w-full rounded-full" onClick={logout}>Logout</Button>
+//                   )}
+//                 </div>
+//               </div>
+//             </SheetContent>
+//           </Sheet>
+//         </div>
+//       </div>
+//     </header>
+//   );
+// };
+
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Menu, Plus, X, ChevronRight, Sparkles, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SearchBar } from "@/components/SearchBar";
 import { UserAvatar } from "@/components/UserAvatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { useState, useEffect } from "react";
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
 
 interface NavbarProps {
   searchQuery?: string;
@@ -18,159 +194,193 @@ interface NavbarProps {
 
 export const Navbar = ({ searchQuery = "", onSearchChange = () => {} }: NavbarProps) => {
   const { isAuthenticated, currentUser, logout } = useAuth();
+  console.log("Current User Role Debug:", { 
+  isAuthenticated, 
+  role: currentUser?.role, 
+  email: currentUser?.email 
+});
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const handleSubmitToolsClick = () => {
     if (!isAuthenticated) {
-      toast({
-        title: "Please Login First",
-        description: "You need to be logged in to upload your model. Please sign in to continue.",
-        variant: "destructive",
-      });
+      toast({ title: "Login Required", description: "Please login to submit tools.", variant: "destructive" });
       navigate('/login', { state: { from: { pathname: '/upload-model' } } });
       return;
     }
-
     if (!currentUser?.isProUser) {
-      toast({
-        title: "Upgrade Required",
-        description: "You need to be a Pro user to upload your model. Upgrade to Pro to share your AI models with the community!",
-        variant: "destructive",
-      });
+      toast({ title: "Pro Required", description: "Upgrade to Pro to submit tools.", variant: "destructive" });
       navigate('/pricing');
       return;
     }
-
     navigate('/upload-model');
   };
 
+  const NavLink = ({ to, children }: { to: string; children: React.ReactNode }) => {
+    const isActive = location.pathname === to;
+    return (
+      <Link 
+        to={to} 
+        className={cn(
+          "relative px-5 py-2 rounded-full text-sm font-medium transition-all duration-300",
+          isActive 
+            ? "text-primary bg-primary/10 shadow-[0_0_15px_-3px_rgba(var(--primary),0.3)]" 
+            : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+        )}
+      >
+        {children}
+      </Link>
+    );
+  };
+
   return (
-    <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
-        <Link to="/" className="flex items-center gap-2 flex-shrink-0">
-          <img 
-            src="https://firebasestorage.googleapis.com/v0/b/sochai-2025.firebasestorage.app/o/website-assets%2Fsochailogo.jpg?alt=media&token=3fda20fa-6dcd-41cc-b898-7b0e3f3c1ca7" 
-            alt="Soch AI Logo" 
-            className="w-8 h-8 rounded-lg object-cover"
-          />
-          <div className="flex items-center gap-2">
-            <span className="text-xl font-bold text-foreground">Soch AI</span>
-            <span className="px-2 py-0.5 text-xs font-medium bg-primary/10 text-primary rounded-full border border-primary/20">
+    <header
+      className={cn(
+        "fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b",
+        "bg-background/80 backdrop-blur-xl border-primary/20", // Always visible base
+        "hover:bg-background/95 hover:border-primary/50 hover:shadow-[0_0_30px_-5px_rgba(var(--primary),0.2)]", // Enhanced hover
+        scrolled && "shadow-lg shadow-black/20"
+      )}
+    >
+      <div className="container mx-auto px-4 h-20 flex items-center justify-between relative">
+        
+        {/* LEFT: LOGO */}
+        <Link to="/" className="flex items-center gap-3 z-20 group">
+          <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-lg border border-white/10 group-hover:border-primary/50 transition-all duration-500">
+            <img 
+              src="https://firebasestorage.googleapis.com/v0/b/sochai-2025.firebasestorage.app/o/website-assets%2Fsochailogo.jpg?alt=media&token=3fda20fa-6dcd-41cc-b898-7b0e3f3c1ca7" 
+              alt="Soch AI Logo" 
+              className="object-cover w-full h-full transform group-hover:scale-110 transition-transform duration-500"
+            />
+          </div>
+          <div className="hidden md:flex flex-col justify-center">
+            <span className="text-xl font-bold text-foreground leading-none tracking-tight">
+              Soch AI
+            </span>
+            <span className="text-[10px] font-bold text-primary uppercase tracking-[0.2em]">
               Store
             </span>
           </div>
         </Link>
 
+        {/* CENTER: CYLINDER NAVIGATION */}
+        <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+          <nav className="flex items-center p-1.5 gap-1 bg-black/40 border border-white/10 rounded-full shadow-inner ring-1 ring-white/5">
+            <NavLink to="/explorer">Explorer</NavLink>
+            <NavLink to="/categories">Categories</NavLink>
+            <NavLink to="/pricing">Pricing</NavLink>
+          </nav>
+        </div>
 
+        {/* RIGHT: ACTIONS */}
+        <div className="hidden md:flex items-center gap-4 z-20">
+          
+          {/* ADMIN BUTTON (Desktop) */}
+          {isAuthenticated && currentUser?.role === 'admin' && (
+            <Link to="/admin">
+              <button className="flex items-center gap-2 px-4 py-2 bg-red-600/10 text-red-400 border border-red-600/30 rounded-full hover:bg-red-600/20 transition-all duration-300 text-sm font-medium">
+                <ShieldAlert className="w-4 h-4" />
+                <span>Admin</span>
+              </button>
+            </Link>
+          )}
 
-        <div className="hidden md:flex items-center gap-3">
-          <Link to="/explorer" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-            Explorer
-          </Link>
-          <Link to="/categories" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-            Categories
-          </Link>
-          <Link to="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-            Pricing
-          </Link>
           <button 
-            onClick={handleSubmitToolsClick} 
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            onClick={handleSubmitToolsClick}
+            className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-muted-foreground hover:text-primary hover:bg-primary/5 border border-transparent hover:border-primary/20 transition-all duration-300"
           >
-            Submit Your Tools
+            <Plus className="w-4 h-4" />
+            <span>Submit Tool</span>
           </button>
+
+          <div className="h-6 w-px bg-border/50" />
+
           {isAuthenticated && currentUser ? (
             <UserAvatar user={currentUser} />
           ) : (
             <Link to="/signup">
-              <Button className="bg-gradient-to-r from-primary to-blue-500 text-white hover:from-primary/90 hover:to-blue-500/90 transition-all duration-200 shadow-lg hover:shadow-xl">
+              <Button className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 px-6">
                 Get Started
+                <Sparkles className="w-3.5 h-3.5 ml-2 opacity-70" />
               </Button>
             </Link>
           )}
-
-          
         </div>
 
-        <Sheet>
-          <SheetTrigger asChild className="md:hidden">
-            <Button variant="ghost" size="icon">
-              <Menu className="w-5 h-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="right" className="w-80">
-            <div className="flex flex-col gap-6 mt-6">
-              <nav className="flex flex-col gap-4">
-                <Link to="/explorer" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Explorer
-                </Link>
-                <Link to="/categories" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Categories
-                </Link>
-                <Link to="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Pricing
-                </Link>
-                <div className="border-t border-border pt-4 mt-4">
-                  <h3 className="text-sm font-semibold text-foreground mb-3">About Soch AI</h3>
-                  <div className="flex flex-col gap-3 pl-2">
-                    <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                      About Us
-                    </Link>
-                    <Link to="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                      Privacy Policy
-                    </Link>
-                    <Link to="/refund-policy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                      Refund Policy
-                    </Link>
-                    <Link to="/data-safety" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                      User Data Safety
-                    </Link>
-                    <Link to="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                      Contact Us
-                    </Link>
-                  </div>
+        {/* MOBILE MENU */}
+        <div className="flex md:hidden items-center gap-4">
+          {isAuthenticated && currentUser && <UserAvatar user={currentUser} />}
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
+                <Menu className="w-6 h-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[300px] border-l border-border/50 bg-background/95 backdrop-blur-xl p-6">
+              <div className="flex flex-col h-full">
+                <div className="flex items-center justify-between mb-8">
+                  <span className="text-lg font-bold">Menu</span>
+                  <SheetClose asChild>
+                    <Button variant="ghost" size="icon"><X className="w-5 h-5" /></Button>
+                  </SheetClose>
                 </div>
-                <button 
-                  onClick={() => handleSubmitToolsClick()} 
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors text-left"
-                >
-                  Submit Your Tools
-                </button>
-                {isAuthenticated && currentUser ? (
-                  <div className="mt-4 pt-4 border-t border-border">
-                    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-blue-500 flex items-center justify-center text-white font-medium text-sm">
-                        {currentUser.firstName.charAt(0)}{currentUser.lastName.charAt(0)}
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">{currentUser.firstName} {currentUser.lastName}</p>
-                        <p className="text-xs text-muted-foreground">{currentUser.email}</p>
-                      </div>
-                    </div>
-                    <Button 
-                      variant="outline" 
-                      className="w-full mt-3" 
-                      onClick={logout}
-                    >
-                      Logout
-                    </Button>
-                  </div>
-                ) : (
-                  <Link to="/signup" className="mt-4">
-                    <Button className="w-full bg-gradient-to-r from-primary to-blue-500 text-white hover:from-primary/90 hover:to-blue-500/90 transition-all duration-200 shadow-lg hover:shadow-xl">
-                      Get Started
-                    </Button>
-                  </Link>
-                )}
                 
-              </nav>
-            </div>
-          </SheetContent>
-        </Sheet>
+                <div className="flex flex-col gap-2">
+                  <Link to="/explorer" className="flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors">
+                    <span className="font-medium">Explorer</span>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  </Link>
+                  <Link to="/categories" className="flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors">
+                    <span className="font-medium">Categories</span>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  </Link>
+                  <Link to="/pricing" className="flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors">
+                    <span className="font-medium">Pricing</span>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  </Link>
+                  
+                  <div className="h-px bg-border my-2" />
+                  
+                  {/* ADMIN LINK (Mobile) */}
+                  {isAuthenticated && currentUser?.role === 'admin' && (
+                     <Link to="/admin" className="flex items-center justify-between p-3 rounded-lg bg-red-900/10 hover:bg-red-900/20 text-red-400 transition-colors">
+                       <div className="flex items-center gap-2">
+                         <ShieldAlert className="w-4 h-4" />
+                         <span className="font-medium">Admin Panel</span>
+                       </div>
+                       <ChevronRight className="w-4 h-4" />
+                     </Link>
+                  )}
+
+                  <button onClick={handleSubmitToolsClick} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors text-left text-primary">
+                    <span className="font-medium">Submit Tool</span>
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="mt-auto pt-6 border-t border-border">
+                  {!isAuthenticated && (
+                    <Link to="/signup">
+                      <Button className="w-full rounded-full">Get Started</Button>
+                    </Link>
+                  )}
+                  {isAuthenticated && (
+                    <Button variant="outline" className="w-full rounded-full" onClick={logout}>Logout</Button>
+                  )}
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
-
-
-    </nav>
+    </header>
   );
 };
