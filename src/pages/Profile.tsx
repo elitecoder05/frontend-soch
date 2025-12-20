@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+// import { PromotionCards } from "./PromotionCards";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -169,7 +170,7 @@ const Profile = () => {
     <div className="min-h-screen bg-background">
       <Navbar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
       
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 mt-16">
         <div className="max-w-4xl mx-auto">
           {/* Profile Header */}
           <Card className="mb-8">
@@ -467,6 +468,7 @@ const Profile = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {/* <PromotionCards /> */}
     </div>
   );
 };

@@ -32,7 +32,11 @@ export const ToolColumnList = ({ title, icon, tools, viewAllLink }: ToolListProp
         ) : (
           <div className="divide-y divide-border/50">
             {tools.map((tool, index) => (
-              <div key={tool.id} className="group p-3 hover:bg-muted/30 transition-colors flex items-center gap-3">
+              <div 
+                // FIX: Use _id or id, and fallback to index if both are missing
+                key={tool._id || tool.id || index} 
+                className="group p-3 hover:bg-muted/30 transition-colors flex items-center gap-3"
+              >
                 {/* Rank/Index (Optional aesthetic) */}
                 <span className="text-xs text-muted-foreground/50 w-4 font-mono">{index + 1}.</span>
                 
@@ -41,12 +45,12 @@ export const ToolColumnList = ({ title, icon, tools, viewAllLink }: ToolListProp
                   {tool.iconUrl ? (
                     <img src={tool.iconUrl} alt={tool.name} className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-xs font-bold text-primary">{tool.name.charAt(0)}</span>
+                    <span className="text-xs font-bold text-primary">{tool.name?.charAt(0) || "?"}</span>
                   )}
                 </div>
 
                 {/* Content */}
-                <Link to={`/model/${tool.id}`} className="flex-1 min-w-0">
+                <Link to={`/model/${tool._id || tool.id}`} className="flex-1 min-w-0">
                   <h4 className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
                     {tool.name}
                   </h4>
@@ -54,14 +58,16 @@ export const ToolColumnList = ({ title, icon, tools, viewAllLink }: ToolListProp
                 </Link>
 
                 {/* Action */}
-                <a 
-                  href={tool.externalUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="p-1.5 rounded-md hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors opacity-0 group-hover:opacity-100"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
+                {tool.externalUrl && (
+                  <a 
+                    href={tool.externalUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="p-1.5 rounded-md hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors opacity-0 group-hover:opacity-100"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                )}
               </div>
             ))}
           </div>
