@@ -31,6 +31,26 @@ export interface User {
   role?: 'user' | 'admin';
 }
 
+export const paymentAPI = {
+  // 1. Subscription Flow
+  createOrder: async (planId: string) => {
+    // Note the PLURAL 'payments'
+    try { const response = await apiClient.post('/api/payments/create-order', { planId }); return response.data; } catch (error: any) { throw new Error(error.response?.data?.message || 'Failed to create order'); }
+  },
+  completeSubscription: async (data: any) => {
+    try { const response = await apiClient.post('/api/payments/complete-subscription', data); return response.data; } catch (error: any) { throw new Error(error.response?.data?.message || 'Failed to complete subscription'); }
+  },
+
+  // 2. Promotion Flow (Get Featured)
+  createPromotionOrder: async () => {
+    // Note the PLURAL 'payments'
+    try { const response = await apiClient.post('/api/payments/create-promotion-order'); return response.data; } catch (error: any) { throw new Error(error.response?.data?.message || 'Failed to create promo order'); }
+  },
+  verifyPromotion: async (data: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string; modelId: string; }) => {
+    try { const response = await apiClient.post('/api/payments/verify-promotion', data); return response.data; } catch (error: any) { throw new Error(error.response?.data?.message || 'Verification failed'); }
+  }
+};
+
 
 
 
@@ -235,7 +255,8 @@ export const authAPI = {
         uid: data.uid
       }, {
         headers: {
-          'Authorization': `Bearer ${data.idToken}`
+          'Authorization': `Bearer ${data.idToken}`,
+          'Content-Type':'application/json'
         }
       });
       
@@ -347,6 +368,19 @@ export const modelsAPI = {
         );
       }
     },
+
+promoteModel: async (modelId: string): Promise<{success: boolean; message: string; data: {model: Model}}> => {
+    try {
+      const response = await apiClient.post(`/api/models/${modelId}/promote`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || 
+        error.message || 
+        'Failed to promote model.'
+      );
+    }
+  },
 
   // Get user's uploaded models
   getUserModels: async (): Promise<ModelsResponse> => {

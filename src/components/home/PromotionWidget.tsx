@@ -6,13 +6,12 @@ import { motion } from "framer-motion";
 export const PromotionWidget = () => {
   const navigate = useNavigate();
 
-  // Helper for the grid buttons
   const WidgetButton = ({ icon: Icon, label, onClick }: { icon: any, label: string, onClick: () => void }) => (
     <motion.button
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
-      className="flex flex-col items-center justify-center bg-[#1e1e2d] hover:bg-[#2d2d44] border border-white/5 rounded-2xl p-4 h-28 w-full transition-all duration-200 group"
+      className="flex flex-col items-center justify-center bg-[#1e1e2d] hover:bg-[#2d2d44] border border-white/5 rounded-2xl p-4 h-28 w-full transition-all duration-200 group cursor-pointer"
     >
       <div className="bg-white/5 p-2 rounded-full mb-2 group-hover:bg-white/10 transition-colors">
         <Icon className="w-6 h-6 text-white" />
@@ -27,17 +26,15 @@ export const PromotionWidget = () => {
     <div className="w-full max-w-[350px] mx-auto">
       <div className="bg-[#13131f] rounded-3xl p-5 border border-white/10 shadow-2xl">
         
-        {/* Header Section */}
         <div className="mb-5">
           <h2 className="text-xl font-bold text-white mb-2">
-            Promote your AI on <span className="text-primary">Soch</span>
+            Promote your AI on <span className="text-primary">SochAI Store</span>
           </h2>
           <div className="h-1 w-full bg-gray-800 rounded-full overflow-hidden">
             <div className="h-full w-1/3 bg-primary rounded-full"></div>
           </div>
         </div>
 
-        {/* Manage Ads Button */}
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -47,7 +44,6 @@ export const PromotionWidget = () => {
           Manage my ads
         </motion.button>
 
-        {/* The 2x2 Grid */}
         <div className="grid grid-cols-2 gap-3">
           <WidgetButton 
             icon={Plus} 
@@ -57,17 +53,17 @@ export const PromotionWidget = () => {
           <WidgetButton 
             icon={Star} 
             label="Get featured" 
-            onClick={() => navigate('/pricing')} 
+            onClick={() => navigate('/get-featured')} // Linked to new page
           />
           <WidgetButton 
             icon={Megaphone} 
             label="Custom campaign" 
-            onClick={() => navigate('/contact')} 
+            onClick={() => navigate('/promote?type=campaign')} // Linked to new page
           />
           <WidgetButton 
             icon={Handshake} 
             label="Sponsorships" 
-            onClick={() => navigate('/contact')} 
+            onClick={() => navigate('/promote?type=sponsorship')} // Linked to new page
           />
         </div>
       </div>

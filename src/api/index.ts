@@ -3,7 +3,7 @@ import Cookies from 'js-cookie';
 
 // Create axios instance with base configuration
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://backend-soch-production.up.railway.app',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://localhost:1000',
   headers: {
     'Content-Type': 'application/json',
   },

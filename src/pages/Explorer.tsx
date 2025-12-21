@@ -1,7 +1,8 @@
-import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useMemo, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ModelCard } from "@/components/ModelCard";
-import { SearchBar } from "@/components/SearchBar";
+// ✅ Swap SearchBar for AnimatedSearchBar
+import { AnimatedSearchBar } from "@/components/AnimatedSearchBar"; 
 import { Footer } from "@/components/Footer";
 import { Navbar } from "@/components/Navbar";
 import { Model } from "@/api/api-methods";
@@ -10,14 +11,22 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-// ADDED: ChevronRight and Sparkles to imports
 import { TrendingUp, Home, Image, Video, Megaphone, Palette, Code2, ChevronRight, Sparkles } from "lucide-react";
 
 const Explorer = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [showAllModels, setShowAllModels] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("home");
+
+  // Sync URL search param with state
+  useEffect(() => {
+    const query = searchParams.get("search");
+    if (query) {
+      setSearchQuery(query);
+    }
+  }, [searchParams]);
 
   // Use React Query for fetching and caching models
   const { data: modelsData, isLoading: loading, error: queryError } = useAllModels({ limit: 200 });
@@ -114,7 +123,7 @@ const Explorer = () => {
       .map(transformModel);
   }, [models, selectedCategory, trendingModels]);
 
-  // Search filtered models
+  // Search filtered models - THIS LOGIC IS PRESERVED
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return [];
     
@@ -129,18 +138,32 @@ const Explorer = () => {
     }).map(transformModel);
   }, [models, searchQuery]);
 
+  // Handle updates from AnimatedSearchBar
+  const handleSearchUpdate = (value: string) => {
+    setSearchQuery(value);
+    // Optional: update URL without reloading
+    setSearchParams(value ? { search: value } : {});
+  };
+
   return (
     <div className="min-h-screen bg-background pt-24">
-      <Navbar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+      {/* Note: If Navbar has its own search, you might want to hide it or sync it.
+         For now keeping it as is. 
+      */}
+      <Navbar />
 
       <main className="container mx-auto px-4 py-8">
-        {/* Search Bar */}
-        <div className="mb-8">
+        
+        {/* --- ✅ NEW ANIMATED SEARCH BAR --- */}
+        <div className="mb-12 relative z-20">
           <div className="max-w-2xl mx-auto">
-            <SearchBar 
-              value={searchQuery} 
-              onChange={setSearchQuery} 
-              placeholder="Search AI models, tools, agents…"
+            {/* We pass a callback to update this page's state. 
+               You might need to adjust AnimatedSearchBar slightly to accept an onChange prop 
+               if it doesn't already have one. 
+            */}
+            <AnimatedSearchBar 
+               initialValue={searchQuery}
+               onSearch={handleSearchUpdate} 
             />
           </div>
         </div>
@@ -180,9 +203,9 @@ const Explorer = () => {
           </Alert>
         )}
 
-        {/* Search Results */}
+        {/* Search Results Display */}
         {searchQuery ? (
-          <div className="mb-8">
+          <div className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold">
                 Search Results ({searchResults.length})
@@ -195,13 +218,20 @@ const Explorer = () => {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-16">
+              <div className="text-center py-16 bg-muted/30 rounded-2xl border border-dashed border-border/50">
                 <p className="text-muted-foreground text-lg mb-2">
                   No models found for "{searchQuery}"
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Try different keywords or browse categories below
                 </p>
+                <Button 
+                  variant="link" 
+                  onClick={() => setSearchQuery("")}
+                  className="mt-4"
+                >
+                  Clear Search
+                </Button>
               </div>
             )}
           </div>
