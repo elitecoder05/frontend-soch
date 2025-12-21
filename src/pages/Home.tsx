@@ -5,6 +5,7 @@ import { CategoryBoxes } from "@/components/home/CategoryBoxes";
 import { ToolColumnList } from "@/components/home/ToolColumnList";
 import { InfoSection } from "@/components/home/InfoSection";
 import { PromotionWidget } from "@/components/home/PromotionWidget";
+import AdSense from "@/components/AdSense";
 import { useAllModels } from "@/hooks/useModels";
 import { 
   Sparkles, Trophy, Zap, MessageCircle, 
@@ -172,6 +173,17 @@ const Home = () => {
 
           </div>
         </div>
+
+        {/* AdSense Ad */}
+        <section className="container mx-auto px-4 my-12">
+          <div className="max-w-4xl mx-auto">
+            <AdSense 
+              adSlot="1234567890"
+              adFormat="horizontal"
+              style={{ display: 'block', textAlign: 'center', minHeight: '100px' }}
+            />
+          </div>
+        </section>
 
         {/* Bottom CTA */}
         <section className="container mx-auto px-4 mb-20 mt-8">
