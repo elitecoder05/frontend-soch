@@ -38,10 +38,12 @@ export const Login = () => {
         photoURL: user.photoURL,
         uid: user.uid
       });
-      
+       console.log("hihihihih",data) 
       if (data.success && data.data.user && data.data.token) {
         // Update auth context
         login(data.data.user, data.data.token);
+        console.log("hihihihih",data.data.token)
+          updateAuthState();
         
         // Give a small delay to ensure cookies are set and state is updated
         setTimeout(() => {
@@ -154,11 +156,12 @@ export const Login = () => {
     
     try {
       const response = await authAPI.login(formData);
-      
+      console.log("hihihihih",response) 
       if (response.success && response.data.user && response.data.token) {
         // Update auth context
         login(response.data.user, response.data.token);
         updateAuthState();
+        console.log("hihihihih",)
         
         toast({
           title: 'Welcome back!',
