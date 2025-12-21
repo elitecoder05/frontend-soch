@@ -5,6 +5,7 @@ import { ModelCard } from "@/components/ModelCard";
 import { AnimatedSearchBar } from "@/components/AnimatedSearchBar"; 
 import { Footer } from "@/components/Footer";
 import { Navbar } from "@/components/Navbar";
+import AdSense from "@/components/AdSense";
 import { Model } from "@/api/api-methods";
 import { useAllModels } from "@/hooks/useModels";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -386,6 +387,17 @@ const Explorer = () => {
             )}
           </div>
         )}
+
+        {/* AdSense Ad */}
+        <div className="container mx-auto px-4 py-12">
+          <div className="max-w-4xl mx-auto">
+            <AdSense 
+              adSlot="1234567890"
+              adFormat="horizontal"
+              style={{ display: 'block', textAlign: 'center', minHeight: '100px' }}
+            />
+          </div>
+        </div>
       </main>
       
       <Footer />
