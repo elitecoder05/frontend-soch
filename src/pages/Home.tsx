@@ -205,6 +205,8 @@ import { AixploriaHero } from "@/components/home/AixploriaHero";
 import { CategoryBoxes } from "@/components/home/CategoryBoxes";
 import { ToolColumnList } from "@/components/home/ToolColumnList";
 import { InfoSection } from "@/components/home/InfoSection";
+import { PromotionWidget } from "@/components/home/PromotionWidget";
+import AdSense from "@/components/AdSense";
 import { useAllModels } from "@/hooks/useModels";
 import { 
   Sparkles, Trophy, Zap, MessageCircle, 
@@ -380,6 +382,37 @@ const Home = () => {
                   </Button>
                 </div>
               </div>
+            </aside>
+
+          </div>
+        </div>
+
+        {/* AdSense Ad */}
+        <section className="container mx-auto px-4 my-12">
+          <div className="max-w-4xl mx-auto">
+            <AdSense 
+              adSlot="1234567890"
+              adFormat="horizontal"
+              style={{ display: 'block', textAlign: 'center', minHeight: '100px' }}
+            />
+          </div>
+        </section>
+
+        {/* Bottom CTA */}
+        <section className="container mx-auto px-4 mb-20 mt-8">
+          <div className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 border border-border rounded-3xl p-8 md:p-12 text-center relative overflow-hidden group hover:border-primary/30 transition-all">
+            <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-colors"></div>
+            <h2 className="text-3xl font-bold mb-4 relative z-10 text-white">Have an AI Tool?</h2>
+            <p className="text-gray-400 max-w-xl mx-auto mb-8 relative z-10 text-lg">
+              Submit your AI tool to Soch AI Store and reach thousands of daily users.
+            </p>
+            <div className="flex flex-col sm:flex-row justify-center gap-4 relative z-10">
+              <Button size="lg" onClick={() => navigate('/upload-model')} className="bg-white text-black hover:bg-gray-200 font-bold px-8">
+                Submit Your Tool
+              </Button>
+              <Button size="lg" variant="outline" onClick={() => navigate('/contact')} className="border-white/20 text-white hover:bg-white/10">
+                Contact Us
+              </Button>
             </div>
           </section>
 
