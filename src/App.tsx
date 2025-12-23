@@ -131,7 +131,7 @@ const App = () => (
           </Routes>
           
           {/* Mobile Bottom Navigation (Handles its own visibility) */}
-          <MobileNav />
+          {/* <MobileNav /> */}
           
         </BrowserRouter>
       </TooltipProvider>
