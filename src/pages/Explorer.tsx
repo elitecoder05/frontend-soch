@@ -675,7 +675,7 @@ const Explorer = () => {
                     {!showAllModels && models.length > 0 && (
                       <div className="text-center py-8">
                         <Button size="lg" variant="outline" className="gap-2 w-full sm:w-auto h-12 text-base shadow-sm" onClick={() => setShowAllModels(true)}>
-                          <Sparkles className="w-4 h-4" /> Explore All {models.length} AI Tools
+                          <Sparkles className="w-4 h-4" /> Explore All AI Tools
                         </Button>
                       </div>
                     )}
