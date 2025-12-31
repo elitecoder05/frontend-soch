@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
+import NetworkStatus from "@/components/NetworkStatus";
 
 // Pages
 import Home from "./pages/Home";
@@ -41,7 +42,8 @@ const queryClient = new QueryClient({
       staleTime: 5 * 60 * 1000, // 5 minutes
       gcTime: 30 * 60 * 1000, // 30 minutes cache time
       refetchOnWindowFocus: false,
-      retry: 1,
+      retry: 3, // Retry failed requests 3 times
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
     },
   },
 });
@@ -132,6 +134,9 @@ const App = () => (
           
           {/* Mobile Bottom Navigation (Handles its own visibility) */}
           {/* <MobileNav /> */}
+          
+          {/* Network Status Indicator */}
+          <NetworkStatus />
           
         </BrowserRouter>
       </TooltipProvider>
