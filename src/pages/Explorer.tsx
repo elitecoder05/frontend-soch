@@ -406,7 +406,6 @@
 // };
 
 // export default Explorer;
-
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ModelCard } from "@/components/ModelCard";
@@ -422,9 +421,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, Home, Image, Video, Megaphone, Palette, Code2, ChevronRight, Sparkles } from "lucide-react";
 import { AiModel } from "@/types/model"; 
+import { useAuth } from "@/contexts/AuthContext"; 
 
 const Explorer = () => {
   const navigate = useNavigate();
+  const { currentUser } = useAuth(); 
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [showAllModels, setShowAllModels] = useState(false);
@@ -439,6 +440,8 @@ const Explorer = () => {
   
   const models = modelsData?.data?.models || [];
   const error = queryError?.message || null;
+
+  const isVisible = (m: Model) => m.status === 'approved' || currentUser?.role === 'admin';
 
   const transformModel = (model: Model): AiModel => ({
     id: model._id,
@@ -486,17 +489,19 @@ const Explorer = () => {
 
     return categories.map(cat => ({
       ...cat,
-      models: models.filter(m => m.category === cat.slug).slice(0, 10).map(transformModel)
+      // ✅ Added visibility filter
+      models: models.filter(m => m.category === cat.slug && isVisible(m)).slice(0, 10).map(transformModel)
     })).filter(cat => cat.models.length > 0);
-  }, [models]);
+  }, [models, currentUser]);
 
   const trendingModels = useMemo(() =>
     [...models]
+      .filter((m) => isVisible(m)) // ✅ Added visibility filter
       .filter((m) => m.trendingScore && m.trendingScore > 0)
       .sort((a, b) => (b.trendingScore || 0) - (a.trendingScore || 0))
       .slice(0, 10)
       .map(transformModel),
-    [models]
+    [models, currentUser]
   );
 
   const categoryFilters = [
@@ -510,23 +515,25 @@ const Explorer = () => {
   ];
 
   const filteredModelsByCategory = useMemo(() => {
-    if (selectedCategory === 'home') return models.map(transformModel);
+    const visibleModels = models.filter(m => isVisible(m)); // ✅ Filter first
+    if (selectedCategory === 'home') return visibleModels.map(transformModel);
     if (selectedCategory === 'trending') return trendingModels;
-    return models.filter((m) => m.category === selectedCategory).map(transformModel);
-  }, [models, selectedCategory, trendingModels]);
+    return visibleModels.filter((m) => m.category === selectedCategory).map(transformModel);
+  }, [models, selectedCategory, trendingModels, currentUser]);
 
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return [];
     return models.filter((model) => {
+      if (!isVisible(model)) return false; // ✅ Filter first
       const query = searchQuery.toLowerCase();
       return (
         model.name.toLowerCase().includes(query) ||
         model.shortDescription.toLowerCase().includes(query) ||
-        model.tags.some((tag) => tag.toLowerCase().includes(query)) ||
+        model.tags?.some((tag) => tag.toLowerCase().includes(query)) ||
         model.category.toLowerCase().includes(query)
       );
     }).map(transformModel);
-  }, [models, searchQuery]);
+  }, [models, searchQuery, currentUser]);
 
   const handleSearchUpdate = (value: string) => {
     setSearchQuery(value);
@@ -534,13 +541,11 @@ const Explorer = () => {
   };
 
   return (
-    // ✅ FIX 1: Added overflow-x-hidden to prevent page wobble
     <div className="min-h-screen bg-background pt-20 md:pt-24 flex flex-col overflow-x-hidden">
       <Navbar searchQuery={searchQuery} onSearchChange={handleSearchUpdate} />
 
       <main className="flex-1 container mx-auto px-4 py-6 md:py-8">
         
-        {/* Animated Search Bar */}
         <div className="mb-8 md:mb-12 relative z-20">
           <div className="max-w-2xl mx-auto">
             <AnimatedSearchBar 
@@ -550,10 +555,8 @@ const Explorer = () => {
           </div>
         </div>
 
-        {/* Category Filter Chips */}
         {!searchQuery && (
           <div className="mb-8 md:mb-10">
-            {/* ✅ FIX 2: justify-start on mobile prevents clipping, center on desktop */}
             <div className="flex gap-2 md:gap-3 overflow-x-auto pb-4 scrollbar-hide justify-start md:justify-center px-1">
               {categoryFilters.map((filter) => {
                 const IconComponent = filter.icon;
@@ -584,7 +587,6 @@ const Explorer = () => {
           </Alert>
         )}
 
-        {/* Search Results */}
         {searchQuery ? (
           <div className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-center justify-between mb-6">
@@ -604,7 +606,6 @@ const Explorer = () => {
             )}
           </div>
         ) : (
-          /* Browse Mode */
           <div className="space-y-12 md:space-y-16">
             {loading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -616,7 +617,6 @@ const Explorer = () => {
               <>
                 {selectedCategory === 'home' ? (
                   <>
-                    {/* Trending Row */}
                     {trendingModels.length > 0 && (
                       <section>
                         <div className="flex items-center justify-between mb-4 md:mb-6 px-1">
@@ -632,10 +632,8 @@ const Explorer = () => {
                           </Button>
                         </div>
                         
-                        {/* ✅ FIX 3: Negative margins for edge-to-edge mobile scroll */}
                         <div className="flex gap-4 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
                           {trendingModels.map((model) => (
-                            // ✅ FIX 4: Use w-[85vw] instead of fixed w-80 on mobile to fit screen
                             <div key={model.id} className="w-[85vw] sm:w-[320px] flex-shrink-0 snap-center">
                               <ModelCard model={model} />
                             </div>
@@ -644,7 +642,6 @@ const Explorer = () => {
                       </section>
                     )}
 
-                    {/* Category Rows */}
                     {categoryGroups.map((category) => (
                       <section key={category.slug}>
                         <div className="flex items-center justify-between mb-4 md:mb-6 px-1">
@@ -660,7 +657,6 @@ const Explorer = () => {
                           </Button>
                         </div>
                         
-                        {/* ✅ FIX 3 & 4 Applied here as well */}
                         <div className="flex gap-4 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
                           {category.models.map((model) => (
                             <div key={model.id} className="w-[85vw] sm:w-[320px] flex-shrink-0 snap-center">
@@ -671,8 +667,7 @@ const Explorer = () => {
                       </section>
                     ))}
 
-                    {/* Explore All Button */}
-                    {!showAllModels && models.length > 0 && (
+                    {!showAllModels && models.filter(isVisible).length > 0 && (
                       <div className="text-center py-8">
                         <Button size="lg" variant="outline" className="gap-2 w-full sm:w-auto h-12 text-base shadow-sm" onClick={() => setShowAllModels(true)}>
                           <Sparkles className="w-4 h-4" /> Explore All AI Tools
@@ -680,7 +675,6 @@ const Explorer = () => {
                       </div>
                     )}
 
-                    {/* All Models Grid */}
                     {showAllModels && (
                       <section className="animate-in fade-in duration-500">
                         <div className="mb-6 px-1">
@@ -688,7 +682,7 @@ const Explorer = () => {
                           <p className="text-muted-foreground">Browse our complete collection</p>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                          {models.map((model) => (
+                          {models.filter(isVisible).map((model) => (
                             <ModelCard key={model._id} model={transformModel(model)} />
                           ))}
                         </div>
@@ -696,7 +690,6 @@ const Explorer = () => {
                     )}
                   </>
                 ) : (
-                  /* Specific Category View */
                   <section>
                     <div className="mb-6 px-1">
                       <h2 className="text-2xl font-bold mb-1 capitalize">
@@ -716,12 +709,6 @@ const Explorer = () => {
                       </div>
                     )}
                   </section>
-                )}
-
-                {!loading && models.length === 0 && (
-                  <div className="text-center py-16">
-                    <p className="text-muted-foreground text-lg">No AI tools available yet</p>
-                  </div>
                 )}
               </>
             )}

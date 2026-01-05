@@ -334,14 +334,13 @@
 // export default ModelDetail;
 
 
-
-
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
+// ✅ ADDED ShieldAlert, Home, and Search to the imports below
 import { 
   ExternalLink, Clock, ChevronLeft, Share2, 
-  Layers, CheckCircle2, Eye, Flag, ArrowRight 
+  Layers, CheckCircle2, Eye, Flag, ArrowRight,
+  ShieldAlert, Home, Search 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -359,38 +358,36 @@ import { useModelById, useSimilarModels } from "@/hooks/useModels";
 import { modelsAPI, Model } from "@/api/api-methods";
 import { useToast } from "@/hooks/use-toast";
 import { AiModel } from "@/types/model";
+import { useAuth } from "@/contexts/AuthContext";
 
 const ModelDetail = () => {
+  // --- 1. CALL ALL HOOKS FIRST (Top Level) ---
   const { id } = useParams();
   const navigate = useNavigate();
   const location: any = useLocation();
   const { toast } = useToast();
+  const { currentUser } = useAuth();
   
   const [searchQuery, setSearchQuery] = useState("");
   const [screenshotOrientations, setScreenshotOrientations] = useState<Record<number, 'landscape' | 'portrait' | 'square'>>({});
+  const [creatorTools, setCreatorTools] = useState<Model[]>([]);
 
-  // 1. Fetch Current Model
+  // Fetching Hooks
   const { data: modelData, isLoading, error: modelError } = useModelById(id);
   const model = modelData?.data?.model || null;
-  
-  // 2. Fetch Similar Models (Category-based)
   const { data: similarData } = useSimilarModels(model?.category, model?._id);
   const similarModels = similarData?.data?.models || [];
 
-  // 3. NEW: Fetch Creator's Other Tools
-  const [creatorTools, setCreatorTools] = useState<Model[]>([]);
-
+  // Effects
   useEffect(() => {
     const fetchCreatorTools = async () => {
         if (model?.uploadedBy?._id) {
             try {
-                // Fetch all models
                 const res = await modelsAPI.getAllModels({ limit: 50 });
-                // Filter by creator ID & exclude current tool
                 const others = res.data.models.filter(
                     (m) => m.uploadedBy._id === model.uploadedBy._id && m._id !== model._id
                 );
-                setCreatorTools(others.slice(0, 4)); // Show max 4
+                setCreatorTools(others.slice(0, 4));
             } catch (err) {
                 console.error("Failed to fetch creator tools", err);
             }
@@ -406,7 +403,7 @@ const ModelDetail = () => {
     window.scrollTo(0, 0);
   }, [id, modelError, toast]);
 
-  // Helper for ModelCard
+  // --- 2. HELPERS ---
   const transformModelForCard = (m: Model): AiModel => ({
     id: m._id,
     slug: m.slug,
@@ -439,16 +436,69 @@ const ModelDetail = () => {
     return new Date(date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
   };
 
-  if (isLoading) return <div className="min-h-screen bg-background"><Navbar /><div className="h-screen flex items-center justify-center"><Skeleton className="h-12 w-12 rounded-full" /></div></div>;
+  // --- 3. CONDITIONAL RENDERS (Must be AFTER all hooks) ---
 
-  if (!model) return <div className="min-h-screen bg-background"><Navbar /><div className="h-screen flex flex-col items-center justify-center"><h1>Model Not Found</h1><Button onClick={() => navigate('/')}>Home</Button></div></div>;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="h-screen flex items-center justify-center">
+          <Skeleton className="h-12 w-12 rounded-full" />
+        </div>
+      </div>
+    );
+  }
 
+  // 🛡️ Access Control Logic
+  if (!model || (model.status !== 'approved' && currentUser?.role !== 'admin')) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Navbar />
+        <div className="flex-1 flex flex-col items-center justify-center px-4 text-center relative overflow-hidden">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-primary/10 rounded-full blur-[100px]" />
+          
+          <div className="relative z-10 max-w-md">
+            <div className="inline-flex p-4 rounded-2xl bg-card border border-border mb-6 shadow-xl">
+              <ShieldAlert className="w-12 h-12 text-primary" />
+            </div>
+
+            <h1 className="text-3xl font-bold text-foreground mb-3 tracking-tight">Tool Not Available</h1>
+            <p className="text-muted-foreground mb-8 leading-relaxed">
+              The AI tool you are looking for might have been removed, rejected, or is currently under review by our team.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button onClick={() => navigate('/')} className="rounded-xl px-6 h-11">
+                <Home className="mr-2 w-4 h-4" /> Back Home
+              </Button>
+              <Button variant="outline" onClick={() => navigate('/explorer')} className="rounded-xl px-6 h-11">
+                <Search className="mr-2 w-4 h-4" /> Explore AI
+              </Button>
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // --- 4. MAIN PAGE RENDER ---
   return (
     <div className="min-h-screen bg-background font-sans selection:bg-primary/20">
       <Navbar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
 
       <main className="container mx-auto px-4 py-8 pt-24">
         
+        {/* Admin Warning Banner */}
+        {model.status !== 'approved' && (
+          <div className="bg-orange-500/10 border border-orange-500/50 p-4 rounded-xl mb-8 flex items-center gap-3 text-orange-200">
+            <ShieldAlert className="w-5 h-5 text-orange-500" />
+            <p className="text-sm">
+              <strong>Admin Preview:</strong> This tool is currently <strong>{model.status}</strong>. Regular users cannot see this page.
+            </p>
+          </div>
+        )}
+
         <Link to={location?.state?.from || "/explorer"} className="inline-block mb-8">
           <Button variant="ghost" size="sm" className="pl-0 hover:pl-2 transition-all text-muted-foreground">
             <ChevronLeft className="w-4 h-4 mr-1" /> Back to Store
@@ -490,11 +540,8 @@ const ModelDetail = () => {
 
         <Separator className="mb-12 opacity-50" />
 
-        {/* MAIN CONTENT + SIDEBAR */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          
           <div className="lg:col-span-2 space-y-12">
-            {/* Screenshots */}
             {model.screenshots && model.screenshots.length > 0 && (
               <section>
                 <h3 className="text-xl font-bold mb-6 flex items-center gap-2"><Layers className="w-5 h-5 text-primary" /> Gallery</h3>
@@ -508,7 +555,6 @@ const ModelDetail = () => {
               </section>
             )}
 
-            {/* Overview */}
             <section>
               <h3 className="text-xl font-bold mb-4">Overview</h3>
               <div className="prose prose-invert max-w-none text-muted-foreground whitespace-pre-line leading-7 text-lg">
@@ -516,7 +562,6 @@ const ModelDetail = () => {
               </div>
             </section>
 
-            {/* Features */}
             {model.features && model.features.length > 0 && (
               <section>
                 <h3 className="text-xl font-bold mb-6">Key Features</h3>
@@ -554,26 +599,22 @@ const ModelDetail = () => {
 
         <Separator className="my-16 opacity-50" />
 
-        {/* --- BOTTOM SECTION --- */}
         <div className="flex flex-col items-center space-y-16">
-            
-            {/* 1. Promotion Widget */}
             <div className="w-full flex justify-center">
                 <PromotionWidget />
             </div>
 
-            {/* 2. ✅ NEW: More by Creator (If any) */}
             {creatorTools.length > 0 && (
                 <section className="w-full">
                     <div className="flex items-center justify-between mb-8">
                         <div className="flex items-center gap-3">
-                           <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
                               {model.uploadedBy?.firstName?.[0] || "U"}
-                           </div>
-                           <div>
+                            </div>
+                            <div>
                               <h3 className="text-2xl font-bold">More by {model.uploadedBy?.firstName}</h3>
                               <p className="text-sm text-muted-foreground">Other tools from this creator</p>
-                           </div>
+                            </div>
                         </div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -584,7 +625,6 @@ const ModelDetail = () => {
                 </section>
             )}
 
-            {/* 3. Similar Models */}
             {similarModels.length > 0 && (
                 <section className="w-full">
                     <div className="flex items-center justify-between mb-8">
