@@ -873,19 +873,52 @@ const Profile = () => {
     setIsBoostModalOpen(true);
   };
 
+  // const confirmDeleteModel = async () => {
+  //   if (!modelToDelete) return;
+  //   try {
+  //     setIsDeleting(true);
+  //     await modelsAPI.deleteModel(modelToDelete._id);
+  //     toast({ title: "Success", description: "Model deleted successfully." });
+  //     fetchUserModels(); // Refresh list
+  //   } catch (error: any) {
+  //     toast({
+  //       title: "Error",
+  //       description: error.message || "Failed to delete model.",
+  //       variant: "destructive",
+  //     });
+  //   } finally {
+  //     setIsDeleting(false);
+  //     setDeleteDialogOpen(false);
+  //     setModelToDelete(null);
+  //   }
+  // };
+
   const confirmDeleteModel = async () => {
     if (!modelToDelete) return;
+    
     try {
       setIsDeleting(true);
+      
+      // 1. Call the Backend API
       await modelsAPI.deleteModel(modelToDelete._id);
+      
+      // 2. ✅ FIX: Update the UI immediately by filtering the local array
+      // This removes the model from the screen instantly without waiting for a re-fetch
+      setUserModels((currentModels) => 
+        currentModels.filter((model) => model._id !== modelToDelete._id)
+      );
+
       toast({ title: "Success", description: "Model deleted successfully." });
-      fetchUserModels(); // Refresh list
+      
     } catch (error: any) {
+      console.error("Delete error:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to delete model.",
         variant: "destructive",
       });
+      // Optional: Re-fetch only if there was an error to ensure UI sync
+      fetchUserModels(); 
     } finally {
       setIsDeleting(false);
       setDeleteDialogOpen(false);
