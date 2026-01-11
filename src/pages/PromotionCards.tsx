@@ -68,7 +68,7 @@ export const PromotionCards = () => {
           desc="Submit your new AI tool to our directory and get indexed immediately."
           color="bg-blue-500 text-blue-500"
           buttonText="Launch Now"
-          onClick={() => navigate('/launch')} 
+          onClick={() => navigate('/upload-model')} 
         />
 
         {/* 2. Get Featured Card */}
