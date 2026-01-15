@@ -29,7 +29,7 @@ import RefundPolicy from "./pages/RefundPolicy";
 import DataSafety from "./pages/DataSafety";
 import Contact from "./pages/Contact";
 import Explorer from "./pages/Explorer";
-import { LaunchPage } from "./pages/LaunchPage";
+// LaunchPage removed - using UploadModel instead
 import PaymentFailure from "./pages/PaymentFailure";
 import { GetFeaturedPage } from "./pages/GetFeaturedPage";
 import { PromotePage } from "./pages/PromotePage";
@@ -105,7 +105,6 @@ const App = () => (
             
             <Route path="/upload-model" element={<UploadModel />} />
             <Route path="/profile" element={<Profile />} />
-            <Route path="/launch" element={<LaunchPage />} />
          
             {/* Auth & Static Routes */}
             <Route path="/signup" element={<Signup />} />
@@ -120,7 +119,6 @@ const App = () => (
             <Route path="/payment-failed" element={<PaymentFailure />} />
             <Route path="/get-featured" element={<GetFeaturedPage />} />
             <Route path="/promote" element={<PromotePage />} />
-            <Route path="/launch" element={<LaunchPage />} />
             {/* Admin Route */}
             <Route path="/admin" element={ 
               <ProtectedRoute allowedRoles={['admin']}>

@@ -4,7 +4,7 @@
 // // // // import { CategoryBoxes } from "@/components/home/CategoryBoxes";
 // // // // import { ToolColumnList } from "@/components/home/ToolColumnList";
 // // // // import { InfoSection } from "@/components/home/InfoSection";
-// // // // import { PromotionWidget } from "@/components/home/PromotionWidget";
+// (PromotionWidget removed)
 // // // // import { useAllModels } from "@/hooks/useModels";
 // // // // import { 
 // // // //   Sparkles, Trophy, Zap, MessageCircle, 
@@ -153,22 +153,7 @@
 
 // // // //             </div>
 
-// // // //             {/* RIGHT COLUMN: Sidebar */}
-// // // //             {/* <aside className="w-full lg:w-1/4 relative">
-// // // //               <div className="lg:sticky lg:top-24 space-y-8">
-// // // //                 <PromotionWidget />
-                
-// // // //                 <div className="bg-card/30 border border-border/50 rounded-2xl p-6 backdrop-blur-sm">
-// // // //                   <h3 className="font-bold text-lg mb-2">Support Us</h3>
-// // // //                   <p className="text-sm text-muted-foreground mb-4">
-// // // //                     Help us keep the servers running by submitting your tool.
-// // // //                   </p>
-// // // //                   <Button variant="outline" size="sm" className="w-full" onClick={() => navigate('/upload-model')}>
-// // // //                     Submit Tool
-// // // //                   </Button>
-// // // //                 </div>
-// // // //               </div>
-// // // //             </aside> */}
+// (Sidebar PromotionWidget removed)
 
 // // // //           </div>
 // // // //         </div>
@@ -205,7 +190,7 @@
 // // // import { CategoryBoxes } from "@/components/home/CategoryBoxes";
 // // // import { ToolColumnList } from "@/components/home/ToolColumnList";
 // // // import { InfoSection } from "@/components/home/InfoSection";
-// // // import { PromotionWidget } from "@/components/home/PromotionWidget";
+// (PromotionWidget removed)
 // // // import AdSense from "@/components/AdSense";
 // // // import { useAllModels } from "@/hooks/useModels";
 // // // import { 

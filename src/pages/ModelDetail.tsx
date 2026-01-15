@@ -15,7 +15,6 @@
 // import { HorizontalCarousel } from "@/components/HorizontalCarousel";
 // import { ShareDialog } from "@/components/ui/share-dialog";
 // import { getModelUrl } from "@/lib/utils";
-// import { PromotionWidget } from "@/components/home/PromotionWidget"; 
 
 // // Hooks & Types
 // import { useModelById, useSimilarModels } from "@/hooks/useModels";
@@ -304,10 +303,6 @@
 //         <div className="flex flex-col items-center space-y-16">
             
 //             {/* 1. Promotion Widget (Centered) */}
-//             {/* <div className="w-full flex justify-center">
-//                 <PromotionWidget />
-//             </div> */}
-
 //             {/* 2. Similar Models (Neat Grid) */}
 //             {similarModels.length > 0 && (
 //                 <section className="w-full">
@@ -353,7 +348,6 @@ import { ModelCard } from "@/components/ModelCard";
 import { HorizontalCarousel } from "@/components/HorizontalCarousel";
 import { ShareDialog } from "@/components/ui/share-dialog";
 import { getModelUrl } from "@/lib/utils";
-import { PromotionWidget } from "@/components/home/PromotionWidget"; 
 import { useModelById, useSimilarModels } from "@/hooks/useModels";
 import { modelsAPI, Model } from "@/api/api-methods";
 import { useToast } from "@/hooks/use-toast";
@@ -600,9 +594,8 @@ const ModelDetail = () => {
         <Separator className="my-16 opacity-50" />
 
         <div className="flex flex-col items-center space-y-16">
-            <div className="w-full flex justify-center">
-                <PromotionWidget />
-            </div>
+            
+            {/* Promotion widget removed */}
 
             {creatorTools.length > 0 && (
                 <section className="w-full">

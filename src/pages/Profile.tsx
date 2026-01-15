@@ -30,7 +30,7 @@
 // // import { useAuth } from "@/contexts/AuthContext";
 // // import { modelsAPI, Model } from "@/api/api-methods";
 // // import { useToast } from "@/hooks/use-toast";
-// // import { PromotionWidget } from "@/components/home/PromotionWidget"; 
+// (PromotionWidget removed)
 
 // // const Profile = () => {
 // //   const navigate = useNavigate();
@@ -226,10 +226,7 @@
 // //             </div>
 // //           </div>
 
-// //           {/* Right: Promotion Widget (1/3 Width) */}
-// //           <div className="lg:col-span-1">
-// //              <PromotionWidget />
-// //           </div>
+// (PromotionWidget removed)
 // //         </div>
 
 // //         {/* --- 2. MY MODELS LIST --- */}
@@ -399,7 +396,7 @@
 // import { useAuth } from "@/contexts/AuthContext";
 // import { modelsAPI, Model } from "@/api/api-methods";
 // import { useToast } from "@/hooks/use-toast";
-// import { PromotionWidget } from "@/components/home/PromotionWidget"; 
+// (PromotionWidget removed)
 // import { BoostModal } from "./BoostModal";
 // const Profile = () => {
 //   const navigate = useNavigate();
@@ -605,10 +602,7 @@
 //             </div>
 //           </div>
 
-//           {/* Right: Promotion Widget (1/3 Width) */}
-//           <div className="lg:col-span-1">
-//              <PromotionWidget />
-//           </div>
+// (PromotionWidget removed)
 //         </div>
 
 //         {/* --- 2. MY MODELS LIST --- */}
@@ -809,7 +803,6 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { modelsAPI, Model } from "@/api/api-methods";
 import { useToast } from "@/hooks/use-toast";
-import { PromotionWidget } from "@/components/home/PromotionWidget"; 
 // Ensure BoostModal is in the same folder or update path accordingly
 import { BoostModal } from "./BoostModal"; 
 
@@ -1056,10 +1049,7 @@ const Profile = () => {
             </div>
           </div>
 
-          {/* Right: Promotion Widget (1/3 Width on Desktop) */}
-          <div className="lg:col-span-1">
-             <PromotionWidget />
-          </div>
+           {/* Promotion widget removed */}
         </div>
 
         {/* --- 2. MY MODELS LIST --- */}
