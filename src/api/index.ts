@@ -3,9 +3,9 @@ import Cookies from 'js-cookie';
 
 // Primary and fallback API URLs for better reliability
 const API_URLS = {
-  primary: import.meta.env.VITE_API_BASE_URL || 'https://backend-soch-production.up.railway.app',
+  primary: import.meta.env.VITE_API_BASE_URL || 'https://backend-soch-production-b526.up.railway.app',
   // Fallback URL in case primary fails (can be same or different endpoint)
-  fallback: import.meta.env.VITE_API_FALLBACK_URL || 'https://backend-soch-production.up.railway.app',
+  fallback: import.meta.env.VITE_API_FALLBACK_URL || 'https://backend-soch-production-b526.up.railway.app',
   // Local development
   local: 'http://localhost:1000'
 };

@@ -111,9 +111,9 @@ import axios from 'axios';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 const api = axios.create({
-  // Note: Port 1000 is unusual (privileged port). 
-  // Ensure your backend is actually running on 1000, not 10000 or 5000.
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:1000/api',
+  // Note: Uses VITE_API_BASE_URL for consistency across the app
+  // Routes automatically add /api prefix
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:1000',
 });
 
 // Helper: Truly wait for Firebase Auth to initialize
