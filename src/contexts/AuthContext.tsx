@@ -96,18 +96,41 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setCurrentUser(null);
   };
 
-  useEffect(() => {
-    updateAuthState();
+  // useEffect(() => {
+  //   updateAuthState();
     
-    // Listen for storage events (multi-tab support)
-    const handleStorageChange = (e: StorageEvent) => {
-      // If the cookie changed in another tab, update here
-      updateAuthState();
-    };
+  //   // Listen for storage events (multi-tab support)
+  //   const handleStorageChange = (e: StorageEvent) => {
+  //     // If the cookie changed in another tab, update here
+  //     updateAuthState();
+  //   };
     
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  //   window.addEventListener('storage', handleStorageChange);
+  //   return () => window.removeEventListener('storage', handleStorageChange);
+  // }, []);
+
+  
+useEffect(() => {
+  // 🚀 1. Check cookies FIRST before even calling the API
+  // This prevents the "flicker" that makes the app think you are logged out
+  const savedUser = Cookies.get('userData');
+  const token = Cookies.get('authToken');
+
+  if (savedUser && token) {
+    try {
+      setCurrentUser(JSON.parse(savedUser));
+      setIsAuthenticated(true);
+    } catch (e) {
+      console.error("Failed to parse saved user");
+    }
+  }
+
+  // 🚀 2. Now fetch fresh data from backend
+  updateAuthState();
+  
+  // Note: 'storage' event only works for localStorage. 
+  // For Cookies, you don't need this listener for a single tab.
+}, []);
 
   const value: AuthContextType = {
     isAuthenticated,
