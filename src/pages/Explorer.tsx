@@ -744,13 +744,13 @@ import { AnimatedSearchBar } from "@/components/AnimatedSearchBar";
 import { Footer } from "@/components/Footer";
 import { Navbar } from "@/components/Navbar";
 // import AdSense from "@/components/AdSense"; // Commented out to prevent errors
-import { Model } from "@/api/api-methods";
+import { Model, modelsAPI } from "@/api/api-methods";
 import { useAllModels } from "@/hooks/useModels";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Home, Image, Video, Megaphone, Palette, Code2, ChevronRight, Sparkles } from "lucide-react";
+import { TrendingUp, Home, Image, Video, Megaphone, Palette, Code2, ChevronRight, Sparkles, Loader2 } from "lucide-react";
 import { AiModel } from "@/types/model"; 
 import { useAuth } from "@/contexts/AuthContext"; 
 
@@ -761,6 +761,22 @@ const Explorer = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showAllModels, setShowAllModels] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("home");
+  const [allCategories, setAllCategories] = useState<any[]>([]);
+
+  // Fetch all categories from backend
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await modelsAPI.getCategories();
+        if (response.success) {
+          setAllCategories(response.data.categories);
+        }
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     const query = searchParams.get("search");
@@ -769,7 +785,7 @@ const Explorer = () => {
 
   // ✅ Pass search query to backend for server-side search
   const { data: modelsData, isLoading: loading, error: queryError } = useAllModels({ 
-    limit: searchQuery ? 100 : 200,  // Fetch fewer when searching
+    limit: searchQuery ? 100 : 500,  // Fetch more models to cover all categories
     search: searchQuery || undefined // Pass search to backend
   });
   
@@ -809,45 +825,29 @@ const Explorer = () => {
   });
 
   const categoryGroups = useMemo(() => {
-    // Get unique categories from actual models data
-    const uniqueCategories = Array.from(new Set(models.map(m => m.category)));
+    // Use ALL categories from backend, not just ones with models in current fetch
+    if (!allCategories || allCategories.length === 0) return [];
     
-    const categoryMap: Record<string, { name: string; icon: string; description: string }> = {
-      'chatbots': { name: 'Chatbots', icon: '💬', description: 'Conversational AI' },
-      'image': { name: 'Image', icon: '🎨', description: 'AI-powered image creation' },
-      'code': { name: 'Code', icon: '💻', description: 'AI coding assistants' },
-      'productivity': { name: 'Productivity', icon: '⚡', description: 'Boost productivity' },
-      'voice': { name: 'Voice', icon: '🎤', description: 'Speech and voice AI' },
-      'writing': { name: 'Writing', icon: '✍️', description: 'Content creation' },
-      'research': { name: 'Research', icon: '🔬', description: 'Research assistants' },
-      'agents': { name: 'AI Agents', icon: '🤖', description: 'Autonomous agents' },
-      'video': { name: 'Video', icon: '🎥', description: 'Video generation' },
-      'audio': { name: 'Audio', icon: '🎵', description: 'Audio processing' },
-      'data-analysis': { name: 'Data Analysis', icon: '📊', description: 'Data analytics' },
-      'language': { name: 'Language', icon: '🌐', description: 'Translation & language' },
-      'design': { name: 'Design', icon: '🎨', description: 'Design tools' },
-      'automation': { name: 'Automation', icon: '⚙️', description: 'Workflow automation' },
-      'healthcare': { name: 'Healthcare', icon: '🏥', description: 'Medical AI' },
-      'education': { name: 'Education', icon: '📚', description: 'Learning tools' },
-      'marketing': { name: 'Marketing', icon: '📈', description: 'Marketing & ads' },
-      'finance': { name: 'Finance', icon: '💰', description: 'Financial tools' },
+    const iconMap: Record<string, string> = {
+      'chatbots': '💬', 'image': '🎨', 'code': '💻', 'productivity': '⚡',
+      'voice': '🎤', 'writing': '✍️', 'research': '🔬', 'agents': '🤖',
+      'video': '🎥', 'audio': '🎵', 'data-analysis': '📊', 'language': '🌐',
+      'design': '🎨', 'automation': '⚙️', 'healthcare': '🏥', 'education': '📚',
+      'marketing': '📈', 'finance': '💰'
     };
 
-    return uniqueCategories
-      .map(slug => {
-        const catInfo = categoryMap[slug] || { 
-          name: slug.charAt(0).toUpperCase() + slug.slice(1), 
-          icon: '🔧', 
-          description: `${slug} tools` 
-        };
-        return {
-          slug,
-          ...catInfo,
-          models: models.filter(m => m.category === slug && isVisible(m)).slice(0, 10).map(transformModel)
-        };
-      })
-      .filter(cat => cat.models.length > 0);
-  }, [models, currentUser]);
+    return allCategories.map(cat => {
+      const categoryModels = models.filter(m => m.category === cat.slug && isVisible(m)).slice(0, 10);
+      return {
+        slug: cat.slug,
+        name: cat.name,
+        icon: iconMap[cat.slug] || '🔧',
+        description: cat.description,
+        modelCount: cat.modelCount || 0,
+        models: categoryModels.map(transformModel)
+      };
+    }).filter(cat => cat.models.length > 0); // Only show if we actually have models loaded
+  }, [allCategories, models, currentUser]);
 
   const trendingModels = useMemo(() =>
     [...models]
@@ -866,7 +866,8 @@ const Explorer = () => {
       { id: 'trending', label: 'Trending', icon: TrendingUp },
     ];
     
-    const dynamicCategories = categoryGroups.slice(0, 8).map(cat => ({
+    // Show ALL categories, not just first 8
+    const dynamicCategories = categoryGroups.map(cat => ({
       id: cat.slug,
       label: cat.name,
       icon: cat.slug === 'image' ? Image : 
@@ -915,7 +916,7 @@ const Explorer = () => {
 
         {!searchQuery && (
           <div className="mb-8 md:mb-10">
-            <div className="flex gap-2 md:gap-3 overflow-x-auto pb-4 scrollbar-hide justify-start md:justify-center px-1">
+            <div className="flex gap-2 md:gap-3 overflow-x-auto overflow-y-hidden pb-4 justify-start md:justify-center px-1 -mx-4 px-4 md:mx-0 md:px-0 snap-x snap-proximity" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(155, 155, 155, 0.5) transparent' }}>
               {categoryFilters.map((filter) => {
                 const IconComponent = filter.icon;
                 const isActive = selectedCategory === filter.id;
@@ -925,7 +926,7 @@ const Explorer = () => {
                     variant={isActive ? "default" : "outline"}
                     className={`
                       cursor-pointer px-3 md:px-4 py-2 md:py-2.5 text-sm font-medium 
-                      transition-all hover:scale-105 flex items-center gap-2 whitespace-nowrap flex-shrink-0
+                      transition-all hover:scale-105 flex items-center gap-2 whitespace-nowrap flex-shrink-0 snap-start
                       ${isActive ? "bg-primary text-primary-foreground shadow-md" : "border-border hover:border-primary/50 hover:bg-primary/5 bg-background"}
                     `}
                     onClick={() => setSelectedCategory(filter.id)}
@@ -948,9 +949,17 @@ const Explorer = () => {
         {searchQuery ? (
           <div className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl md:text-2xl font-bold">Search Results ({searchResults.length})</h2>
+              <h2 className="text-xl md:text-2xl font-bold">
+                Search Results {loading ? <span className="text-sm text-muted-foreground ml-3">Searching...</span> : <span className="text-sm text-muted-foreground">({searchResults.length})</span>}
+              </h2>
             </div>
-            {searchResults.length > 0 ? (
+
+            {/* Show loader while backend is fetching results to avoid premature "No results" message */}
+            {loading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            ) : searchResults.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                 {searchResults.map((model) => (
                   <ModelCard key={model.id} model={model} />
@@ -1000,6 +1009,7 @@ const Explorer = () => {
                       </section>
                     )}
 
+                    {/* Display ALL category sections with models */}
                     {categoryGroups.map((category) => (
                       <section key={category.slug}>
                         <div className="flex items-center justify-between mb-4 md:mb-6 px-1">
