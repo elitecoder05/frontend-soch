@@ -1262,7 +1262,7 @@ import { useNavigate } from "react-router-dom";
 const Home = () => {
   const navigate = useNavigate();
   
-  const { data: modelsData, isLoading } = useAllModels({ limit: 100 });
+  const { data: modelsData, isLoading } = useAllModels({ limit: 100, randomize: true });
   const allModels = modelsData?.data?.models || [];
 
   // --- FILTERS ---

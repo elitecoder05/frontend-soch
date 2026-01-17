@@ -17,14 +17,15 @@ export const useAllModels = (params?: {
   pricing?: string;
   limit?: number;
   includePending?: string;
+  randomize?: boolean;
 }) => {
   return useQuery<AllModelsResponse, Error>({
     queryKey: modelKeys.list(params),
     queryFn: () => modelsAPI.getAllModels(params),
-    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    staleTime: params?.randomize ? 0 : 5 * 60 * 1000, // Don't cache randomized results, cache others for 5 min
     gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes (previously cacheTime)
-    refetchOnWindowFocus: false, // Don't refetch when window regains focus
-    refetchOnMount: false, // Don't refetch when component mounts if data exists
+    refetchOnWindowFocus: params?.randomize ? true : false, // Refetch randomized on focus for fresh results
+    refetchOnMount: params?.randomize ? true : false, // Refetch randomized on mount for fresh results
   });
 };
 

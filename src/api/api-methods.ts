@@ -321,6 +321,7 @@ export const modelsAPI = {
     page?: number;
     limit?: number;
     includePending?: string;
+    randomize?: boolean;
   }): Promise<AllModelsResponse> => {
     try {
       const queryParams = new URLSearchParams();
@@ -342,6 +343,9 @@ export const modelsAPI = {
       }
       if (params?.includePending) {
         queryParams.append('includePending', params.includePending);
+      }
+      if (params?.randomize !== undefined) {
+        queryParams.append('randomize', params.randomize.toString());
       }
 
       const url = `/api/models${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;

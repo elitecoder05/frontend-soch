@@ -466,7 +466,7 @@ export const BoostModal = ({ isOpen, onClose, toolId, toolName }: BoostModalProp
       }
 
       // 1. Create Order
-      const { data } = await api.post('/payments/create-boost-order', {
+      const { data } = await api.post('/api/payments/create-boost-order', {
         toolId,
         days,
         amount: totalPrice // Backend now expects simple toolId/days strings
@@ -482,7 +482,7 @@ export const BoostModal = ({ isOpen, onClose, toolId, toolName }: BoostModalProp
         order_id: data.order.id,
         handler: async function (response: any) {
              // ... existing handler code ...
-             await api.post('/payments/verify-boost', {
+             await api.post('/api/payments/verify-boost', {
                razorpay_payment_id: response.razorpay_payment_id,
                razorpay_order_id: response.razorpay_order_id,
                razorpay_signature: response.razorpay_signature,

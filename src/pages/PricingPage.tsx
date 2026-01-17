@@ -317,7 +317,7 @@ const PricingPage = () => {
       }
 
       // 2. Create Subscription Order
-      const res = await api.post('/payments/create-order', { planId });
+      const res = await api.post('/api/payments/create-order', { planId });
       const data = res.data;
 
       if (!data || !data.success) throw new Error(data?.message || 'Failed to initialize payment');
@@ -343,7 +343,7 @@ const PricingPage = () => {
           try {
             toast({ title: "Processing...", description: "Verifying your subscription status." });
 
-            const completeRes = await api.post('/payments/complete-subscription', {
+            const completeRes = await api.post('/api/payments/complete-subscription', {
               planId,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_order_id: response.razorpay_order_id,
