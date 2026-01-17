@@ -3,13 +3,13 @@ export const subscriptionPlans = [
     id: 'monthly',
     name: 'Monthly',
     price: '₹49',
-    duration: 'per month',
-    description: 'Essential tools for creators',
+    duration: 'Month',
+    description: 'Perfect to get started',
     features: [
-      '1 Month Listing',
-      'Basic Tool Analytics',
-      'Edit Tool Listing',
-      'Community Access'
+      'List your AI tool for 30 days',
+      '50–100 estimated clicks (discovery traffic in first week)',
+      'Basic visibility and analytics',
+      'Edit or update your listing anytime'
     ],
     popular: false,
     color: 'blue'
@@ -18,30 +18,31 @@ export const subscriptionPlans = [
     id: 'six_months',
     name: '6 Months',
     price: '₹149',
-    duration: '6 months',
-    description: 'Best value for serious developers',
+    duration: '6 Months',
+    description: 'Best value for serious builders',
     features: [
-      'Everything in Monthly',
-      'Extended Listing Validity',
-      'New Tool Updates',
-      'Priority Support',
-      'Enhanced Analytics'
+      '700–3,000+ estimated clicks',
+      'Website-only focused traffic',
+      'Longer listing visibility',
+      'Faster updates for new features',
+      'Enhanced analytics'
     ],
     popular: true,
-    badge: 'Most Popular',
+    badge: '⭐ Most Popular',
     color: 'primary'
   },
   {
     id: 'annual',
-    name: '1 Year',
+    name: '1 Year Plan',
     price: '₹249',
-    duration: '12 months',
-    description: 'Long term visibility',
+    duration: '12 Months',
+    description: 'Built for long-term growth',
     features: [
-      'Everything in 6 Months',
-      '25 Days Extra Validity',
-      'Newsletter Mention',
-      'SEO Optimization Tips'
+      '800–10,000+ estimated clicks',
+      'Extra 25 days listing bonus',
+      'Free homepage feature',
+      'Stronger brand credibility',
+      'Advanced performance insights'
     ],
     popular: false,
     color: 'orange'
@@ -50,17 +51,17 @@ export const subscriptionPlans = [
     id: 'lifetime',
     name: 'Lifetime',
     price: '₹999',
-    duration: 'One Time Payment',
-    description: 'Never expire. Ultimate access.',
+    duration: 'One-time',
+    description: 'Limited Time – Lifetime',
     features: [
-      'Never Expires',
-      'Priority Review & Approval',
-      'Lifetime "Pro" Badge',
-      'Access to Beta Features',
-      'Direct Developer Support'
+      'Lifetime listing access',
+      'Priority review and faster approval',
+      'Lifetime Pro badge',
+      'Early access to beta features',
+      'Direct developer support'
     ],
     popular: false,
-    badge: 'Limited Time',
+    badge: '♾️ Limited Time',
     color: 'purple'
   }
 ];

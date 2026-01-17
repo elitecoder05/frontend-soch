@@ -4,84 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/Navbar";
+import { subscriptionPlans } from '@/data/subscriptionPlans';
 
 const SubscriptionPlans = () => {
   const [searchQuery, setSearchQuery] = useState("");
   
-  const subscriptionPlans = [
-    {
-      name: "Free Trial",
-      price: "₹0",
-      duration: "14 Days",
-      description: "Perfect for getting started and exploring our platform",
-      features: [
-        "Access to all AI tools directory",
-        "Basic search and filtering",
-        "Community support",
-        "Tool recommendations",
-        "No commitment required"
-      ],
-      popular: false,
-      badge: "Try Free",
-      color: "green"
-    },
-    {
-      name: "Monthly Plan",
-      price: "₹49",
-      duration: "per month",
-      description: "Flexible monthly access with premium features",
-      features: [
-        "Everything in Free Trial",
-        "Advanced search filters",
-        "Premium tool recommendations",
-        "Priority customer support",
-        "Bookmark favorite tools",
-        "Usage analytics"
-      ],
-      popular: false,
-      badge: null,
-      color: "blue"
-    },
-    {
-      name: "6 Months Plan",
-      price: "₹149",
-      duration: "6 months",
-      originalPrice: "₹294",
-      description: "Best value for regular users - Save 2 months!",
-      features: [
-        "Everything in Monthly Plan",
-        "2 months completely free",
-        "Enhanced AI tool insights",
-        "Beta features early access",
-        "Advanced comparison tools",
-        "Custom tool collections",
-        "Priority feature requests"
-      ],
-      popular: true,
-      badge: "Most Popular",
-      color: "primary"
-    },
-    {
-      name: "Annual Plan",
-      price: "₹249",
-      duration: "12 months",
-      originalPrice: "₹588",
-      description: "Maximum savings for power users",
-      features: [
-        "Everything in 6 months plan",
-        "5+ months completely free",
-        "Premium AI tool coaching",
-        "One-on-one consultation",
-        "Custom integrations",
-        "Priority feature development",
-        "Exclusive community access",
-        "Annual summary reports"
-      ],
-      popular: false,
-      badge: "Best Value",
-      color: "orange"
-    }
-  ];
+  // Using shared `subscriptionPlans` from data/subscriptionPlans.ts
 
   return (
     <div className="min-h-screen bg-background">
