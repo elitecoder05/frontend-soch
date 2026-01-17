@@ -767,7 +767,11 @@ const Explorer = () => {
     if (query) setSearchQuery(query);
   }, [searchParams]);
 
-  const { data: modelsData, isLoading: loading, error: queryError } = useAllModels({ limit: 200 });
+  // ✅ Pass search query to backend for server-side search
+  const { data: modelsData, isLoading: loading, error: queryError } = useAllModels({ 
+    limit: searchQuery ? 100 : 200,  // Fetch fewer when searching
+    search: searchQuery || undefined // Pass search to backend
+  });
   
   const models = modelsData?.data?.models || [];
   const error = queryError?.message || null;
@@ -805,24 +809,44 @@ const Explorer = () => {
   });
 
   const categoryGroups = useMemo(() => {
-    const categories = [
-      { slug: 'video', name: 'Video Generation', icon: '🎥', description: 'Create stunning videos' },
-      { slug: 'image', name: 'Image Generation', icon: '🎨', description: 'AI-powered image creation' },
-      { slug: 'research', name: 'Research Tools', icon: '🔬', description: 'Advanced research assistants' },
-      { slug: 'marketing', name: 'Marketing', icon: '📈', description: 'Boost your marketing' },
-      { slug: 'code', name: 'Code Generation', icon: '💻', description: 'AI coding assistants' },
-      { slug: 'writing', name: 'Writing', icon: '✍️', description: 'Content creation made easy' },
-      { slug: 'chatbots', name: 'Chatbots', icon: '💬', description: 'Conversational AI' },
-      { slug: 'agents', name: 'AI Agents', icon: '🤖', description: 'Autonomous AI agents' },
-      { slug: 'audio', name: 'Audio Tools', icon: '🎵', description: 'Audio generation & processing' },
-      { slug: 'productivity', name: 'Productivity', icon: '⚡', description: 'Get more done faster' },
-    ];
+    // Get unique categories from actual models data
+    const uniqueCategories = Array.from(new Set(models.map(m => m.category)));
+    
+    const categoryMap: Record<string, { name: string; icon: string; description: string }> = {
+      'chatbots': { name: 'Chatbots', icon: '💬', description: 'Conversational AI' },
+      'image': { name: 'Image', icon: '🎨', description: 'AI-powered image creation' },
+      'code': { name: 'Code', icon: '💻', description: 'AI coding assistants' },
+      'productivity': { name: 'Productivity', icon: '⚡', description: 'Boost productivity' },
+      'voice': { name: 'Voice', icon: '🎤', description: 'Speech and voice AI' },
+      'writing': { name: 'Writing', icon: '✍️', description: 'Content creation' },
+      'research': { name: 'Research', icon: '🔬', description: 'Research assistants' },
+      'agents': { name: 'AI Agents', icon: '🤖', description: 'Autonomous agents' },
+      'video': { name: 'Video', icon: '🎥', description: 'Video generation' },
+      'audio': { name: 'Audio', icon: '🎵', description: 'Audio processing' },
+      'data-analysis': { name: 'Data Analysis', icon: '📊', description: 'Data analytics' },
+      'language': { name: 'Language', icon: '🌐', description: 'Translation & language' },
+      'design': { name: 'Design', icon: '🎨', description: 'Design tools' },
+      'automation': { name: 'Automation', icon: '⚙️', description: 'Workflow automation' },
+      'healthcare': { name: 'Healthcare', icon: '🏥', description: 'Medical AI' },
+      'education': { name: 'Education', icon: '📚', description: 'Learning tools' },
+      'marketing': { name: 'Marketing', icon: '📈', description: 'Marketing & ads' },
+      'finance': { name: 'Finance', icon: '💰', description: 'Financial tools' },
+    };
 
-    return categories.map(cat => ({
-      ...cat,
-      // ✅ Added visibility filter
-      models: models.filter(m => m.category === cat.slug && isVisible(m)).slice(0, 10).map(transformModel)
-    })).filter(cat => cat.models.length > 0);
+    return uniqueCategories
+      .map(slug => {
+        const catInfo = categoryMap[slug] || { 
+          name: slug.charAt(0).toUpperCase() + slug.slice(1), 
+          icon: '🔧', 
+          description: `${slug} tools` 
+        };
+        return {
+          slug,
+          ...catInfo,
+          models: models.filter(m => m.category === slug && isVisible(m)).slice(0, 10).map(transformModel)
+        };
+      })
+      .filter(cat => cat.models.length > 0);
   }, [models, currentUser]);
 
   const trendingModels = useMemo(() =>
@@ -835,15 +859,25 @@ const Explorer = () => {
     [models, currentUser]
   );
 
-  const categoryFilters = [
-    { id: 'home', label: 'Home', icon: Home },
-    { id: 'trending', label: 'Trending', icon: TrendingUp },
-    { id: 'image', label: 'Image', icon: Image },
-    { id: 'video', label: 'Video', icon: Video },
-    { id: 'marketing', label: 'Marketing', icon: Megaphone },
-    { id: 'design', label: 'Design', icon: Palette },
-    { id: 'code', label: 'Code', icon: Code2 },
-  ];
+  // ✅ Dynamic category filters based on actual categories with models
+  const categoryFilters = useMemo(() => {
+    const base = [
+      { id: 'home', label: 'All', icon: Home },
+      { id: 'trending', label: 'Trending', icon: TrendingUp },
+    ];
+    
+    const dynamicCategories = categoryGroups.slice(0, 8).map(cat => ({
+      id: cat.slug,
+      label: cat.name,
+      icon: cat.slug === 'image' ? Image : 
+            cat.slug === 'video' ? Video :
+            cat.slug === 'marketing' ? Megaphone :
+            cat.slug === 'design' ? Palette :
+            cat.slug === 'code' ? Code2 : Home
+    }));
+    
+    return [...base, ...dynamicCategories];
+  }, [categoryGroups]);
 
   const filteredModelsByCategory = useMemo(() => {
     const visibleModels = models.filter(m => isVisible(m)); // ✅ Filter first
@@ -852,18 +886,11 @@ const Explorer = () => {
     return visibleModels.filter((m) => m.category === selectedCategory).map(transformModel);
   }, [models, selectedCategory, trendingModels, currentUser]);
 
+  // ✅ When search query exists, backend already filtered results - just transform them
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return [];
-    return models.filter((model) => {
-      if (!isVisible(model)) return false; // ✅ Filter first
-      const query = searchQuery.toLowerCase();
-      return (
-        model.name.toLowerCase().includes(query) ||
-        model.shortDescription.toLowerCase().includes(query) ||
-        model.tags?.some((tag) => tag.toLowerCase().includes(query)) ||
-        model.category.toLowerCase().includes(query)
-      );
-    }).map(transformModel);
+    // Backend has already filtered by search, just apply visibility and transform
+    return models.filter((model) => isVisible(model)).map(transformModel);
   }, [models, searchQuery, currentUser]);
 
   const handleSearchUpdate = (value: string) => {
