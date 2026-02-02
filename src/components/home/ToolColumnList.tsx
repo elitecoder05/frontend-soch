@@ -7,9 +7,10 @@ interface ToolListProps {
   icon: React.ReactNode;
   tools: Model[];
   viewAllLink?: string;
+  isScrollable?: boolean;
 }
 
-export const ToolColumnList = ({ title, icon, tools, viewAllLink }: ToolListProps) => {
+export const ToolColumnList = ({ title, icon, tools, viewAllLink, isScrollable = true }: ToolListProps) => {
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden flex flex-col h-full shadow-sm">
       {/* Header */}
@@ -26,7 +27,7 @@ export const ToolColumnList = ({ title, icon, tools, viewAllLink }: ToolListProp
       </div>
 
       {/* List */}
-      <div className="flex-1 overflow-y-auto max-h-[500px] scrollbar-thin scrollbar-thumb-border">
+      <div className={`flex-1 ${isScrollable ? "overflow-y-auto max-h-[500px] scrollbar-thin scrollbar-thumb-border" : ""}`}>
         {tools.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground text-sm">No tools found</div>
         ) : (

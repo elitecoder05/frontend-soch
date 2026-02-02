@@ -89,7 +89,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
-import { ChevronRight, MessageSquare, Image, Code, Zap, Mic, BookOpen, Bot, Palette, Video, Heart } from "lucide-react";
+import { ChevronRight, MessageSquare, Image, Code, Zap, Mic, BookOpen, Bot, Palette, Video, Heart, Github, Lightbulb } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { categories as defaultCategories } from "@/data/models";
 import type { Category } from "@/types/model";
@@ -98,7 +98,12 @@ import { Navbar } from "@/components/Navbar";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const iconMap: { [key: string]: any } = {
+  // Core icons
   MessageSquare, Image, Code, Zap, Mic, BookOpen, Bot, Palette, Video, Heart,
+  // Additional icons for new categories
+  Github,
+  Lightbulb,
+  // Fallback for any unmapped icons (will use the icon name from backend)
 };
 
 // ✅ OPTIMIZATION 1: Module-Level Cache

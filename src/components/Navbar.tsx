@@ -602,7 +602,7 @@
 // };
 
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Menu, Plus, X, ChevronRight, Sparkles, ShieldAlert, Compass } from "lucide-react";
+import { Menu, Plus, X, ChevronRight, Sparkles, ShieldAlert, Compass, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/UserAvatar";
 import { useAuth } from "@/contexts/AuthContext";
@@ -692,6 +692,7 @@ export const Navbar = ({ searchQuery = "", onSearchChange = () => {} }: NavbarPr
           <nav className="flex items-center p-1.5 gap-1 bg-black/40 border border-white/10 rounded-full shadow-inner ring-1 ring-white/5">
             <NavLink to="/explorer">Explorer</NavLink>
             <NavLink to="/categories">Categories</NavLink>
+            <NavLink to="/soch-ai-apps">Soch AI Apps</NavLink>
             <NavLink to="/pricing">Pricing</NavLink>
           </nav>
         </div>
@@ -768,6 +769,13 @@ export const Navbar = ({ searchQuery = "", onSearchChange = () => {} }: NavbarPr
                   </Link>
                   <Link to="/categories" className="flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors">
                     <span className="font-medium">Categories</span>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  </Link>
+                  <Link to="/soch-ai-apps" className="flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors">
+                    <div className="flex items-center gap-2">
+                      <Zap className="w-4 h-4 text-yellow-500" />
+                      <span className="font-medium">Soch AI Apps</span>
+                    </div>
                     <ChevronRight className="w-4 h-4 text-muted-foreground" />
                   </Link>
                   <Link to="/pricing" className="flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors">

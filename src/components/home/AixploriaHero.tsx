@@ -48,12 +48,12 @@ export const AixploriaHero = () => {
         </motion.div>
 
         <motion.h1 variants={itemVariants} className="text-4xl lg:text-7xl font-bold text-foreground mb-6 tracking-tight">
-          Soch AI <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-500 animate-pulse">Explorer</span>
+          Soch AI <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-500 animate-pulse">Store</span>
         </motion.h1>
 
         <motion.p variants={itemVariants} className="text-lg text-muted-foreground max-w-2xl mx-auto mb-10">
           Discover, compare, and find the perfect AI tools for your workflow. 
-          The largest curated library of AI models in India.
+          India’s largest curated AI tools directory for creators, developers, students, and businesses.
         </motion.p>
 
         {/* Animated Search Bar Integration */}

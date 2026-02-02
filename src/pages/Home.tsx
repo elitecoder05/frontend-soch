@@ -1258,6 +1258,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -1277,7 +1278,7 @@ const Home = () => {
     return true;
   });
 
-  const sponsoredModels = allModels.filter(m => !!m.isSponsored);
+  const sponsoredModels = allModels.filter(m => !!m.isSponsored).slice(0, 10);
   
   const latestModels = [...allModels].sort((a, b) => 
     new Date(b.createdAt || "").getTime() - new Date(a.createdAt || "").getTime()
@@ -1288,7 +1289,7 @@ const Home = () => {
   ).slice(0, 10);
 
   const chatModels = allModels.filter(m => 
-    ['chatbots', 'assistants', 'agents'].includes(m.category)
+    ['chatbots'].includes(m.category)
   ).slice(0, 10);
 
   return (
@@ -1302,7 +1303,7 @@ const Home = () => {
           
           {/* 1. Categories Section */}
           <section>
-            <CategoryBoxes />
+            <CategoryBoxes allModels={allModels} />
           </section>
 
           {/* 2. AI Tools Grid */}
@@ -1321,6 +1322,7 @@ const Home = () => {
                       icon={<Crown className="w-4 h-4 text-orange-500" />}
                       tools={sponsoredModels}
                       viewAllLink="/explorer?sponsored=true"
+                      isScrollable={false}
                     />
                 )}
 
@@ -1391,6 +1393,27 @@ const Home = () => {
                 ]}
               />
             </div>
+          </section>
+
+          {/* About Section (SEO Optimized) */}
+          <section className="py-12 border-t border-border/40">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="max-w-4xl mx-auto text-center"
+            >
+              <h2 className="text-3xl font-bold mb-6 text-foreground">About Soch AI Store</h2>
+              <div className="space-y-4 text-lg text-muted-foreground leading-relaxed">
+                <p>
+                  <strong>Soch AI Store</strong> is India’s most reliable AI tools directory. We help creators, students, developers, and businesses discover the right AI tools without confusion.
+                </p>
+                <p>
+                  This AI tools directory helps you quickly find the best solutions for your workflow. With hundreds of AI startups launching every month, Soch AI Store makes it easy to search, compare, and choose the best AI tools in one place.
+                </p>
+              </div>
+            </motion.div>
           </section>
 
           {/* 4. Bottom CTA */}

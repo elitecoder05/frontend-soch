@@ -71,6 +71,18 @@ export interface AuthResponse {
 }
 
 // Models API types
+export interface PricingPlan {
+  name: string;
+  price: string;
+  billingCycle: 'one-time' | 'monthly' | 'yearly' | 'free';
+  features: string[];
+}
+
+export interface FAQ {
+  question: string;
+  answer: string;
+}
+
 export interface Model {
   _id: string;
   name: string;
@@ -94,6 +106,8 @@ export interface Model {
   bestFor?: string[];
   features?: string[];
   examplePrompts?: string[];
+  pricingPlans?: PricingPlan[];
+  faqs?: FAQ[];
   status: 'pending' | 'approved' | 'rejected';
   rejectionReason?: string;
   featured?: boolean;
@@ -133,6 +147,8 @@ export interface ModelUploadData {
   bestFor: string[];
   features: string[];
   examplePrompts: string[];
+  pricingPlans?: PricingPlan[];
+  faqs?: FAQ[];
   iconUrl?: string;
   screenshots?: string[];
 }

@@ -52,7 +52,7 @@ const CategoryDetail = () => {
 
   const filteredModels = useMemo(() => {
     if (!category) return [];
-    let models = modelsList.filter((m) => m.category === category.slug);
+    let models = modelsList.filter((m) => m.category?.toLowerCase() === category.slug?.toLowerCase());
     
     switch (sortBy) {
       case "popular":
@@ -71,7 +71,7 @@ const CategoryDetail = () => {
   const trendingInCategory = useMemo(() => {
     if (!category) return [];
     return modelsList
-      .filter((m) => m.category === category.slug)
+      .filter((m) => m.category?.toLowerCase() === category.slug?.toLowerCase())
       .filter((m) => (m.categoryTrendingScore ?? m.trendingScore ?? 0) > 0)
       .sort((a, b) => (b.categoryTrendingScore ?? b.trendingScore ?? 0) - (a.categoryTrendingScore ?? a.trendingScore ?? 0))
       .slice(0, 8);

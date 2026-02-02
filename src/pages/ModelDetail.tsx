@@ -335,7 +335,7 @@ import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { 
   ExternalLink, Clock, ChevronLeft, Share2, 
   Layers, CheckCircle2, Eye, Flag, ArrowRight,
-  ShieldAlert, Home, Search 
+  ShieldAlert, Home, Search, CreditCard, HelpCircle 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -565,6 +565,60 @@ const ModelDetail = () => {
                       <div className="bg-primary/20 p-1 rounded-full mt-0.5"><CheckCircle2 className="w-4 h-4 text-primary" /></div>
                       <span className="text-sm font-medium">{feature}</span>
                     </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Pricing Plans */}
+            {model.pricingPlans && model.pricingPlans.length > 0 && (
+              <section>
+                <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                  <CreditCard className="w-5 h-5 text-primary" /> Pricing Plans
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {model.pricingPlans.map((plan, i) => (
+                    <Card key={i} className="border-border/50 bg-card/30 overflow-hidden shadow-sm">
+                      <CardHeader className="pb-2">
+                        <div>
+                          <CardTitle className="text-lg">{plan.name}</CardTitle>
+                          <p className="text-2xl font-bold mt-2">{plan.price}</p>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">{plan.billingCycle}</p>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <Separator className="my-4 opacity-50" />
+                        <ul className="space-y-2">
+                          {plan.features.map((feature, idx) => (
+                            <li key={idx} className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                              {feature}
+                            </li>
+                          ))}
+                        </ul>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* FAQs */}
+            {model.faqs && model.faqs.length > 0 && (
+              <section>
+                <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                  <HelpCircle className="w-5 h-5 text-primary" /> FAQs
+                </h3>
+                <div className="space-y-4">
+                  {model.faqs.map((faq, i) => (
+                    <Card key={i} className="border-border/50 bg-card/30 shadow-sm">
+                      <CardHeader className="py-4">
+                        <CardTitle className="text-base font-semibold">{faq.question}</CardTitle>
+                      </CardHeader>
+                      <CardContent className="pb-4 text-muted-foreground text-sm leading-relaxed">
+                        {faq.answer}
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
               </section>

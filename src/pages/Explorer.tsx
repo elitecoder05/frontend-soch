@@ -837,7 +837,7 @@ const Explorer = () => {
     };
 
     return allCategories.map(cat => {
-      const categoryModels = models.filter(m => m.category === cat.slug && isVisible(m)).slice(0, 10);
+      const categoryModels = models.filter(m => m.category?.toLowerCase() === cat.slug?.toLowerCase() && isVisible(m)).slice(0, 10);
       return {
         slug: cat.slug,
         name: cat.name,
@@ -884,7 +884,7 @@ const Explorer = () => {
     const visibleModels = models.filter(m => isVisible(m)); // ✅ Filter first
     if (selectedCategory === 'home') return visibleModels.map(transformModel);
     if (selectedCategory === 'trending') return trendingModels;
-    return visibleModels.filter((m) => m.category === selectedCategory).map(transformModel);
+    return visibleModels.filter((m) => m.category?.toLowerCase() === selectedCategory?.toLowerCase()).map(transformModel);
   }, [models, selectedCategory, trendingModels, currentUser]);
 
   // ✅ When search query exists, backend already filtered results - just transform them

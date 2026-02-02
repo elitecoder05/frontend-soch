@@ -1151,12 +1151,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Plus, X, Upload, Sparkles, Loader2, Image as ImageIcon } from "lucide-react";
+import { Plus, X, Upload, Sparkles, Loader2, Image as ImageIcon, CreditCard, HelpCircle, Trash2 } from "lucide-react";
 import { categories as defaultCategories } from "@/data/models";
 import type { Category } from "@/types/model";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { modelsAPI, ModelUploadData } from "@/api/api-methods";
+import { modelsAPI, ModelUploadData, PricingPlan, FAQ } from "@/api/api-methods";
 import { LogoUpload } from "@/components/ui/LogoUpload";
 import { ScreenshotsUpload } from "@/components/ui/ScreenshotsUpload";
 import { Footer } from "@/components/Footer";
@@ -1229,6 +1229,8 @@ export default function UploadModel() {
       setExamplePrompts(modelData.examplePrompts || []);
       setLogoUrl(modelData.iconUrl || "");
       setScreenshotUrls(modelData.screenshots || []);
+      setPricingPlans(modelData.pricingPlans || []);
+      setFaqs(modelData.faqs || []);
     }
   }, [editMode, modelData]);
   
@@ -1258,6 +1260,9 @@ export default function UploadModel() {
   const [examplePrompts, setExamplePrompts] = useState<string[]>([]);
   const [newPrompt, setNewPrompt] = useState("");
 
+  const [pricingPlans, setPricingPlans] = useState<PricingPlan[]>([]);
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
+
   const capabilityOptions = ["text", "image", "audio", "video", "code", "agent"];
   const pricingOptions = [
     { value: "free", label: "Free" },
@@ -1286,6 +1291,34 @@ export default function UploadModel() {
         ? prev.filter(c => c !== capability)
         : [...prev, capability]
     );
+  };
+
+  const addPricingPlan = () => {
+    setPricingPlans([...pricingPlans, { name: "", price: "", billingCycle: "monthly", features: [] }]);
+  };
+
+  const removePricingPlan = (index: number) => {
+    setPricingPlans(pricingPlans.filter((_, i) => i !== index));
+  };
+
+  const updatePricingPlan = (index: number, field: keyof PricingPlan, value: any) => {
+    const updated = [...pricingPlans];
+    updated[index] = { ...updated[index], [field]: value };
+    setPricingPlans(updated);
+  };
+
+  const addFaq = () => {
+    setFaqs([...faqs, { question: "", answer: "" }]);
+  };
+
+  const removeFaq = (index: number) => {
+    setFaqs(faqs.filter((_, i) => i !== index));
+  };
+
+  const updateFaq = (index: number, field: keyof FAQ, value: string) => {
+    const updated = [...faqs];
+    updated[index] = { ...updated[index], [field]: value };
+    setFaqs(updated);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1330,6 +1363,8 @@ export default function UploadModel() {
         bestFor,
         features,
         examplePrompts,
+        pricingPlans,
+        faqs,
         iconUrl: logoUrl,
         screenshots: screenshotUrls,
       };
@@ -1516,6 +1551,139 @@ export default function UploadModel() {
                   </div>
                 </div>
 
+              </CardContent>
+            </Card>
+
+            {/* 4. Pricing Plans Card */}
+            <Card className="border-muted/60 shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between pb-4">
+                <div className="space-y-1">
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                    <CreditCard className="w-5 h-5 text-primary" />
+                    Pricing Plans
+                  </CardTitle>
+                  <CardDescription>Add detailed pricing plans for your tool.</CardDescription>
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={addPricingPlan} className="gap-2">
+                  <Plus className="w-4 h-4" /> Add Plan
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {pricingPlans.map((plan, index) => (
+                  <div key={index} className="relative p-4 border rounded-xl bg-muted/30 space-y-4">
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="icon" 
+                      className="absolute top-2 right-2 text-muted-foreground hover:text-destructive"
+                      onClick={() => removePricingPlan(index)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label>Plan Name</Label>
+                        <Input 
+                          placeholder="e.g., Pro, Enterprise" 
+                          value={plan.name} 
+                          onChange={(e) => updatePricingPlan(index, "name", e.target.value)} 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Price</Label>
+                        <Input 
+                          placeholder="e.g., $20, Custom" 
+                          value={plan.price} 
+                          onChange={(e) => updatePricingPlan(index, "price", e.target.value)} 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Billing Cycle</Label>
+                        <Select 
+                          value={plan.billingCycle} 
+                          onValueChange={(value: any) => updatePricingPlan(index, "billingCycle", value)}
+                        >
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="free">Free</SelectItem>
+                            <SelectItem value="one-time">One-time</SelectItem>
+                            <SelectItem value="monthly">Monthly</SelectItem>
+                            <SelectItem value="yearly">Yearly</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Key Features (comma separated)</Label>
+                      <Input 
+                        placeholder="Feature 1, Feature 2, Feature 3" 
+                        value={plan.features.join(", ")} 
+                        onChange={(e) => updatePricingPlan(index, "features", e.target.value.split(",").map(f => f.trim()))} 
+                      />
+                    </div>
+                  </div>
+                ))}
+                {pricingPlans.length === 0 && (
+                  <div className="text-center py-6 border-2 border-dashed rounded-xl text-muted-foreground">
+                    No pricing plans added yet.
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* 5. FAQs Card */}
+            <Card className="border-muted/60 shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between pb-4">
+                <div className="space-y-1">
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                    <HelpCircle className="w-5 h-5 text-primary" />
+                    FAQs
+                  </CardTitle>
+                  <CardDescription>Answer common questions about your tool.</CardDescription>
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={addFaq} className="gap-2">
+                  <Plus className="w-4 h-4" /> Add FAQ
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {faqs.map((faq, index) => (
+                  <div key={index} className="relative p-4 border rounded-xl bg-muted/30 space-y-4">
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="icon" 
+                      className="absolute top-2 right-2 text-muted-foreground hover:text-destructive"
+                      onClick={() => removeFaq(index)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                    
+                    <div className="space-y-2">
+                      <Label>Question</Label>
+                      <Input 
+                        placeholder="e.g., Is there a free trial?" 
+                        value={faq.question} 
+                        onChange={(e) => updateFaq(index, "question", e.target.value)} 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Answer</Label>
+                      <Textarea 
+                        placeholder="Provide a clear answer..." 
+                        value={faq.answer} 
+                        onChange={(e) => updateFaq(index, "answer", e.target.value)} 
+                        rows={2}
+                      />
+                    </div>
+                  </div>
+                ))}
+                {faqs.length === 0 && (
+                  <div className="text-center py-6 border-2 border-dashed rounded-xl text-muted-foreground">
+                    No FAQs added yet.
+                  </div>
+                )}
               </CardContent>
             </Card>
 
