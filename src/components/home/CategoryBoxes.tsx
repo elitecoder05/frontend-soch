@@ -144,8 +144,20 @@ import { motion } from "framer-motion";
 import { Model } from "@/api/api-methods";
 
 export const CategoryBoxes = ({ allModels = [] }: { allModels?: Model[] }) => {
+  // Category mapping for backward compatibility with old slugs
+  const categoryAliases: Record<string, string[]> = {
+    "image-to-image": ["image-to-image", "image"],
+    "code-ai": ["code-ai", "code"],
+    "video-generation": ["video-generation", "video"],
+    "audio-editing": ["audio-editing", "audio"],
+    "chatbots": ["chatbots"],
+    "productivity": ["productivity"],
+  };
+
   const getCount = (slug: string) => {
-    return allModels.filter(m => m.category === slug).length;
+    // Check if this slug has aliases
+    const aliases = categoryAliases[slug] || [slug];
+    return allModels.filter(m => aliases.includes(m.category)).length;
   };
 
   const categories = [
