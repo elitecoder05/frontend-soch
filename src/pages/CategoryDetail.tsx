@@ -50,9 +50,25 @@ const CategoryDetail = () => {
     examplePrompts: model.examplePrompts,
   });
 
+  const getCategoryAliases = (categorySlug?: string) => {
+    if (!categorySlug) return [];
+    const aliasMap: Record<string, string[]> = {
+      "image-to-image": ["image-to-image", "image"],
+      "code-ai": ["code-ai", "code"],
+      "video-generation": ["video-generation", "video"],
+      "audio-editing": ["audio-editing", "audio"],
+      "copywriting": ["copywriting", "marketing"],
+    };
+    return aliasMap[categorySlug] || [categorySlug];
+  };
+
   const filteredModels = useMemo(() => {
     if (!category) return [];
-    let models = modelsList.filter((m) => m.category?.toLowerCase() === category.slug?.toLowerCase());
+    const aliases = getCategoryAliases(category.slug).map((s) => s.toLowerCase());
+    let models = modelsList.filter((m) => {
+      const modelCategory = m.category?.toLowerCase();
+      return modelCategory ? aliases.includes(modelCategory) : false;
+    });
     
     switch (sortBy) {
       case "popular":
@@ -70,8 +86,12 @@ const CategoryDetail = () => {
 
   const trendingInCategory = useMemo(() => {
     if (!category) return [];
+    const aliases = getCategoryAliases(category.slug).map((s) => s.toLowerCase());
     return modelsList
-      .filter((m) => m.category?.toLowerCase() === category.slug?.toLowerCase())
+      .filter((m) => {
+        const modelCategory = m.category?.toLowerCase();
+        return modelCategory ? aliases.includes(modelCategory) : false;
+      })
       .filter((m) => (m.categoryTrendingScore ?? m.trendingScore ?? 0) > 0)
       .sort((a, b) => (b.categoryTrendingScore ?? b.trendingScore ?? 0) - (a.categoryTrendingScore ?? a.trendingScore ?? 0))
       .slice(0, 8);

@@ -1392,7 +1392,25 @@ export default function UploadModel() {
 
     } catch (error: any) {
       console.error(editMode ? 'Update error:' : 'Upload error:', error);
-      toast({ title: "Error", description: error?.message || "Failed to save model.", variant: "destructive" });
+      const rawMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to save model.";
+
+      let friendlyMessage = "Something went wrong while saving your model. Please try again.";
+      if (typeof rawMessage === 'string') {
+        if (rawMessage.includes('pricingPlans') || rawMessage.includes('faqs')) {
+          friendlyMessage = "Some pricing or FAQ details are invalid. Please review and try again.";
+        } else if (rawMessage.toLowerCase().includes('pro subscription')) {
+          friendlyMessage = "You need a Pro subscription to upload models.";
+        } else if (rawMessage.toLowerCase().includes('login')) {
+          friendlyMessage = "Please log in to upload a model.";
+        } else if (rawMessage.toLowerCase().includes('category')) {
+          friendlyMessage = "Please choose a valid category.";
+        }
+      }
+
+      toast({ title: "Error", description: friendlyMessage, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
