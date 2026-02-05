@@ -1507,6 +1507,8 @@ export default function UploadModel() {
               </CardContent>
             </Card>
 
+            
+
             {/* 2. Visuals Card */}
             <Card className="border-muted/60 shadow-sm">
               <CardHeader className="pb-4">

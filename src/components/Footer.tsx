@@ -10,27 +10,7 @@ export const Footer = () => {
   const { toast } = useToast();
 
   const handleSubmitToolClick = () => {
-      if (!isAuthenticated) {
-      toast({
-        title: "Please Login First",
-        description: "You need to be logged in to upload your model. Please sign in to continue.",
-        variant: "destructive",
-      });
-      navigate('/login', { state: { from: { pathname: '/upload-model' } } });
-      return;
-    }
-
-    if (!currentUser?.isProUser) {
-      toast({
-        title: "Upgrade Required",
-        description: "You need to be a Pro user to upload your model. Upgrade to Pro to share your AI models with the community!",
-        variant: "destructive",
-      });
-      navigate('/pricing');
-      return;
-    }
-
-    navigate('/upload-model');
+    navigate('/submit-tool');
   };
 
   const footerSections = [
@@ -66,7 +46,7 @@ export const Footer = () => {
       icon: <HelpCircle className="w-4 h-4" />,
       links: [
         { label: "Help Center", href: "/help" },
-        { label: "Submit Your Tool", href: "/upload-model", isSpecial: true },
+        { label: "Submit Your Tool", href: "/submit-tool", isSpecial: true },
         { label: "Community", href: "/community" }
       ]
     }

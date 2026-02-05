@@ -34,6 +34,7 @@ import PaymentFailure from "./pages/PaymentFailure";
 import { GetFeaturedPage } from "./pages/GetFeaturedPage";
 import { PromotePage } from "./pages/PromotePage";
 import SochAIApps from "./pages/SochAIApps";
+import { SubmitToolLanding } from "./pages/SubmitToolLanding";
 // Components
 import { MobileNav } from "./components/MobileNav";
 
@@ -104,6 +105,7 @@ const App = () => (
             <Route path="/categories" element={<Categories />} />
             <Route path="/category/:slug" element={<CategoryDetail />} />
             
+            <Route path="/submit-tool" element={<SubmitToolLanding />} />
             <Route path="/upload-model" element={<UploadModel />} />
             <Route path="/profile" element={<Profile />} />
          

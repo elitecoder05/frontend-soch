@@ -631,12 +631,7 @@ export const Navbar = ({ searchQuery = "", onSearchChange = () => {} }: NavbarPr
   }, []);
 
   const handleSubmitToolsClick = () => {
-    if (!isAuthenticated) {
-      toast({ title: "Login Required", description: "Please login to submit tools.", variant: "destructive" });
-      navigate('/login', { state: { from: { pathname: '/upload-model' } } });
-      return;
-    }
-    navigate('/upload-model');
+    navigate('/submit-tool');
   };
 
   const NavLink = ({ to, children }: { to: string; children: React.ReactNode }) => {
