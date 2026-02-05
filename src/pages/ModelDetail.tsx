@@ -517,12 +517,12 @@ const ModelDetail = () => {
                   <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {formatDate(model.updatedAt)}</span>
                 </div>
               </div>
-              <div className="flex gap-3">
+              <div className="flex gap-3 items-center">
                 <ShareDialog url={getModelUrl(model._id)} title={model.name}>
-                  <Button variant="outline" size="icon" className="rounded-full"><Share2 className="w-5 h-5" /></Button>
+                  <Button variant="outline" size="lg" className="rounded-full w-12 h-12 p-0"><Share2 className="w-5 h-5" /></Button>
                 </ShareDialog>
                 {model.externalUrl && (
-                  <Button size="lg" className="rounded-full shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90" onClick={() => window.open(model.externalUrl, '_blank')}>
+                  <Button size="lg" className="rounded-full shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 h-12" onClick={() => window.open(model.externalUrl, '_blank')}>
                     Visit Website <ExternalLink className="w-4 h-4 ml-2" />
                   </Button>
                 )}

@@ -737,7 +737,7 @@
 
 
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ModelCard } from "@/components/ModelCard";
 import { AnimatedSearchBar } from "@/components/AnimatedSearchBar"; 
@@ -750,7 +750,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Home, Image, Video, Megaphone, Palette, Code2, ChevronRight, Sparkles, Loader2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TrendingUp, Home, Image, Video, Megaphone, Palette, Code2, ChevronRight, Sparkles, Loader2, Filter } from "lucide-react";
 import { AiModel } from "@/types/model"; 
 import { useAuth } from "@/contexts/AuthContext"; 
 
@@ -761,7 +762,12 @@ const Explorer = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showAllModels, setShowAllModels] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("home");
+  const [selectedPricing, setSelectedPricing] = useState<string>("all");
   const [allCategories, setAllCategories] = useState<any[]>([]);
+  const PAGE_SIZE = 8;
+  const [categoryPages, setCategoryPages] = useState<Record<string, number>>({});
+  const [categoryLoaded, setCategoryLoaded] = useState<Record<string, AiModel[]>>({});
+  const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // Fetch all categories from backend
   useEffect(() => {
@@ -824,6 +830,55 @@ const Explorer = () => {
     examplePrompts: model.examplePrompts
   });
 
+  // Initialize per-category loaded models from the already-fetched `models` (first page)
+  useEffect(() => {
+    if (!allCategories || allCategories.length === 0) return;
+
+    const initial: Record<string, AiModel[]> = {};
+    const pages: Record<string, number> = {};
+
+    allCategories.forEach((cat) => {
+      const items = models
+        .filter((m) => m.category?.toLowerCase() === cat.slug?.toLowerCase() && isVisible(m))
+        .slice(0, PAGE_SIZE)
+        .map(transformModel);
+
+      if (items.length) {
+        initial[cat.slug] = items;
+        pages[cat.slug] = 1;
+      }
+    });
+
+    setCategoryLoaded(initial);
+    setCategoryPages(pages);
+  }, [allCategories, models, currentUser]);
+
+  // Load more models for a specific category (appends to existing list)
+  const loadMore = async (slug: string) => {
+    try {
+      const nextPage = (categoryPages[slug] || 1) + 1;
+      // optimistically set page
+      setCategoryPages((prev) => ({ ...prev, [slug]: nextPage }));
+
+      const resp = await modelsAPI.getAllModels({ category: slug, page: nextPage, limit: PAGE_SIZE });
+      const newModels: AiModel[] = (resp.data?.models || [])
+        .filter((m: Model) => isVisible(m))
+        .map(transformModel);
+
+      setCategoryLoaded((prev) => ({ ...prev, [slug]: [...(prev[slug] || []), ...newModels] }));
+
+      // Scroll the container to reveal appended items
+      setTimeout(() => {
+        const el = categoryRefs.current[slug];
+        if (el) {
+          el.scrollTo({ left: el.scrollWidth, behavior: 'smooth' });
+        }
+      }, 50);
+    } catch (err) {
+      console.error('Failed to load more models for', slug, err);
+    }
+  };
+
   const categoryGroups = useMemo(() => {
     // Use ALL categories from backend, not just ones with models in current fetch
     if (!allCategories || allCategories.length === 0) return [];
@@ -837,27 +892,35 @@ const Explorer = () => {
     };
 
     return allCategories.map(cat => {
-      const categoryModels = models.filter(m => m.category?.toLowerCase() === cat.slug?.toLowerCase() && isVisible(m)).slice(0, 10);
+      const categoryModels = models
+        .filter(m => m.category?.toLowerCase() === cat.slug?.toLowerCase() && isVisible(m))
+        .slice(0, 10)
+        .map(transformModel);
+      
+      // Apply pricing filter
+      const filteredModels = applyPricingFilter(categoryModels);
+      
       return {
         slug: cat.slug,
         name: cat.name,
         icon: iconMap[cat.slug] || '🔧',
         description: cat.description,
         modelCount: cat.modelCount || 0,
-        models: categoryModels.map(transformModel)
+        models: filteredModels
       };
     }).filter(cat => cat.models.length > 0); // Only show if we actually have models loaded
-  }, [allCategories, models, currentUser]);
+  }, [allCategories, models, selectedPricing, currentUser]);
 
-  const trendingModels = useMemo(() =>
-    [...models]
+  const trendingModels = useMemo(() => {
+    const trending = [...models]
       .filter((m) => isVisible(m)) // ✅ Added visibility filter
       .filter((m) => m.trendingScore && m.trendingScore > 0)
       .sort((a, b) => (b.trendingScore || 0) - (a.trendingScore || 0))
       .slice(0, 10)
-      .map(transformModel),
-    [models, currentUser]
-  );
+      .map(transformModel);
+      
+    return applyPricingFilter(trending);
+  }, [models, selectedPricing, currentUser]);
 
   // ✅ Dynamic category filters based on actual categories with models
   const categoryFilters = useMemo(() => {
@@ -880,19 +943,28 @@ const Explorer = () => {
     return [...base, ...dynamicCategories];
   }, [categoryGroups]);
 
+  const applyPricingFilter = (models: AiModel[]) => {
+    if (selectedPricing === "all") return models;
+    return models.filter(model => model.pricing === selectedPricing);
+  };
+
   const filteredModelsByCategory = useMemo(() => {
     const visibleModels = models.filter(m => isVisible(m)); // ✅ Filter first
-    if (selectedCategory === 'home') return visibleModels.map(transformModel);
-    if (selectedCategory === 'trending') return trendingModels;
-    return visibleModels.filter((m) => m.category?.toLowerCase() === selectedCategory?.toLowerCase()).map(transformModel);
-  }, [models, selectedCategory, trendingModels, currentUser]);
+    let categoryModels;
+    if (selectedCategory === 'home') categoryModels = visibleModels.map(transformModel);
+    else if (selectedCategory === 'trending') categoryModels = trendingModels;
+    else categoryModels = visibleModels.filter((m) => m.category?.toLowerCase() === selectedCategory?.toLowerCase()).map(transformModel);
+    
+    return applyPricingFilter(categoryModels);
+  }, [models, selectedCategory, selectedPricing, trendingModels, currentUser]);
 
   // ✅ When search query exists, backend already filtered results - just transform them
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return [];
     // Backend has already filtered by search, just apply visibility and transform
-    return models.filter((model) => isVisible(model)).map(transformModel);
-  }, [models, searchQuery, currentUser]);
+    const results = models.filter((model) => isVisible(model)).map(transformModel);
+    return applyPricingFilter(results);
+  }, [models, searchQuery, selectedPricing, currentUser]);
 
   const handleSearchUpdate = (value: string) => {
     setSearchQuery(value);
@@ -906,11 +978,29 @@ const Explorer = () => {
       <main className="flex-1 container mx-auto px-4 py-6 md:py-8">
         
         <div className="mb-8 md:mb-12 relative z-20">
-          <div className="max-w-2xl mx-auto">
-            <AnimatedSearchBar 
-               initialValue={searchQuery}
-               onSearch={handleSearchUpdate} 
-            />
+          <div className="max-w-4xl mx-auto">
+            <div className="flex flex-col sm:flex-row gap-4 items-center">
+              <div className="flex-1 w-full">
+                <AnimatedSearchBar 
+                   initialValue={searchQuery}
+                   onSearch={handleSearchUpdate} 
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-muted-foreground" />
+                <Select value={selectedPricing} onValueChange={setSelectedPricing}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Pricing" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="free">Free</SelectItem>
+                    <SelectItem value="freemium">Freemium</SelectItem>
+                    <SelectItem value="paid">Paid</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1025,12 +1115,22 @@ const Explorer = () => {
                           </Button>
                         </div>
                         
-                        <div className="flex gap-4 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
-                          {category.models.map((model) => (
-                            <div key={model.id} className="w-[85vw] sm:w-[320px] flex-shrink-0 snap-center">
+                        <div
+                          ref={(el) => (categoryRefs.current[category.slug] = el)}
+                          className="flex gap-4 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0"
+                        >
+                          {(categoryLoaded[category.slug] || category.models).map((model) => (
+                            <div key={(model as any).id || (model as any)._id} className="w-[85vw] sm:w-[320px] flex-shrink-0 snap-center">
                               <ModelCard model={model} />
                             </div>
                           ))}
+
+                          {/* Load more button appears as the last card in the scroller */}
+                          <div className="w-[85vw] sm:w-[320px] flex-shrink-0 snap-center flex items-center justify-center">
+                            <Button variant="outline" onClick={() => loadMore(category.slug)} className="px-6 py-3">
+                              Load more
+                            </Button>
+                          </div>
                         </div>
                       </section>
                     ))}
@@ -1050,8 +1150,8 @@ const Explorer = () => {
                           <p className="text-muted-foreground">Browse our complete collection</p>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                          {models.filter(isVisible).map((model) => (
-                            <ModelCard key={model._id} model={transformModel(model)} />
+                          {applyPricingFilter(models.filter(isVisible).map(transformModel)).map((model) => (
+                            <ModelCard key={model.id} model={model} />
                           ))}
                         </div>
                       </section>

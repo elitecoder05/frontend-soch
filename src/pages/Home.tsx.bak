@@ -1395,6 +1395,28 @@ const Home = () => {
             </div>
           </section>
 
+          {/* About Section (SEO Optimized) */}
+          <section className="py-12 border-t border-border/40">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="max-w-4xl mx-auto text-center"
+            >
+              <h2 className="text-3xl font-bold mb-6 text-foreground">About Soch AI Store</h2>
+              <div className="space-y-4 text-lg text-muted-foreground leading-relaxed">
+                <p>
+                  <strong>Soch AI Store</strong> is India’s most reliable AI tools directory. We help creators, students, developers, and businesses discover the right AI tools without confusion.
+                </p>
+                <p>
+                  This AI tools directory helps you quickly find the best solutions for your workflow. With hundreds of AI startups launching every month, Soch AI Store makes it easy to search, compare, and choose the best AI tools in one place.
+                </p>
+              </div>
+            </motion.div>
+          </section>
+
+          {/* 4. Bottom CTA */}
           <section className="pb-8">
             <div className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 border border-border rounded-3xl p-8 md:p-16 text-center relative overflow-hidden group hover:border-primary/30 transition-all shadow-2xl shadow-black/10">
               <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-primary/10 rounded-full blur-[100px] group-hover:bg-primary/20 transition-colors duration-500"></div>
