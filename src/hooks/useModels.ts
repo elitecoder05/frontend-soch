@@ -15,6 +15,7 @@ export const modelKeys = {
 export const useAllModels = (params?: {
   category?: string;
   pricing?: string;
+  search?: string;
   limit?: number;
   includePending?: string;
   randomize?: boolean;

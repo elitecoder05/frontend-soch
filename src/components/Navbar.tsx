@@ -753,7 +753,7 @@ export const Navbar = ({ searchQuery = "", onSearchChange = () => {} }: NavbarPr
                 <div className="flex items-center justify-between mb-8">
                   <span className="text-lg font-bold">Menu</span>
                   <SheetClose asChild>
-                    <Button variant="ghost" size="icon"><X className="w-5 h-5" /></Button>
+                    <Button variant="ghost" size="icon" />
                   </SheetClose>
                 </div>
                 

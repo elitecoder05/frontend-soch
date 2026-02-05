@@ -1507,9 +1507,129 @@ export default function UploadModel() {
               </CardContent>
             </Card>
 
-            
+            {/* 2. Pricing Plans Card */}
+            <Card className="border-muted/60 shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between pb-4">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">Pricing Plans</CardTitle>
+                  <CardDescription>Optional: Add pricing tiers for your tool.</CardDescription>
+                </div>
+                <Button type="button" onClick={addPricingPlan} variant="outline" size="sm" className="gap-2">
+                  <Plus className="w-4 h-4" /> Add Plan
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {pricingPlans.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>No pricing plans added yet. Click "Add Plan" to create one.</p>
+                  </div>
+                ) : (
+                  pricingPlans.map((plan, index) => (
+                    <Card key={index} className="p-4 border-muted">
+                      <div className="flex justify-between items-start mb-4">
+                        <h4 className="font-medium">Plan {index + 1}</h4>
+                        <Button type="button" onClick={() => removePricingPlan(index)} variant="ghost" size="sm">
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label>Plan Name</Label>
+                          <Input 
+                            placeholder="e.g., Basic, Pro, Enterprise"
+                            value={plan.name}
+                            onChange={(e) => updatePricingPlan(index, 'name', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Price</Label>
+                          <Input 
+                            placeholder="e.g., $9.99, Free"
+                            value={plan.price}
+                            onChange={(e) => updatePricingPlan(index, 'price', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Billing Cycle</Label>
+                          <Select 
+                            value={plan.billingCycle} 
+                            onValueChange={(value: 'monthly' | 'annual' | 'one-time') => updatePricingPlan(index, 'billingCycle', value)}
+                          >
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="monthly">Monthly</SelectItem>
+                              <SelectItem value="annual">Annual</SelectItem>
+                              <SelectItem value="one-time">One-time</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="mt-4 space-y-2">
+                        <Label>Features (one per line)</Label>
+                        <Textarea 
+                          placeholder="Feature 1&#10;Feature 2&#10;Feature 3"
+                          value={plan.features.join('\n')}
+                          onChange={(e) => updatePricingPlan(index, 'features', e.target.value.split('\n').filter(f => f.trim()))}
+                          rows={4}
+                        />
+                      </div>
+                    </Card>
+                  ))
+                )}
+              </CardContent>
+            </Card>
 
-            {/* 2. Visuals Card */}
+            {/* 3. FAQs Card */}
+            <Card className="border-muted/60 shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between pb-4">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">FAQs</CardTitle>
+                  <CardDescription>Optional: Add frequently asked questions about your tool.</CardDescription>
+                </div>
+                <Button type="button" onClick={addFaq} variant="outline" size="sm" className="gap-2">
+                  <Plus className="w-4 h-4" /> Add FAQ
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {faqs.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>No FAQs added yet. Click "Add FAQ" to create one.</p>
+                  </div>
+                ) : (
+                  faqs.map((faq, index) => (
+                    <Card key={index} className="p-4 border-muted">
+                      <div className="flex justify-between items-start mb-4">
+                        <h4 className="font-medium">FAQ {index + 1}</h4>
+                        <Button type="button" onClick={() => removeFaq(index)} variant="ghost" size="sm">
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label>Question</Label>
+                          <Input 
+                            placeholder="What does this tool do?"
+                            value={faq.question}
+                            onChange={(e) => updateFaq(index, 'question', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Answer</Label>
+                          <Textarea 
+                            placeholder="This tool helps you..."
+                            value={faq.answer}
+                            onChange={(e) => updateFaq(index, 'answer', e.target.value)}
+                            rows={3}
+                          />
+                        </div>
+                      </div>
+                    </Card>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+
+            {/* 4. Visuals Card */}
             <Card className="border-muted/60 shadow-sm">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
@@ -1526,7 +1646,7 @@ export default function UploadModel() {
               </CardContent>
             </Card>
 
-            {/* 3. Tags & Technical Card */}
+            {/* 5. Tags & Technical Card */}
             <Card className="border-muted/60 shadow-sm">
               <CardHeader>
                 <CardTitle>Tags & Features</CardTitle>
