@@ -26,6 +26,7 @@ const Explorer = () => {
   const { currentUser } = useAuth(); 
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [showAllModels, setShowAllModels] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("home");
   const [selectedPricing, setSelectedPricing] = useState<string>("all");
@@ -34,6 +35,15 @@ const Explorer = () => {
   const [categoryPages, setCategoryPages] = useState<Record<string, number>>({});
   const [categoryLoaded, setCategoryLoaded] = useState<Record<string, AiModel[]>>({});
   const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  // Debounce search query to prevent excessive API calls
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Fetch all categories from backend
   useEffect(() => {
@@ -55,10 +65,10 @@ const Explorer = () => {
     if (query) setSearchQuery(query);
   }, [searchParams]);
 
-  // ✅ Pass search query to backend for server-side search
+  // ✅ Pass debounced search query to backend for server-side search
   const { data: modelsData, isLoading: loading, error: queryError } = useAllModels({ 
-    limit: searchQuery ? 100 : 500,  // Fetch more models to cover all categories
-    search: searchQuery || undefined // Pass search to backend
+    limit: 500,  // Always fetch more models to cover all categories and searches
+    search: debouncedSearchQuery || undefined // Pass search to backend
   });
   
   const models = modelsData?.data?.models || [];
@@ -227,11 +237,11 @@ const Explorer = () => {
 
   // ✅ When search query exists, backend already filtered results - just transform them
   const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) return [];
+    if (!debouncedSearchQuery.trim()) return [];
     // Backend has already filtered by search, just apply visibility and transform
     const results = models.filter((model) => isVisible(model)).map(transformModel);
     return applyPricingFilter(results);
-  }, [models, searchQuery, selectedPricing, currentUser, applyPricingFilter]);
+  }, [models, debouncedSearchQuery, selectedPricing, currentUser, applyPricingFilter]);
 
   // Debug logging in useEffect to prevent excessive console output
   useEffect(() => {
@@ -241,9 +251,10 @@ const Explorer = () => {
       modelsCount: models?.length || 0,
       categoriesCount: allCategories?.length || 0,
       searchQuery,
+      debouncedSearchQuery,
       selectedCategory
     });
-  }, [loading, error, models?.length, allCategories?.length, searchQuery, selectedCategory]);
+  }, [loading, error, models?.length, allCategories?.length, searchQuery, debouncedSearchQuery, selectedCategory]);
 
   const handleSearchUpdate = (value: string) => {
     setSearchQuery(value);
@@ -251,7 +262,7 @@ const Explorer = () => {
   };
 
   // Add loading state for when component is initializing
-  if (loading && models.length === 0) {
+  if (loading && models.length === 0 && !searchQuery) {
     return (
       <div className="min-h-screen bg-background pt-20 md:pt-24 flex items-center justify-center">
         <div className="text-center">
@@ -339,7 +350,7 @@ const Explorer = () => {
           </Alert>
         )}
 
-        {searchQuery ? (
+        {debouncedSearchQuery ? (
           <div className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl md:text-2xl font-bold">
@@ -360,7 +371,7 @@ const Explorer = () => {
               </div>
             ) : (
               <div className="text-center py-16 bg-muted/30 rounded-2xl border border-dashed border-border/50">
-                <p className="text-muted-foreground text-lg mb-2">No models found for "{searchQuery}"</p>
+                <p className="text-muted-foreground text-lg mb-2">No models found for "{debouncedSearchQuery}"</p>
                 <Button variant="link" onClick={() => setSearchQuery("")} className="mt-2">Clear Search</Button>
               </div>
             )}

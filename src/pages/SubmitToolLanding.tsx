@@ -66,7 +66,7 @@ export const SubmitToolLanding = () => {
   const stats = [
     {
       icon: Users,
-      value: '120+',
+      value: '12,000+',
       label: 'Monthly AI Tool Explorers',
       color: 'text-blue-400'
     },
@@ -230,71 +230,73 @@ export const SubmitToolLanding = () => {
           </motion.div>
 
           {/* Pricing Plans Section */}
-          <div ref={pricingRef} className="scroll-mt-24">
-            <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              transition={{ delay: 0.6 }}
-              className="text-center mb-10"
-            >
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Choose Your Plan</h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                Select a plan that fits your needs. All plans include listing on Soch AI Store with varying levels of visibility and features.
-              </p>
-            </motion.div>
+          {!isPaidUser && (
+            <div ref={pricingRef} className="scroll-mt-24">
+              <motion.div 
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                transition={{ delay: 0.6 }}
+                className="text-center mb-10"
+              >
+                <h2 className="text-3xl md:text-4xl font-bold mb-4">Choose Your Plan</h2>
+                <p className="text-muted-foreground max-w-2xl mx-auto">
+                  Select a plan that fits your needs. All plans include listing on Soch AI Store with varying levels of visibility and features.
+                </p>
+              </motion.div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
-              {subscriptionPlans.map((plan, index) => (
-                <motion.div
-                  key={plan.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.7 + index * 0.1 }}
-                  className={`relative bg-card border rounded-2xl p-6 flex flex-col ${
-                    plan.popular 
-                      ? 'border-primary ring-2 ring-primary/20' 
-                      : 'border-border hover:border-primary/30'
-                  } transition-all duration-300`}
-                >
-                  {plan.badge && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <span className="bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
-                        {plan.badge}
-                      </span>
-                    </div>
-                  )}
-                  
-                  <div className="text-center mb-6 pt-2">
-                    <h3 className="text-lg font-bold mb-2">{plan.name}</h3>
-                    <div className="flex items-baseline justify-center gap-1">
-                      <span className="text-4xl font-bold">{plan.price}</span>
-                      <span className="text-muted-foreground text-sm">/{plan.duration}</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-2">{plan.description}</p>
-                  </div>
-
-                  <ul className="space-y-3 flex-1 mb-6">
-                    {plan.features.map((feature, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm">
-                        <div className="mt-0.5 text-green-500">✓</div>
-                        <span className="text-muted-foreground">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <Button
-                    onClick={() => navigate('/pricing')}
-                    variant={plan.popular ? 'default' : 'outline'}
-                    className={`w-full py-5 rounded-xl font-semibold ${
-                      plan.popular ? 'bg-primary hover:bg-primary/90' : ''
-                    }`}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+                {subscriptionPlans.map((plan, index) => (
+                  <motion.div
+                    key={plan.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.7 + index * 0.1 }}
+                    className={`relative bg-card border rounded-2xl p-6 flex flex-col ${
+                      plan.popular 
+                        ? 'border-primary ring-2 ring-primary/20' 
+                        : 'border-border hover:border-primary/30'
+                    } transition-all duration-300`}
                   >
-                    Get Started
-                  </Button>
-                </motion.div>
-              ))}
+                    {plan.badge && (
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                        <span className="bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
+                          {plan.badge}
+                        </span>
+                      </div>
+                    )}
+                    
+                    <div className="text-center mb-6 pt-2">
+                      <h3 className="text-lg font-bold mb-2">{plan.name}</h3>
+                      <div className="flex items-baseline justify-center gap-1">
+                        <span className="text-4xl font-bold">{plan.price}</span>
+                        <span className="text-muted-foreground text-sm">/{plan.duration}</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-2">{plan.description}</p>
+                    </div>
+
+                    <ul className="space-y-3 flex-1 mb-6">
+                      {plan.features.map((feature, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm">
+                          <div className="mt-0.5 text-green-500">✓</div>
+                          <span className="text-muted-foreground">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <Button
+                      onClick={() => navigate('/pricing')}
+                      variant={plan.popular ? 'default' : 'outline'}
+                      className={`w-full py-5 rounded-xl font-semibold ${
+                        plan.popular ? 'bg-primary hover:bg-primary/90' : ''
+                      }`}
+                    >
+                      Get Started
+                    </Button>
+                  </motion.div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </main>
 
