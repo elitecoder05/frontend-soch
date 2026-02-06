@@ -157,11 +157,33 @@ export const SubmitToolLanding = () => {
                     {stat.label}
                   </p>
                   {stat.showFlags && (
-                    <div className="flex gap-2 mt-3">
-                      <span className="text-2xl">🇮🇳</span>
-                      <span className="text-2xl">🇺🇸</span>
-                      <span className="text-2xl">🇧🇷</span>
-                      <span className="text-2xl">🇬🇧</span>
+                    <div className="overflow-hidden mt-3 w-full">
+                      <motion.div 
+                        className="flex gap-2"
+                        animate={{ x: [0, -320] }}
+                        transition={{ 
+                          duration: 8, 
+                          repeat: Infinity, 
+                          ease: "linear"
+                        }}
+                      >
+                        <span className="text-2xl">🇮🇳</span>
+                        <span className="text-2xl">🇺🇸</span>
+                        <span className="text-2xl">🇧🇷</span>
+                        <span className="text-2xl">🇬🇧</span>
+                        <span className="text-2xl">🇨🇦</span>
+                        <span className="text-2xl">🇦🇺</span>
+                        <span className="text-2xl">🇩🇪</span>
+                        <span className="text-2xl">🇫🇷</span>
+                        <span className="text-2xl">🇮🇳</span>
+                        <span className="text-2xl">🇺🇸</span>
+                        <span className="text-2xl">🇧🇷</span>
+                        <span className="text-2xl">🇬🇧</span>
+                        <span className="text-2xl">🇨🇦</span>
+                        <span className="text-2xl">🇦🇺</span>
+                        <span className="text-2xl">🇩🇪</span>
+                        <span className="text-2xl">🇫🇷</span>
+                      </motion.div>
                     </div>
                   )}
                 </div>
