@@ -8,6 +8,9 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 import NetworkStatus from "@/components/NetworkStatus";
 
+// Import network debugging utilities (makes functions available in console)
+import "@/utils/networkUtils";
+
 // Pages
 import Home from "./pages/Home";
 import { LandingPage } from "./pages/LandingPage"; // Point #1 & #3

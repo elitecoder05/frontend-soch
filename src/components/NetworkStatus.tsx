@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { checkApiHealth, getNetworkDiagnostics, getApiBaseUrl } from '@/api';
-import { WifiOff, RefreshCw, AlertTriangle, Info } from 'lucide-react';
+import { checkApiHealth, getNetworkDiagnostics, getApiBaseUrl, getConnectionDiagnostics, switchToWorkingEndpoint } from '@/api';
+import { WifiOff, RefreshCw, AlertTriangle, Info, CheckCircle, XCircle } from 'lucide-react';
 
 interface NetworkStatusProps {
   onRetry?: () => void;
@@ -63,20 +63,44 @@ const NetworkStatus: React.FC<NetworkStatusProps> = ({ onRetry }) => {
     }
     
     try {
-      // Get detailed diagnostics
-      const diagResult = await getNetworkDiagnostics();
-      setDiagnostics(diagResult);
-      setApiReachable(diagResult.apiReachable);
+      // Get comprehensive connection diagnostics
+      const connectionDiagnostics = await getConnectionDiagnostics();
       
-      if (diagResult.apiReachable) {
+      // Also get the old diagnostics for latency info
+      const diagResult = await getNetworkDiagnostics();
+      
+      setDiagnostics(diagResult);
+      
+      // Check if we have a working URL
+      if (connectionDiagnostics.primaryStatus === 'working') {
+        setApiReachable(true);
         setConsecutiveFailures(0);
         if (onRetry) {
           onRetry();
         }
+      } else if (connectionDiagnostics.workingUrl) {
+        // Primary failed but we have a fallback
+        console.log('[NetworkStatus] Primary URL failed, automatically switched to fallback');
+        setApiReachable(true);
+        setConsecutiveFailures(0);
+        
+        // Try to switch to the working endpoint
+        await switchToWorkingEndpoint();
+        
+        if (onRetry) {
+          onRetry();
+        }
       } else {
+        // No working URLs found
+        setApiReachable(false);
         setConsecutiveFailures(prev => prev + 1);
       }
-    } catch {
+      
+      // Store connection diagnostics for debugging
+      (window as any).connectionDiagnostics = connectionDiagnostics;
+      
+    } catch (error) {
+      console.error('[NetworkStatus] Diagnostic check failed:', error);
       setApiReachable(false);
       setConsecutiveFailures(prev => prev + 1);
     } finally {

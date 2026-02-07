@@ -3,30 +3,68 @@ import Cookies from 'js-cookie';
 
 // Primary and fallback API URLs for better reliability
 const API_URLS = {
-  primary: import.meta.env.VITE_API_BASE_URL || 'https://backend-soch-production-b526.up.railway.app',
-  // Fallback URL in case primary fails (can be same or different endpoint)
-  fallback: import.meta.env.VITE_API_FALLBACK_URL || 'https://backend-soch-production-b526.up.railway.app',
+  primary: import.meta.env.VITE_API_BASE_URL || 'https://backend-soch-production-56cd.up.railway.app',
+  // Multiple fallback URLs for DNS resolution issues
+  fallbacks: [
+    import.meta.env.VITE_API_FALLBACK_URL || 'https://backend-soch-production-b526.up.railway.app',
+    'https://backend-soch-production.up.railway.app', // Alternative Railway subdomain
+    // Add your custom domain here when available: 'https://api.sochai.store'
+  ],
   // Local development
   local: 'http://localhost:1000'
 };
 
+// Current base URL being used
+let currentBaseURL = '';
+
 // Get the API base URL - ensure it's properly set
 const getBaseURL = (): string => {
+  if (currentBaseURL) {
+    return currentBaseURL;
+  }
+
   const envUrl = import.meta.env.VITE_API_BASE_URL;
   if (envUrl) {
     console.log('[API] Using base URL:', envUrl);
+    currentBaseURL = envUrl;
     return envUrl;
   }
   
   // In production, always use HTTPS backend - NEVER fallback to localhost
   if (import.meta.env.PROD) {
     console.log('[API] Production mode - using Railway backend');
+    currentBaseURL = API_URLS.primary;
     return API_URLS.primary;
   }
   
   // Fallback for development
   console.warn('[API] VITE_API_BASE_URL not set, using localhost');
+  currentBaseURL = API_URLS.local;
   return API_URLS.local;
+};
+
+// Function to try fallback URLs when primary fails
+const tryFallbackURL = async (): Promise<string | null> => {
+  for (const fallbackUrl of API_URLS.fallbacks) {
+    try {
+      console.log('[API] Trying fallback URL:', fallbackUrl);
+      const response = await fetch(`${fallbackUrl}/api/ping`, {
+        method: 'GET',
+        cache: 'no-store',
+        signal: AbortSignal.timeout(10000)
+      });
+      
+      if (response.ok) {
+        console.log('[API] Fallback URL working:', fallbackUrl);
+        currentBaseURL = fallbackUrl;
+        return fallbackUrl;
+      }
+    } catch (error) {
+      console.warn('[API] Fallback URL failed:', fallbackUrl, error);
+      continue;
+    }
+  }
+  return null;
 };
 
 // Network diagnostics helper - useful for debugging regional issues
@@ -90,6 +128,16 @@ const apiClient = axios.create({
   withCredentials: true, // Include credentials for CORS requests
 });
 
+// DNS prefetch fallback URLs to improve connection speed
+if (typeof window !== 'undefined') {
+  API_URLS.fallbacks.forEach(url => {
+    const link = document.createElement('link');
+    link.rel = 'dns-prefetch';
+    link.href = url;
+    document.head.appendChild(link);
+  });
+}
+
 // Retry configuration - more aggressive for unreliable networks
 const MAX_RETRIES = 4;
 const RETRY_DELAY = 1500; // 1.5 seconds base delay
@@ -151,8 +199,19 @@ apiClient.interceptors.response.use(
       config.retryCount += 1;
       console.log(`[API] Retrying request (${config.retryCount}/${MAX_RETRIES}): ${config.url}`);
       
-      // Exponential backoff
-      await delay(RETRY_DELAY * config.retryCount);
+      // For DNS errors, try fallback URLs first
+      if (error.code === 'ERR_NAME_NOT_RESOLVED' && config.retryCount === 1) {
+        const fallbackUrl = await tryFallbackURL();
+        if (fallbackUrl) {
+          console.log('[API] Switching to fallback URL due to DNS error');
+          config.baseURL = fallbackUrl;
+          return apiClient(config);
+        }
+      }
+      
+      // Exponential backoff with jitter to prevent thundering herd
+      const jitter = Math.random() * 1000; // Random delay up to 1 second
+      await delay(RETRY_DELAY * config.retryCount + jitter);
       
       return apiClient(config);
     }
@@ -215,8 +274,89 @@ export const checkApiHealth = async (): Promise<boolean> => {
     return response.status === 200;
   } catch (error: any) {
     console.error('[API] Health check failed:', error.message || error);
+    
+    // Try fallback URLs if health check fails
+    const fallbackUrl = await tryFallbackURL();
+    if (fallbackUrl) {
+      // Update axios instance baseURL
+      apiClient.defaults.baseURL = fallbackUrl;
+      try {
+        const retryResponse = await apiClient.get('/api/health', { timeout: 15000 });
+        return retryResponse.status === 200;
+      } catch (retryError) {
+        console.error('[API] Fallback health check also failed:', retryError);
+      }
+    }
+    
     return false;
   }
+};
+
+// Function to manually switch to a working endpoint
+export const switchToWorkingEndpoint = async (): Promise<boolean> => {
+  const fallbackUrl = await tryFallbackURL();
+  if (fallbackUrl) {
+    apiClient.defaults.baseURL = fallbackUrl;
+    return true;
+  }
+  return false;
+};
+
+// Get connection diagnostics for debugging
+export const getConnectionDiagnostics = async (): Promise<{
+  primaryStatus: 'working' | 'dns_error' | 'timeout' | 'other_error';
+  workingUrl: string | null;
+  testedUrls: { url: string; status: string; responseTime: number }[];
+}> => {
+  const results = {
+    primaryStatus: 'other_error' as const,
+    workingUrl: null as string | null,
+    testedUrls: [] as { url: string; status: string; responseTime: number }[]
+  };
+
+  const urlsToTest = [API_URLS.primary, ...API_URLS.fallbacks];
+
+  for (const url of urlsToTest) {
+    const startTime = Date.now();
+    try {
+      const response = await fetch(`${url}/api/ping`, {
+        method: 'GET',
+        cache: 'no-store',
+        signal: AbortSignal.timeout(10000)
+      });
+      
+      const responseTime = Date.now() - startTime;
+      const status = response.ok ? 'working' : `error_${response.status}`;
+      
+      results.testedUrls.push({ url, status, responseTime });
+      
+      if (response.ok && !results.workingUrl) {
+        results.workingUrl = url;
+        if (url === API_URLS.primary) {
+          results.primaryStatus = 'working';
+        }
+      }
+    } catch (error: any) {
+      const responseTime = Date.now() - startTime;
+      let status = 'unknown_error';
+      
+      if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+        status = 'dns_error';
+        if (url === API_URLS.primary) {
+          results.primaryStatus = 'dns_error';
+        }
+      } else if (error.name === 'AbortError') {
+        status = 'timeout';
+        if (url === API_URLS.primary) {
+          results.primaryStatus = 'timeout';
+        }
+      }
+      
+      results.testedUrls.push({ url, status, responseTime });
+    }
+  }
+
+  return results;
 };
 
 // Export the base URL for debugging
