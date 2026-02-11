@@ -6,9 +6,9 @@ import { AiModel, Category } from "@/types/model";
 
 export const categories: Category[] = [
   // Existing categories (renamed/updated)
-  { id: 'image-to-image', slug: 'image-to-image', name: 'Image to Image Generation', description: 'AI models for image-to-image conversion and transformation', icon: 'Image', modelCount: 0 },
-  { id: 'code-ai', slug: 'code-ai', name: 'Code to AI Assistant', description: 'Code generation and AI-powered code assistants', icon: 'Code', modelCount: 0 },
-  { id: 'voice-cloning', slug: 'voice-cloning', name: 'Voice to Voice Cloning', description: 'Voice synthesis and cloning models', icon: 'Mic', modelCount: 0 },
+  { id: 'image-to-image', slug: 'image-to-image', name: 'Image generation', description: 'AI models for image-to-image conversion and transformation', icon: 'Image', modelCount: 0 },
+  { id: 'code-ai', slug: 'code-ai', name: 'AI assistant', description: 'Code generation and AI-powered code assistants', icon: 'Code', modelCount: 0 },
+  { id: 'voice-cloning', slug: 'voice-cloning', name: 'Voice cloning', description: 'Voice synthesis and cloning models', icon: 'Mic', modelCount: 0 },
   { id: 'writing', slug: 'writing', name: 'Writing & Web', description: 'Writing assistance and web content creation tools', icon: 'BookOpen', modelCount: 0 },
   { id: 'research', slug: 'research', name: 'SEO Research & Science', description: 'Research, analytics, and scientific models', icon: 'Zap', modelCount: 0 },
   { id: 'video-generation', slug: 'video-generation', name: 'Video Generation', description: 'AI models for creating and editing videos', icon: 'Video', modelCount: 0 },
