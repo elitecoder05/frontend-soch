@@ -141,139 +141,116 @@ import { Link } from "react-router-dom";
 import { Video, Image, MessageSquare, Code, Megaphone, Zap, Bot, Music, ChevronRight, Github, Lightbulb, Search, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Model } from "@/api/api-methods";
+import { useEffect, useState } from "react";
+import { modelsAPI } from "@/api/api-methods";
 
-export const CategoryBoxes = ({ allModels = [] }: { allModels?: Model[] }) => {
-  // Category mapping for backward compatibility with old slugs (matching backend CATEGORY_ALIASES)
-  const categoryAliases: Record<string, string[]> = {
-    "image-to-image": ["image-to-image", "image"],
-    "code-ai": ["code-ai", "code"],
-    "video-generation": ["video-generation", "video"],
-    "audio-editing": ["audio-editing", "audio"],
-    "copywriting": ["copywriting", "marketing"],
-    "chatbots": ["chatbots"],
-    "productivity": ["productivity"],
-    "writing": ["writing"],
-    "research": ["research"],
-    "voice-cloning": ["voice-cloning"],
-    "website-design": ["website-design"],
-    "github-projects": ["github-projects"],
-    "no-code-low-code": ["no-code-low-code"],
-    "seo-tools": ["seo-tools"],
-    "text-to-speech": ["text-to-speech"],
-    "text-to-video": ["text-to-video"],
-    "ai-detection": ["ai-detection"],
-    "agents": ["agents"],
-    "data-analysis": ["data-analysis"],
-    "automation": ["automation"],
-    "education": ["education"]
+// Icon mapping for categories
+const iconMap: { [key: string]: any } = {
+  Image, Code, Mic: Music, MessageSquare, Zap, Video, BookOpen: MessageSquare, Palette: Sparkles,
+  Github, Lightbulb
+};
+
+export const CategoryBoxes = () => {
+  const [categories, setCategories] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await modelsAPI.getCategories();
+        if (res?.data?.categories) {
+          // Filter to show only the main 8 categories for home page
+          const mainCategories = res.data.categories.filter((cat: any) => 
+            ['image-to-image', 'code-ai', 'voice-cloning', 'writing', 'research', 'video-generation', 'audio-editing', 'website-design'].includes(cat.slug)
+          );
+          setCategories(mainCategories);
+        }
+      } catch (err) {
+        console.error('Failed to fetch categories:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  const getCategoryConfig = (slug: string) => {
+    const configs: { [key: string]: any } = {
+      "image-to-image": {
+        icon: Image,
+        color: "from-pink-600 to-rose-600",
+        textColor: "text-pink-400",
+        borderColor: "group-hover:border-pink-500/50",
+        triangleColor: "from-pink-500/80 via-pink-500/20 to-transparent",
+        iconBg: "bg-pink-500/10 group-hover:bg-pink-500/20",
+        shadowColor: "group-hover:shadow-pink-500/20",
+      },
+      "code-ai": {
+        icon: Code,
+        color: "from-emerald-600 to-green-600",
+        textColor: "text-emerald-400",
+        borderColor: "group-hover:border-emerald-500/50",
+        triangleColor: "from-emerald-500/80 via-emerald-500/20 to-transparent",
+        iconBg: "bg-emerald-500/10 group-hover:bg-emerald-500/20",
+        shadowColor: "group-hover:shadow-emerald-500/20",
+      },
+      "voice-cloning": {
+        icon: Music,
+        color: "from-violet-600 to-purple-600",
+        textColor: "text-violet-400",
+        borderColor: "group-hover:border-violet-500/50",
+        triangleColor: "from-violet-500/80 via-violet-500/20 to-transparent",
+        iconBg: "bg-violet-500/10 group-hover:bg-violet-500/20",
+        shadowColor: "group-hover:shadow-violet-500/20",
+      },
+      "writing": {
+        icon: MessageSquare,
+        color: "from-blue-600 to-cyan-600",
+        textColor: "text-blue-400",
+        borderColor: "group-hover:border-blue-500/50",
+        triangleColor: "from-blue-500/80 via-blue-500/20 to-transparent",
+        iconBg: "bg-blue-500/10 group-hover:bg-blue-500/20",
+        shadowColor: "group-hover:shadow-blue-500/20",
+      },
+      "research": {
+        icon: Search,
+        color: "from-orange-600 to-red-600",
+        textColor: "text-orange-400",
+        borderColor: "group-hover:border-orange-500/50",
+        triangleColor: "from-orange-500/80 via-orange-500/20 to-transparent",
+        iconBg: "bg-orange-500/10 group-hover:bg-orange-500/20",
+        shadowColor: "group-hover:shadow-orange-500/20",
+      },
+      "video-generation": {
+        icon: Video,
+        color: "from-purple-600 to-indigo-600",
+        textColor: "text-purple-400",
+        borderColor: "group-hover:border-purple-500/50",
+        triangleColor: "from-purple-500/80 via-purple-500/20 to-transparent",
+        iconBg: "bg-purple-500/10 group-hover:bg-purple-500/20",
+        shadowColor: "group-hover:shadow-purple-500/20",
+      },
+      "audio-editing": {
+        icon: Music,
+        color: "from-yellow-600 to-amber-600",
+        textColor: "text-yellow-400",
+        borderColor: "group-hover:border-yellow-500/50",
+        triangleColor: "from-yellow-500/80 via-yellow-500/20 to-transparent",
+        iconBg: "bg-yellow-500/10 group-hover:bg-yellow-500/20",
+        shadowColor: "group-hover:shadow-yellow-500/20",
+      },
+      "website-design": {
+        icon: Sparkles,
+        color: "from-fuchsia-600 to-pink-600",
+        textColor: "text-fuchsia-400",
+        borderColor: "group-hover:border-fuchsia-500/50",
+        triangleColor: "from-fuchsia-500/80 via-fuchsia-500/20 to-transparent",
+        iconBg: "bg-fuchsia-500/10 group-hover:bg-fuchsia-500/20",
+        shadowColor: "group-hover:shadow-fuchsia-500/20",
+      },
+    };
+    return configs[slug] || configs["image-to-image"];
   };
-
-  const getCount = (slug: string) => {
-    // Check if this slug has aliases
-    const aliases = categoryAliases[slug] || [slug];
-    return allModels.filter(m => aliases.includes(m.category)).length;
-  };
-
-  const categories = [
-    // Main categories matching the UI shown in the screenshot
-    { 
-      name: "Image to Image", 
-      icon: Image, 
-      slug: "image-to-image", 
-      count: getCount("image-to-image"), 
-      color: "from-pink-600 to-rose-600",
-      textColor: "text-pink-400",
-      borderColor: "group-hover:border-pink-500/50",
-      triangleColor: "from-pink-500/80 via-pink-500/20 to-transparent",
-      iconBg: "bg-pink-500/10 group-hover:bg-pink-500/20",
-      shadowColor: "group-hover:shadow-pink-500/20",
-    },
-    { 
-      name: "Code to AI", 
-      icon: Code, 
-      slug: "code-ai", 
-      count: getCount("code-ai"), 
-      color: "from-emerald-600 to-green-600",
-      textColor: "text-emerald-400",
-      borderColor: "group-hover:border-emerald-500/50",
-      triangleColor: "from-emerald-500/80 via-emerald-500/20 to-transparent",
-      iconBg: "bg-emerald-500/10 group-hover:bg-emerald-500/20",
-      shadowColor: "group-hover:shadow-emerald-500/20",
-    },
-    { 
-      name: "Voice Cloning", 
-      icon: Music, 
-      slug: "voice-cloning", 
-      count: getCount("voice-cloning"), 
-      color: "from-violet-600 to-purple-600",
-      textColor: "text-violet-400",
-      borderColor: "group-hover:border-violet-500/50",
-      triangleColor: "from-violet-500/80 via-violet-500/20 to-transparent",
-      iconBg: "bg-violet-500/10 group-hover:bg-violet-500/20",
-      shadowColor: "group-hover:shadow-violet-500/20",
-    },
-    { 
-      name: "Writing & Web", 
-      icon: MessageSquare, 
-      slug: "writing", 
-      count: getCount("writing"), 
-      color: "from-blue-600 to-cyan-600",
-      textColor: "text-blue-400",
-      borderColor: "group-hover:border-blue-500/50",
-      triangleColor: "from-blue-500/80 via-blue-500/20 to-transparent",
-      iconBg: "bg-blue-500/10 group-hover:bg-blue-500/20",
-      shadowColor: "group-hover:shadow-blue-500/20",
-    },
-    { 
-      name: "SEO Research", 
-      icon: Search, 
-      slug: "research", 
-      count: getCount("research"), 
-      color: "from-orange-600 to-red-600",
-      textColor: "text-orange-400",
-      borderColor: "group-hover:border-orange-500/50",
-      triangleColor: "from-orange-500/80 via-orange-500/20 to-transparent",
-      iconBg: "bg-orange-500/10 group-hover:bg-orange-500/20",
-      shadowColor: "group-hover:shadow-orange-500/20",
-    },
-    { 
-      name: "Video Generation", 
-      icon: Video, 
-      slug: "video-generation", 
-      count: getCount("video-generation"), 
-      color: "from-purple-600 to-indigo-600",
-      textColor: "text-purple-400",
-      borderColor: "group-hover:border-purple-500/50",
-      triangleColor: "from-purple-500/80 via-purple-500/20 to-transparent",
-      iconBg: "bg-purple-500/10 group-hover:bg-purple-500/20",
-      shadowColor: "group-hover:shadow-purple-500/20",
-    },
-    { 
-      name: "Audio Editing", 
-      icon: Music, 
-      slug: "audio-editing", 
-      count: getCount("audio-editing"), 
-      color: "from-yellow-600 to-amber-600",
-      textColor: "text-yellow-400",
-      borderColor: "group-hover:border-yellow-500/50",
-      triangleColor: "from-yellow-500/80 via-yellow-500/20 to-transparent",
-      iconBg: "bg-yellow-500/10 group-hover:bg-yellow-500/20",
-      shadowColor: "group-hover:shadow-yellow-500/20",
-    },
-    { 
-      name: "Design & Web", 
-      icon: Sparkles, 
-      slug: "website-design", 
-      count: getCount("website-design"), 
-      color: "from-fuchsia-600 to-pink-600",
-      textColor: "text-fuchsia-400",
-      borderColor: "group-hover:border-fuchsia-500/50",
-      triangleColor: "from-fuchsia-500/80 via-fuchsia-500/20 to-transparent",
-      iconBg: "bg-fuchsia-500/10 group-hover:bg-fuchsia-500/20",
-      shadowColor: "group-hover:shadow-fuchsia-500/20",
-    },
-  ];
 
   const container = {
     hidden: { opacity: 0 },
@@ -287,6 +264,27 @@ export const CategoryBoxes = ({ allModels = [] }: { allModels?: Model[] }) => {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0 }
   };
+
+  if (isLoading) {
+    return (
+      <section className="container mx-auto px-4 mb-24">
+        <div className="flex items-end justify-between mb-8">
+          <div>
+            <h2 className="text-2xl font-bold text-foreground">Explore Categories</h2>
+            <p className="text-muted-foreground text-sm mt-1">Browse our curated collection by topic</p>
+          </div>
+          <Link to="/categories" className="text-sm font-medium text-primary hover:text-primary/80 flex items-center gap-1 transition-colors">
+            View all <ChevronRight className="w-4 h-4" />
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {[...Array(8)].map((_, i) => (
+            <div key={i} className="h-32 bg-card/30 border border-border rounded-2xl animate-pulse" />
+          ))}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="container mx-auto px-4 mb-24">
@@ -307,67 +305,69 @@ export const CategoryBoxes = ({ allModels = [] }: { allModels?: Model[] }) => {
         viewport={{ once: true, margin: "-50px" }}
         className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
       >
-        {categories.map((cat) => (
-          <motion.div key={cat.slug} variants={item}>
-            <Link to={`/category/${cat.slug}`} className="group block h-full">
-              <div className={cn(
-                "relative h-full overflow-hidden rounded-2xl border border-border bg-card/30 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl",
-                cat.borderColor,
-                cat.shadowColor
-              )}>
-                
-                {/* --- THE TECH TRIANGLE CORNER --- */}
-                {/* This uses clip-path to create a perfect triangle in the top-left */}
-                <div 
-                  className={cn(
-                    "absolute top-0 left-0 w-16 h-16 bg-gradient-to-br opacity-60 transition-all duration-500 group-hover:scale-125 group-hover:opacity-100",
-                    cat.triangleColor
-                  )}
-                  style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }}
-                />
-                
-                {/* Subtle Inner Glow Overlay */}
+        {categories.map((cat) => {
+          const config = getCategoryConfig(cat.slug);
+          const IconComponent = config.icon;
+          
+          return (
+            <motion.div key={cat.slug} variants={item}>
+              <Link to={`/category/${cat.slug}`} className="group block h-full">
                 <div className={cn(
-                  "absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none",
-                  cat.color
-                )} />
-
-                {/* Content Container */}
-                <div className="p-6 flex flex-col items-center justify-center text-center gap-4 h-full relative z-10">
+                  "relative h-full overflow-hidden rounded-2xl border border-border bg-card/30 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl",
+                  config.borderColor,
+                  config.shadowColor
+                )}>
                   
-                  {/* Icon Container with specific color background */}
+                  {/* Triangle corner */}
+                  <div 
+                    className={cn(
+                      "absolute top-0 left-0 w-16 h-16 bg-gradient-to-br opacity-60 transition-all duration-500 group-hover:scale-125 group-hover:opacity-100",
+                      config.triangleColor
+                    )}
+                    style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }}
+                  />
+                  
+                  {/* Subtle Inner Glow Overlay */}
                   <div className={cn(
-                    "w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-lg", 
-                    cat.iconBg,
-                    cat.textColor
-                  )}>
-                    <cat.icon className="w-7 h-7" />
-                  </div>
-                  
-                  {/* Text Content */}
-                  <div className="space-y-1">
-                    <h3 className={cn(
-                      "font-bold text-base md:text-lg text-foreground transition-colors duration-300",
-                      // Ensure text highlights on hover
-                      `group-hover:${cat.textColor.split(' ')[0]}` 
-                    )}>
-                      {cat.name}
-                    </h3>
-                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider opacity-80">
-                      {cat.count} Tools
-                    </p>
-                  </div>
-                </div>
+                    "absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none",
+                    config.color
+                  )} />
 
-                {/* Decorative Bottom-Right Glow Blob */}
-                <div className={cn(
-                  "absolute -bottom-8 -right-8 w-24 h-24 rounded-full blur-3xl opacity-0 group-hover:opacity-30 transition-opacity duration-700 bg-gradient-to-t", 
-                  cat.color
-                )} />
-              </div>
-            </Link>
-          </motion.div>
-        ))}
+                  {/* Content Container */}
+                  <div className="p-6 flex flex-col items-center justify-center text-center gap-4 h-full relative z-10">
+                    
+                    {/* Icon Container */}
+                    <div className={cn(
+                      "w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-lg", 
+                      config.iconBg,
+                      config.textColor
+                    )}>
+                      <IconComponent className="w-7 h-7" />
+                    </div>
+                    
+                    {/* Text Content */}
+                    <div className="space-y-1">
+                      <h3 className={cn(
+                        "font-bold text-base md:text-lg text-foreground transition-colors duration-300 group-hover:text-primary"
+                      )}>
+                        {cat.name}
+                      </h3>
+                      <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider opacity-80">
+                        {cat.modelCount} Tools
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Decorative Bottom-Right Glow Blob */}
+                  <div className={cn(
+                    "absolute -bottom-8 -right-8 w-24 h-24 rounded-full blur-3xl opacity-0 group-hover:opacity-30 transition-opacity duration-700 bg-gradient-to-t", 
+                    config.color
+                  )} />
+                </div>
+              </Link>
+            </motion.div>
+          );
+        })}
       </motion.div>
     </section>
   );

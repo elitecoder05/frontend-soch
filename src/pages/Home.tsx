@@ -1303,7 +1303,7 @@ const Home = () => {
           
           {/* 1. Categories Section */}
           <section>
-            <CategoryBoxes allModels={allModels} />
+            <CategoryBoxes />
           </section>
 
           {/* 2. AI Tools Grid */}
