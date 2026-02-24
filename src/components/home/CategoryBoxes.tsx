@@ -144,14 +144,29 @@ import { motion } from "framer-motion";
 import { Model } from "@/api/api-methods";
 
 export const CategoryBoxes = ({ allModels = [] }: { allModels?: Model[] }) => {
-  // Category mapping for backward compatibility with old slugs
+  // Category mapping for backward compatibility with old slugs (matching backend CATEGORY_ALIASES)
   const categoryAliases: Record<string, string[]> = {
     "image-to-image": ["image-to-image", "image"],
     "code-ai": ["code-ai", "code"],
     "video-generation": ["video-generation", "video"],
     "audio-editing": ["audio-editing", "audio"],
+    "copywriting": ["copywriting", "marketing"],
     "chatbots": ["chatbots"],
     "productivity": ["productivity"],
+    "writing": ["writing"],
+    "research": ["research"],
+    "voice-cloning": ["voice-cloning"],
+    "website-design": ["website-design"],
+    "github-projects": ["github-projects"],
+    "no-code-low-code": ["no-code-low-code"],
+    "seo-tools": ["seo-tools"],
+    "text-to-speech": ["text-to-speech"],
+    "text-to-video": ["text-to-video"],
+    "ai-detection": ["ai-detection"],
+    "agents": ["agents"],
+    "data-analysis": ["data-analysis"],
+    "automation": ["automation"],
+    "education": ["education"]
   };
 
   const getCount = (slug: string) => {
@@ -161,7 +176,7 @@ export const CategoryBoxes = ({ allModels = [] }: { allModels?: Model[] }) => {
   };
 
   const categories = [
-    // Updated existing categories
+    // Main categories matching the UI shown in the screenshot
     { 
       name: "Image to Image", 
       icon: Image, 
@@ -257,116 +272,6 @@ export const CategoryBoxes = ({ allModels = [] }: { allModels?: Model[] }) => {
       triangleColor: "from-fuchsia-500/80 via-fuchsia-500/20 to-transparent",
       iconBg: "bg-fuchsia-500/10 group-hover:bg-fuchsia-500/20",
       shadowColor: "group-hover:shadow-fuchsia-500/20",
-    },
-    // New categories
-    { 
-      name: "GitHub Projects", 
-      icon: Github, 
-      slug: "github-projects", 
-      count: getCount("github-projects"), 
-      color: "from-slate-700 to-slate-900",
-      textColor: "text-slate-400",
-      borderColor: "group-hover:border-slate-500/50",
-      triangleColor: "from-slate-500/80 via-slate-500/20 to-transparent",
-      iconBg: "bg-slate-500/10 group-hover:bg-slate-500/20",
-      shadowColor: "group-hover:shadow-slate-500/20",
-    },
-    { 
-      name: "No-Code / Low-Code", 
-      icon: Lightbulb, 
-      slug: "no-code-low-code", 
-      count: getCount("no-code-low-code"), 
-      color: "from-lime-600 to-green-600",
-      textColor: "text-lime-400",
-      borderColor: "group-hover:border-lime-500/50",
-      triangleColor: "from-lime-500/80 via-lime-500/20 to-transparent",
-      iconBg: "bg-lime-500/10 group-hover:bg-lime-500/20",
-      shadowColor: "group-hover:shadow-lime-500/20",
-    },
-    { 
-      name: "SEO Tools", 
-      icon: Search, 
-      slug: "seo-tools", 
-      count: getCount("seo-tools"), 
-      color: "from-cyan-600 to-blue-600",
-      textColor: "text-cyan-400",
-      borderColor: "group-hover:border-cyan-500/50",
-      triangleColor: "from-cyan-500/80 via-cyan-500/20 to-transparent",
-      iconBg: "bg-cyan-500/10 group-hover:bg-cyan-500/20",
-      shadowColor: "group-hover:shadow-cyan-500/20",
-    },
-    { 
-      name: "Text-to-Speech", 
-      icon: Music, 
-      slug: "text-to-speech", 
-      count: getCount("text-to-speech"), 
-      color: "from-rose-600 to-pink-600",
-      textColor: "text-rose-400",
-      borderColor: "group-hover:border-rose-500/50",
-      triangleColor: "from-rose-500/80 via-rose-500/20 to-transparent",
-      iconBg: "bg-rose-500/10 group-hover:bg-rose-500/20",
-      shadowColor: "group-hover:shadow-rose-500/20",
-    },
-    { 
-      name: "Text-to-Video", 
-      icon: Video, 
-      slug: "text-to-video", 
-      count: getCount("text-to-video"), 
-      color: "from-indigo-600 to-violet-600",
-      textColor: "text-indigo-400",
-      borderColor: "group-hover:border-indigo-500/50",
-      triangleColor: "from-indigo-500/80 via-indigo-500/20 to-transparent",
-      iconBg: "bg-indigo-500/10 group-hover:bg-indigo-500/20",
-      shadowColor: "group-hover:shadow-indigo-500/20",
-    },
-    { 
-      name: "Copywriting", 
-      icon: MessageSquare, 
-      slug: "copywriting", 
-      count: getCount("copywriting"), 
-      color: "from-amber-600 to-orange-600",
-      textColor: "text-amber-400",
-      borderColor: "group-hover:border-amber-500/50",
-      triangleColor: "from-amber-500/80 via-amber-500/20 to-transparent",
-      iconBg: "bg-amber-500/10 group-hover:bg-amber-500/20",
-      shadowColor: "group-hover:shadow-amber-500/20",
-    },
-    { 
-      name: "AI Detection", 
-      icon: Zap, 
-      slug: "ai-detection", 
-      count: getCount("ai-detection"), 
-      color: "from-red-600 to-rose-600",
-      textColor: "text-red-400",
-      borderColor: "group-hover:border-red-500/50",
-      triangleColor: "from-red-500/80 via-red-500/20 to-transparent",
-      iconBg: "bg-red-500/10 group-hover:bg-red-500/20",
-      shadowColor: "group-hover:shadow-red-500/20",
-    },
-    // Additional core categories
-    { 
-      name: "Chatbots", 
-      icon: MessageSquare, 
-      slug: "chatbots", 
-      count: getCount("chatbots"), 
-      color: "from-teal-600 to-cyan-600",
-      textColor: "text-teal-400",
-      borderColor: "group-hover:border-teal-500/50",
-      triangleColor: "from-teal-500/80 via-teal-500/20 to-transparent",
-      iconBg: "bg-teal-500/10 group-hover:bg-teal-500/20",
-      shadowColor: "group-hover:shadow-teal-500/20",
-    },
-    { 
-      name: "Productivity", 
-      icon: Zap, 
-      slug: "productivity", 
-      count: getCount("productivity"), 
-      color: "from-yellow-500 to-amber-500",
-      textColor: "text-yellow-400",
-      borderColor: "group-hover:border-yellow-500/50",
-      triangleColor: "from-yellow-500/80 via-yellow-500/20 to-transparent",
-      iconBg: "bg-yellow-500/10 group-hover:bg-yellow-500/20",
-      shadowColor: "group-hover:shadow-yellow-500/20",
     },
   ];
 
