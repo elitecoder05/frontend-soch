@@ -320,7 +320,7 @@ const Explorer = () => {
 
         {!searchQuery && (
           <div className="mb-8 md:mb-10">
-            <div className="flex gap-2 md:gap-3 overflow-x-auto overflow-y-hidden pb-4 justify-start md:justify-center -mx-4 px-4 md:mx-0 md:px-0 snap-x snap-proximity" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(155, 155, 155, 0.5) transparent' }}>
+            <div className="flex gap-2 md:gap-3 overflow-x-auto overflow-y-hidden pb-4 justify-start md:flex-wrap md:justify-center -mx-4 px-6 md:mx-0 md:px-0 snap-x snap-proximity" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(155, 155, 155, 0.5) transparent' }}>
               {categoryFilters.map((filter) => {
                 const IconComponent = filter.icon;
                 const isActive = selectedCategory === filter.id;

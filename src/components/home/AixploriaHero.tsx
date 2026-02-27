@@ -1,4 +1,4 @@
-import { Sparkles } from "lucide-react";
+import { Sparkles, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 
 export const AixploriaHero = () => {
@@ -18,7 +18,7 @@ export const AixploriaHero = () => {
 
   return (
     // Top padding (pt-40) ensures content is below the fixed Navbar
-    <div className="relative pt-40 pb-32 lg:pt-48 lg:pb-40 overflow-hidden min-h-[85vh] flex items-center">
+    <div className="relative pt-40 pb-16 lg:pt-48 lg:pb-24 overflow-hidden flex items-center">
       {/* Enhanced Background Effects */}
       <motion.div 
         animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.5, 0.3] }}
@@ -62,9 +62,19 @@ export const AixploriaHero = () => {
           Soch AI <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-500 to-purple-500 animate-pulse">Store</span>
         </motion.h1>
 
-        <motion.p variants={itemVariants} className="text-xl lg:text-2xl text-muted-foreground max-w-4xl mx-auto mb-16 leading-relaxed">
+        <motion.p variants={itemVariants} className="text-xl lg:text-2xl text-muted-foreground max-w-4xl mx-auto mb-10 leading-relaxed">
           Soch AI Store is India's most reliable AI tools directory. We help creators, students, developers, and businesses discover the right AI tools without confusion. This AI tools directory helps you quickly find the best solutions for your workflow. With hundreds of AI startups launching every month, Soch AI Store makes it easy to search, compare, and choose the best AI tools in one place.
         </motion.p>
+
+        <motion.div variants={itemVariants} className="flex justify-center mb-12">
+          <a 
+            href="/explorer" 
+            className="inline-flex items-center gap-2 px-8 py-4 bg-[#005fcc] hover:bg-[#004db3] text-white text-lg font-bold rounded-full shadow-lg shadow-[#005fcc]/30 hover:shadow-xl hover:shadow-[#005fcc]/40 transition-all hover:scale-105"
+          >
+            Start Exploring
+            <ArrowRight className="w-5 h-5" />
+          </a>
+        </motion.div>
 
         {/* Additional decorative elements */}
         <motion.div 

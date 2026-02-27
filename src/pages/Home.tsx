@@ -1404,7 +1404,7 @@ const Home = () => {
                 <h2 className="text-3xl md:text-5xl font-bold mb-6 text-white tracking-tight">
                   Have an AI Tool?
                 </h2>
-                <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+                <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-10 leading-relaxed">
                   Join the largest AI community in India. Submit your tool to Soch AI Store and reach thousands of daily users instantly.
                 </p>
                 <div className="flex flex-col sm:flex-row justify-center gap-4">
@@ -1419,7 +1419,7 @@ const Home = () => {
                     size="lg" 
                     variant="outline" 
                     onClick={() => navigate('/contact')} 
-                    className="h-12 px-8 text-base border-white/30 text-white hover:bg-white/10 hover:text-white rounded-full"
+                    className="h-12 px-8 text-base bg-white text-black hover:bg-gray-100 font-bold rounded-full transition-transform hover:scale-105"
                   >
                     Contact Us
                   </Button>

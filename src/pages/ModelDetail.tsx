@@ -510,8 +510,8 @@ const ModelDetail = () => {
                 <h1 className="text-3xl md:text-5xl font-bold text-foreground mb-3">{model.name}</h1>
                 <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground mb-4">
                   <Badge variant="secondary" className="px-3 py-1 text-sm">{model.category}</Badge>
-                  <span className="flex items-center gap-1"><Eye className="w-4 h-4" /> {model.clicks || 0} views</span>
-                  <span>•</span>
+                  {/* <span className="flex items-center gap-1"><Eye className="w-4 h-4" /> {model.clicks || 0} views</span>
+                  <span>•</span> */}
                   <span>by {model.provider}</span>
                   <span>•</span>
                   <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {formatDate(model.updatedAt)}</span>
