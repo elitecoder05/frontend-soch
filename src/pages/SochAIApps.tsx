@@ -101,7 +101,7 @@ const SochAIApps = () => {
               {/* Content */}
               <CardHeader className="relative z-10 pb-4">
                 <div className="flex items-start justify-between mb-4">
-                  <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-black/5 to-black/10 dark:from-white/5 dark:to-white/10 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-black/5 to-black/10 flex items-center justify-center">
                     {app.icon}
                   </div>
                 </div>

@@ -643,7 +643,7 @@ export const Navbar = ({ searchQuery = "", onSearchChange = () => {} }: NavbarPr
           "relative px-5 py-2 rounded-full text-sm font-medium transition-all duration-300",
           isActive 
             ? "text-primary bg-primary/10 shadow-[0_0_15px_-3px_rgba(var(--primary),0.3)]" 
-            : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+            : "text-muted-foreground hover:text-foreground hover:bg-black/5"
         )}
       >
         {children}
@@ -657,14 +657,14 @@ export const Navbar = ({ searchQuery = "", onSearchChange = () => {} }: NavbarPr
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b",
         "bg-background/80 backdrop-blur-xl border-primary/20", 
         "hover:bg-background/95 hover:border-primary/50 hover:shadow-[0_0_30px_-5px_rgba(var(--primary),0.2)]",
-        scrolled && "shadow-lg shadow-black/20"
+        scrolled && "shadow-lg shadow-gray-200/60"
       )}
     >
       <div className="container mx-auto px-4 h-20 flex items-center justify-between relative">
         
         {/* --- LEFT: LOGO --- */}
         <Link to="/" className="flex items-center gap-3 z-20 group">
-          <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-lg border border-white/10 group-hover:border-primary/50 transition-all duration-500">
+          <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-lg border border-black/10 group-hover:border-primary/50 transition-all duration-500">
             <img 
               src="https://firebasestorage.googleapis.com/v0/b/sochai-2025.firebasestorage.app/o/website-assets%2Fsochailogo.jpg?alt=media&token=3fda20fa-6dcd-41cc-b898-7b0e3f3c1ca7" 
               alt="Soch AI Logo" 
@@ -684,7 +684,7 @@ export const Navbar = ({ searchQuery = "", onSearchChange = () => {} }: NavbarPr
 
         {/* --- CENTER: NAVIGATION (Desktop Only) --- */}
         <div className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-          <nav className="flex items-center p-1.5 gap-1 bg-black/40 border border-white/10 rounded-full shadow-inner ring-1 ring-white/5">
+          <nav className="flex items-center p-1.5 gap-1 bg-gray-100/80 border border-black/8 rounded-full shadow-inner ring-1 ring-black/5">
             <NavLink to="/explorer">Explorer</NavLink>
             <NavLink to="/categories">Categories</NavLink>
             <NavLink to="/soch-ai-apps">Soch AI Apps</NavLink>

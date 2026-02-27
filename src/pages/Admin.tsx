@@ -595,7 +595,7 @@ const handleTrendingUpdate = async (modelId: string) => {
   }, [activeTab]);
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar searchQuery="" onSearchChange={() => {}} />
       
       <main className="container mx-auto px-4 py-8 pt-24">
@@ -603,25 +603,25 @@ const handleTrendingUpdate = async (modelId: string) => {
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">
             Admin Dashboard
           </h1>
-          <div className="flex space-x-2 bg-gray-900 p-1 rounded-lg border border-gray-800">
+          <div className="flex space-x-2 bg-muted p-1 rounded-lg border border-border">
             <Button 
               variant={activeTab === 'models' ? 'default' : 'ghost'} 
               onClick={() => setActiveTab('models')}
-              className={activeTab === 'models' ? 'bg-gray-800' : 'hover:bg-gray-800 text-gray-400'}
+              className={activeTab === 'models' ? 'bg-card shadow-sm' : 'hover:bg-card text-muted-foreground'}
             >
               Models
             </Button>
             <Button 
               variant={activeTab === 'users' ? 'default' : 'ghost'} 
               onClick={() => setActiveTab('users')}
-              className={activeTab === 'users' ? 'bg-gray-800' : 'hover:bg-gray-800 text-gray-400'}
+              className={activeTab === 'users' ? 'bg-card shadow-sm' : 'hover:bg-card text-muted-foreground'}
             >
               Users
             </Button>
             <Button 
               variant={activeTab === 'inquiries' ? 'default' : 'ghost'} 
               onClick={() => setActiveTab('inquiries')}
-              className={activeTab === 'inquiries' ? 'bg-gray-800' : 'hover:bg-gray-800 text-gray-400'}
+              className={activeTab === 'inquiries' ? 'bg-card shadow-sm' : 'hover:bg-card text-muted-foreground'}
             >
               Inquiries
             </Button>
@@ -633,7 +633,7 @@ const handleTrendingUpdate = async (modelId: string) => {
           <div className="space-y-6">
             <div className="flex justify-end">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px] bg-gray-900 border-gray-800 text-white">
+                <SelectTrigger className="w-[180px] bg-card border-border text-foreground">
                   <SelectValue placeholder="Filter Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -647,20 +647,20 @@ const handleTrendingUpdate = async (modelId: string) => {
 
             {isLoading ? (
               <div className="space-y-4">
-                {[1, 2, 3].map((i) => <Skeleton key={i} className="h-48 w-full bg-gray-900 rounded-xl" />)}
+                {[1, 2, 3].map((i) => <Skeleton key={i} className="h-48 w-full bg-muted rounded-xl" />)}
               </div>
             ) : models.length === 0 ? (
-              <div className="text-center py-12 text-gray-500 bg-gray-900/50 rounded-xl border border-gray-800">
+              <div className="text-center py-12 text-muted-foreground bg-muted/50 rounded-xl border border-border">
                 No models found for this filter.
               </div>
             ) : (
               <div className="grid gap-6">
                 {models.map((model) => (
-                  <Card key={model._id} className="bg-gray-900 border-gray-800 text-gray-100 overflow-hidden">
-                    <CardHeader className="flex flex-row items-start justify-between pb-2 bg-black/20">
+                  <Card key={model._id} className="bg-card border-border text-foreground overflow-hidden">
+                    <CardHeader className="flex flex-row items-start justify-between pb-2 bg-muted/30">
                       <div>
                         <div className="flex items-center gap-3 flex-wrap">
-                          <CardTitle className="text-xl text-white">{model.name}</CardTitle>
+                          <CardTitle className="text-xl text-foreground">{model.name}</CardTitle>
                           <Badge variant={getStatusBadgeVariant(model.status)} className="capitalize">
                             {model.status}
                           </Badge>
@@ -668,10 +668,10 @@ const handleTrendingUpdate = async (modelId: string) => {
                           {model.isSponsored && <Badge variant="default" className="bg-orange-600/20 text-orange-500 border-orange-600/50">Sponsored</Badge>}
                           {model.hasCustomCampaign && <Badge variant="default" className="bg-blue-600/20 text-blue-500 border-blue-600/50">Campaign</Badge>}
                         </div>
-                        <CardDescription className="mt-1 text-gray-400">{model.shortDescription}</CardDescription>
+                        <CardDescription className="mt-1 text-muted-foreground">{model.shortDescription}</CardDescription>
                       </div>
                       {model.externalUrl && (
-                        <a href={model.externalUrl} target="_blank" rel="noreferrer" className="text-gray-500 hover:text-white transition-colors">
+                        <a href={model.externalUrl} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
                           <ExternalLink className="h-5 w-5" />
                         </a>
                       )}
@@ -679,24 +679,24 @@ const handleTrendingUpdate = async (modelId: string) => {
 
                     <CardContent className="space-y-6 p-6">
                       {/* Meta Info */}
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-400">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-2"><UserIcon className="w-4 h-4"/> {model.uploadedBy?.firstName || 'Unknown'}</div>
                         <div className="flex items-center gap-2 capitalize"><Tag className="w-4 h-4"/> {model.category}</div>
                         <div className="flex items-center gap-2"><Calendar className="w-4 h-4"/> {formatDate(model.createdAt)}</div>
-                        <div className="flex items-center gap-2"><Badge variant="outline" className="border-gray-700 bg-gray-950">{model.pricing}</Badge></div>
+                        <div className="flex items-center gap-2"><Badge variant="outline" className="border-border bg-muted">{model.pricing}</Badge></div>
                       </div>
 
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Approval Controls */}
-                        <div className="p-4 bg-black/40 rounded-lg border border-gray-800 space-y-4">
-                            <h4 className="text-sm font-semibold text-gray-300">Review Action</h4>
+                        <div className="p-4 bg-muted/40 rounded-lg border border-border space-y-4">
+                            <h4 className="text-sm font-semibold text-foreground">Review Action</h4>
                             <div className="flex items-center gap-4">
                               <Select 
                                 value={model.status} 
                                 onValueChange={(val: any) => handleStatusUpdate(model._id, val)}
                                 disabled={updatingModel === model._id}
                               >
-                                <SelectTrigger className="w-[140px] bg-gray-950 border-gray-700 h-9">
+                                <SelectTrigger className="w-[140px] bg-background border-border h-9">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -714,25 +714,25 @@ const handleTrendingUpdate = async (modelId: string) => {
                                 placeholder="Reason for rejection..." 
                                 value={rejectionReasons[model._id] || model.rejectionReason || ''}
                                 onChange={(e) => setRejectionReasons(prev => ({...prev, [model._id]: e.target.value}))}
-                                className="bg-gray-950 border-gray-700 text-sm"
+                                className="bg-background border-border text-sm"
                               />
                             )}
                         </div>
 
                         {/* Trending & Promotion Controls */}
-                        <div className="p-4 bg-black/40 rounded-lg border border-gray-800 space-y-4">
-                          <h4 className="text-sm font-semibold text-gray-300">Visibility & Promotions</h4>
+                        <div className="p-4 bg-muted/40 rounded-lg border border-border space-y-4">
+                          <h4 className="text-sm font-semibold text-foreground">Visibility & Promotions</h4>
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <label className="text-xs text-gray-500 block mb-1">Global Score</label>
-                              <Input type="number" className="bg-gray-950 border-gray-700 h-9" 
+                              <label className="text-xs text-muted-foreground block mb-1">Global Score</label>
+                              <Input type="number" className="bg-background border-border h-9" 
                                 value={trendingEdits[model._id]?.trendingScore ?? model.trendingScore ?? 0}
                                 onChange={(e) => setTrendingEdits(prev => ({...prev, [model._id]: {...prev[model._id], trendingScore: parseInt(e.target.value)}}))}
                               />
                             </div>
                             <div>
-                              <label className="text-xs text-gray-500 block mb-1">Category Score</label>
-                              <Input type="number" className="bg-gray-950 border-gray-700 h-9"
+                              <label className="text-xs text-muted-foreground block mb-1">Category Score</label>
+                              <Input type="number" className="bg-background border-border h-9"
                                 value={trendingEdits[model._id]?.categoryTrendingScore ?? model.categoryTrendingScore ?? 0}
                                 onChange={(e) => setTrendingEdits(prev => ({...prev, [model._id]: {...prev[model._id], categoryTrendingScore: parseInt(e.target.value)}}))}
                               />
@@ -746,21 +746,21 @@ const handleTrendingUpdate = async (modelId: string) => {
                                   checked={trendingEdits[model._id]?.featured ?? model.featured ?? false}
                                   onCheckedChange={(checked) => setTrendingEdits(prev => ({...prev, [model._id]: {...prev[model._id], featured: checked}}))}
                                 />
-                                <label className="text-sm text-gray-400">Featured</label>
+                                <label className="text-sm text-muted-foreground">Featured</label>
                              </div>
                              <div className="flex items-center gap-2">
                                 <Switch 
                                   checked={trendingEdits[model._id]?.isSponsored ?? model.isSponsored ?? false}
                                   onCheckedChange={(checked) => setTrendingEdits(prev => ({...prev, [model._id]: {...prev[model._id], isSponsored: checked}}))}
                                 />
-                                <label className="text-sm text-gray-400">Sponsored</label>
+                                <label className="text-sm text-muted-foreground">Sponsored</label>
                              </div>
                              <div className="flex items-center gap-2 col-span-2">
                                 <Switch 
                                   checked={trendingEdits[model._id]?.hasCustomCampaign ?? model.hasCustomCampaign ?? false}
                                   onCheckedChange={(checked) => setTrendingEdits(prev => ({...prev, [model._id]: {...prev[model._id], hasCustomCampaign: checked}}))}
                                 />
-                                <label className="text-sm text-gray-400">Custom Campaign (Banner)</label>
+                                <label className="text-sm text-muted-foreground">Custom Campaign (Banner)</label>
                              </div>
                           </div>
 
@@ -782,32 +782,32 @@ const handleTrendingUpdate = async (modelId: string) => {
         {/* --- USERS TAB --- */}
         {activeTab === 'users' && (
            <div className="space-y-6">
-             <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4 mb-6">
-                <p className="text-sm text-gray-400">Manage user subscriptions manually. "Pro" users can upload models.</p>
+             <div className="bg-muted/50 border border-border rounded-lg p-4 mb-6">
+                <p className="text-sm text-muted-foreground">Manage user subscriptions manually. "Pro" users can upload models.</p>
              </div>
              
-             {isUsersLoading ? <div className="space-y-4">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-24 w-full bg-gray-900 rounded-xl" />)}</div> : (
+             {isUsersLoading ? <div className="space-y-4">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-24 w-full bg-muted rounded-xl" />)}</div> : (
                <div className="grid gap-4">
                  {users.map(user => (
-                   <Card key={user.id} className="bg-gray-900 border-gray-800 text-gray-100">
+                   <Card key={user.id} className="bg-card border-border text-foreground">
                      <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 gap-4">
                        <div>
                          <div className="flex items-center gap-2">
-                            <h3 className="font-bold text-lg text-white">{user.firstName} {user.lastName}</h3>
+                            <h3 className="font-bold text-lg text-foreground">{user.firstName} {user.lastName}</h3>
                             {user.googleUid && <Badge variant="secondary" className="text-[10px] h-5">Google</Badge>}
                          </div>
-                         <p className="text-gray-400 text-sm">{user.email}</p>
+                         <p className="text-muted-foreground text-sm">{user.email}</p>
                          <div className="flex gap-2 mt-2">
-                           <Badge variant="outline" className="border-gray-700">{user.subscriptionType || 'free'}</Badge>
+                           <Badge variant="outline" className="border-border">{user.subscriptionType || 'free'}</Badge>
                            <Badge variant={user.isProUser ? 'default' : 'secondary'} className={user.isProUser ? 'bg-purple-900 text-purple-200 hover:bg-purple-800' : ''}>
                              {user.isProUser ? 'PRO STATUS' : 'FREE STATUS'}
                            </Badge>
                          </div>
                        </div>
-                       <div className="flex items-center gap-4 bg-black/20 p-3 rounded-lg border border-gray-800">
+                       <div className="flex items-center gap-4 bg-muted/30 p-3 rounded-lg border border-border">
                          <div className="text-right">
-                            <span className="block text-sm font-medium text-gray-300">Access Level</span>
-                            <span className="block text-xs text-gray-500">{user.isProUser ? 'Can Upload' : 'View Only'}</span>
+                            <span className="block text-sm font-medium text-foreground">Access Level</span>
+                            <span className="block text-xs text-muted-foreground">{user.isProUser ? 'Can Upload' : 'View Only'}</span>
                          </div>
                          <Switch 
                            checked={user.isProUser} 

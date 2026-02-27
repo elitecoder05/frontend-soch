@@ -226,7 +226,7 @@ export const MobileNav = () => {
   return (
     <div className="fixed bottom-6 left-0 right-0 z-50 md:hidden flex justify-center px-4">
       {/* Floating Capsule Container */}
-      <div className="flex items-center justify-between w-full max-w-sm h-16 px-2 bg-[#0f1117]/95 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl shadow-black/50">
+      <div className="flex items-center justify-between w-full max-w-sm h-16 px-2 bg-white/95 backdrop-blur-xl border border-black/10 rounded-full shadow-2xl shadow-gray-300/50">
         
         {/* 1. Home */}
         <NavItem to="/" icon={Home} label="Home" />

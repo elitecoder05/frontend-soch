@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 const PromoCard = ({ icon: Icon, title, desc, color }: any) => (
-  <Card className="group relative overflow-hidden border-white/10 bg-card/50 hover:bg-card hover:border-primary/50 transition-all duration-300 cursor-pointer p-6">
+  <Card className="group relative overflow-hidden border-border bg-card/50 hover:bg-card hover:border-primary/50 transition-all duration-300 cursor-pointer p-6">
     <div className={`absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity ${color}`}>
       <Icon className="w-24 h-24" />
     </div>
@@ -16,7 +16,7 @@ const PromoCard = ({ icon: Icon, title, desc, color }: any) => (
         <h3 className="text-lg font-bold">{title}</h3>
         <p className="text-sm text-muted-foreground mt-1">{desc}</p>
       </div>
-      <Button variant="outline" className="w-full mt-2 border-white/10 group-hover:bg-primary group-hover:text-white group-hover:border-primary">
+      <Button variant="outline" className="w-full mt-2 border-border group-hover:bg-primary group-hover:text-white group-hover:border-primary">
         Start Campaign <ChevronRight className="w-4 h-4 ml-1" />
       </Button>
     </div>

@@ -17,7 +17,7 @@ interface PromoCardProps {
 const PromoCard = ({ icon: Icon, title, desc, color, onClick, buttonText = "Get Started" }: PromoCardProps) => (
   <Card 
     onClick={onClick}
-    className="group relative overflow-hidden border-white/10 bg-card/50 hover:bg-card hover:border-primary/50 transition-all duration-300 cursor-pointer p-6 h-full flex flex-col justify-between"
+    className="group relative overflow-hidden border-border bg-card/50 hover:bg-card hover:border-primary/50 transition-all duration-300 cursor-pointer p-6 h-full flex flex-col justify-between"
   >
     {/* Decorative Background Icon */}
     <div className={`absolute -top-2 -right-2 p-3 opacity-10 group-hover:opacity-20 transition-opacity transform group-hover:scale-110 duration-500 ${color}`}>
@@ -31,14 +31,14 @@ const PromoCard = ({ icon: Icon, title, desc, color, onClick, buttonText = "Get 
       </div>
       
       {/* Text Content */}
-      <h3 className="text-lg font-bold text-white mb-2">{title}</h3>
-      <p className="text-sm text-gray-400 mb-6">{desc}</p>
+      <h3 className="text-lg font-bold text-foreground mb-2">{title}</h3>
+      <p className="text-sm text-muted-foreground mb-6">{desc}</p>
     </div>
 
     {/* Action Button */}
     <Button 
       variant="outline" 
-      className="w-full border-white/10 bg-transparent text-white group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all"
+      className="w-full border-border bg-transparent text-foreground group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all"
     >
       {buttonText} <ChevronRight className="w-4 h-4 ml-1" />
     </Button>
@@ -52,8 +52,8 @@ export const PromotionCards = () => {
     <div className="w-full space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-white">Creator Studio</h2>
-          <p className="text-gray-400">Manage your tools and grow your audience.</p>
+          <h2 className="text-2xl font-bold text-foreground">Creator Studio</h2>
+          <p className="text-muted-foreground">Manage your tools and grow your audience.</p>
         </div>
         <Badge variant="secondary" className="w-fit px-3 py-1 bg-purple-500/10 text-purple-400 border-purple-500/20">
           Ads Manager Beta

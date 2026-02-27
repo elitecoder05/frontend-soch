@@ -1396,7 +1396,7 @@ const Home = () => {
           </section>
 
           <section className="pb-8">
-            <div className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 border border-border rounded-3xl p-8 md:p-16 text-center relative overflow-hidden group hover:border-primary/30 transition-all shadow-2xl shadow-black/10">
+            <div className="bg-gradient-to-r from-[#005fcc] to-[#00aeef] border border-border rounded-3xl p-8 md:p-16 text-center relative overflow-hidden group hover:border-primary/30 transition-all shadow-2xl shadow-primary/10">
               <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-primary/10 rounded-full blur-[100px] group-hover:bg-primary/20 transition-colors duration-500"></div>
               <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 bg-blue-500/10 rounded-full blur-[100px] group-hover:bg-blue-500/20 transition-colors duration-500"></div>
               
@@ -1419,7 +1419,7 @@ const Home = () => {
                     size="lg" 
                     variant="outline" 
                     onClick={() => navigate('/contact')} 
-                    className="h-12 px-8 text-base border-white/20 text-white hover:bg-white/10 hover:text-white rounded-full"
+                    className="h-12 px-8 text-base border-white/30 text-white hover:bg-white/10 hover:text-white rounded-full"
                   >
                     Contact Us
                   </Button>
