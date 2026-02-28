@@ -1430,12 +1430,12 @@ const Home = () => {
         </div>
 
         {/* AdSense Ad */}
-        <section className="container mx-auto px-4 my-12">
+        <section className="container mx-auto px-4 my-4">
           <div className="max-w-4xl mx-auto">
             <AdSense 
               adSlot="1234567890"
               adFormat="horizontal"
-              style={{ display: 'block', textAlign: 'center', minHeight: '100px' }}
+              style={{ display: 'block', textAlign: 'center', minHeight: '50px' }}
             />
           </div>
         </section>

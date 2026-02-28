@@ -606,7 +606,7 @@ export const Signup = () => {
             </div>
             <CardTitle className="text-2xl font-bold text-foreground">Join Soch AI</CardTitle>
             <CardDescription className="text-muted-foreground">
-              Create your account to explore 120+ AI tools
+              Create your account to explore 1000+ AI tools
             </CardDescription>
           </CardHeader>
           
