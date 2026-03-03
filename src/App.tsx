@@ -38,6 +38,7 @@ import { GetFeaturedPage } from "./pages/GetFeaturedPage";
 import { PromotePage } from "./pages/PromotePage";
 import SochAIApps from "./pages/SochAIApps";
 import { SubmitToolLanding } from "./pages/SubmitToolLanding";
+import ScriptGeneratorPage from "../frontend-script/pages/ScriptGeneratorPage";
 // Components
 import { MobileNav } from "./components/MobileNav";
 
@@ -126,6 +127,7 @@ const App = () => (
             <Route path="/get-featured" element={<GetFeaturedPage />} />
             <Route path="/promote" element={<PromotePage />} />
             <Route path="/soch-ai-apps" element={<SochAIApps />} />
+            <Route path="/script-generator" element={<ScriptGeneratorPage />} />
             {/* Admin Route */}
             <Route path="/admin" element={ 
               <ProtectedRoute allowedRoles={['admin']}>
