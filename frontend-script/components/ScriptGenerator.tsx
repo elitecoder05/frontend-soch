@@ -1,9 +1,14 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Sparkles, Copy, Check, Loader2, Send, Settings2, X, ChevronDown
+  Sparkles, Copy, Check, Loader2, Send, Settings2, X,
+  Menu, Trash2, Clock
 } from "lucide-react";
-import { generateScript, type ScriptGenerationParams, type ScriptResult } from "../api/scriptGeneratorApi";
+import {
+  generateScript, saveScriptHistory, getScriptHistory, getScriptHistoryItem, deleteScriptHistory,
+  type ScriptGenerationParams, type ScriptResult, type ScriptHistoryItem
+} from "../api/scriptGeneratorApi";
+import Cookies from "js-cookie";
 
 // ─── Suggestion Chips ────────────────────────────────────────────
 const SUGGESTIONS = [
@@ -43,6 +48,34 @@ const CTA_OPTIONS = [
   "Follow for more", "Subscribe", "Comment", "Save", "custom"
 ] as const;
 
+// ─── Date grouping helper ────────────────────────────────────────
+const groupByDate = (items: ScriptHistoryItem[]) => {
+  const groups: { label: string; items: ScriptHistoryItem[] }[] = [];
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+  const weekAgo = new Date(today); weekAgo.setDate(today.getDate() - 7);
+
+  const todayItems: ScriptHistoryItem[] = [];
+  const yesterdayItems: ScriptHistoryItem[] = [];
+  const weekItems: ScriptHistoryItem[] = [];
+  const olderItems: ScriptHistoryItem[] = [];
+
+  items.forEach((item) => {
+    const d = new Date(item.createdAt);
+    if (d >= today) todayItems.push(item);
+    else if (d >= yesterday) yesterdayItems.push(item);
+    else if (d >= weekAgo) weekItems.push(item);
+    else olderItems.push(item);
+  });
+
+  if (todayItems.length) groups.push({ label: "Today", items: todayItems });
+  if (yesterdayItems.length) groups.push({ label: "Yesterday", items: yesterdayItems });
+  if (weekItems.length) groups.push({ label: "Previous 7 days", items: weekItems });
+  if (olderItems.length) groups.push({ label: "Older", items: olderItems });
+  return groups;
+};
+
 // ─── Main Component ──────────────────────────────────────────────
 const ScriptGenerator = () => {
   const [topic, setTopic] = useState("");
@@ -65,9 +98,30 @@ const ScriptGenerator = () => {
   const [copied, setCopied] = useState(false);
   const [lastTopic, setLastTopic] = useState("");
 
+  // History state
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [history, setHistory] = useState<ScriptHistoryItem[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [activeHistoryId, setActiveHistoryId] = useState<string | null>(null);
+
   const resultRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
+
+  const isLoggedIn = !!Cookies.get("authToken");
+
+  // Load history when sidebar opens
+  const loadHistory = useCallback(async () => {
+    if (!isLoggedIn) return;
+    setHistoryLoading(true);
+    const res = await getScriptHistory();
+    if (res.success && res.data) setHistory(res.data);
+    setHistoryLoading(false);
+  }, [isLoggedIn]);
+
+  useEffect(() => {
+    if (sidebarOpen && isLoggedIn) loadHistory();
+  }, [sidebarOpen, isLoggedIn, loadHistory]);
 
   // Close settings on outside click
   useEffect(() => {
@@ -88,6 +142,7 @@ const ScriptGenerator = () => {
     setError(null);
     setResult(null);
     setLastTopic(finalTopic);
+    setActiveHistoryId(null);
     if (customTopic) setTopic(customTopic);
     setShowSettings(false);
 
@@ -111,6 +166,13 @@ const ScriptGenerator = () => {
       if (response.success && response.data) {
         setResult(response.data);
         setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 300);
+
+        // Auto-save if logged in
+        if (isLoggedIn) {
+          saveScriptHistory(finalTopic, params, response.data).then((saveRes) => {
+            if (saveRes.success) loadHistory(); // Refresh sidebar
+          });
+        }
       } else {
         setError(response.error || "Something went wrong. Please try again.");
       }
@@ -118,6 +180,40 @@ const ScriptGenerator = () => {
       setError(err.message || "Connection failed.");
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleLoadHistory = async (item: ScriptHistoryItem) => {
+    setActiveHistoryId(item._id);
+    setLastTopic(item.topic);
+    setTopic("");
+    setError(null);
+
+    // If result is already present (from list), use it directly
+    if (item.result && item.result.hook && item.result.body) {
+      setResult(item.result);
+      setSidebarOpen(false);
+      return;
+    }
+
+    // Otherwise fetch full data
+    const res = await getScriptHistoryItem(item._id);
+    if (res.success && res.data?.result) {
+      setResult(res.data.result);
+    }
+    setSidebarOpen(false);
+  };
+
+  const handleDeleteHistory = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    const res = await deleteScriptHistory(id);
+    if (res.success) {
+      setHistory((prev) => prev.filter((h) => h._id !== id));
+      if (activeHistoryId === id) {
+        setResult(null);
+        setLastTopic("");
+        setActiveHistoryId(null);
+      }
     }
   };
 
@@ -141,6 +237,8 @@ const ScriptGenerator = () => {
     }
   };
 
+  const historyGroups = groupByDate(history);
+
   // ─── Styles ─────────────────────────────────────────────────
   const page: React.CSSProperties = {
     height: "100dvh",
@@ -149,7 +247,26 @@ const ScriptGenerator = () => {
     color: "#E5E5E5",
     fontFamily: "'Inter', -apple-system, system-ui, sans-serif",
     display: "flex",
+  };
+
+  const sidebarStyle: React.CSSProperties = {
+    width: 280,
+    height: "100dvh",
+    background: "#1A1A1A",
+    borderRight: "1px solid #262626",
+    display: "flex",
     flexDirection: "column",
+    flexShrink: 0,
+    overflowY: "auto",
+  };
+
+  const mainStyle: React.CSSProperties = {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    height: "100dvh",
+    overflowY: "auto",
+    position: "relative",
   };
 
   const container: React.CSSProperties = {
@@ -164,413 +281,550 @@ const ScriptGenerator = () => {
 
   return (
     <div style={page} className="custom-scrollbar">
-      <div style={container}>
-        {/* ─── Main content area ─────────────────────── */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: result || isGenerating || error ? "flex-start" : "center", paddingTop: result || isGenerating || error ? 48 : 0, paddingBottom: 140 }}>
-
-          {/* ─── Empty State ─────────────────────────── */}
-          {!result && !isGenerating && !error && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ textAlign: "center" }}>
-              <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 52, height: 52, borderRadius: 14, background: "rgba(139,92,246,0.12)", marginBottom: 24 }}>
-                <Sparkles style={{ width: 26, height: 26, color: "#A78BFA" }} />
+      {/* ─── Sidebar ─────────────────────────────── */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <>
+            {/* Mobile overlay */}
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setSidebarOpen(false)}
+              style={{
+                position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
+                zIndex: 20, display: "none",
+              }}
+              className="sidebar-overlay"
+            />
+            <motion.div
+              initial={{ x: -280, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -280, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              style={{ ...sidebarStyle, zIndex: 21, position: "fixed", left: 0, top: 0 }}
+              className="custom-scrollbar"
+            >
+              {/* Sidebar header */}
+              <div style={{
+                padding: "16px 16px 12px", display: "flex", alignItems: "center",
+                justifyContent: "space-between", borderBottom: "1px solid #262626",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <Clock style={{ width: 15, height: 15, color: "#737373" }} />
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "#A3A3A3" }}>History</span>
+                </div>
+                <button onClick={() => setSidebarOpen(false)} style={{
+                  background: "none", border: "none", cursor: "pointer", color: "#525252", padding: 4,
+                }}>
+                  <X style={{ width: 16, height: 16 }} />
+                </button>
               </div>
-              <h1 style={{ fontSize: 28, fontWeight: 700, margin: "0 0 10px", color: "#F5F5F5", letterSpacing: "-0.01em" }}>
-                What script do you need?
-              </h1>
-              <p style={{ fontSize: 15, color: "#737373", margin: "0 0 36px", lineHeight: 1.5 }}>
-                Describe your topic and get a ready-to-use video script instantly.
-              </p>
 
-              {/* Suggestion Chips */}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center" }}>
-                {SUGGESTIONS.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => handleGenerate(s)}
-                    style={{
-                      padding: "10px 18px",
-                      borderRadius: 20,
-                      border: "1px solid #303030",
-                      background: "transparent",
-                      color: "#A3A3A3",
-                      fontSize: 13,
-                      cursor: "pointer",
-                      transition: "all 0.15s",
-                      lineHeight: 1.3,
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#525252"; e.currentTarget.style.color = "#E5E5E5"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#303030"; e.currentTarget.style.color = "#A3A3A3"; }}
-                  >
-                    {s}
-                  </button>
+              {/* New script button */}
+              <div style={{ padding: "12px 12px 4px" }}>
+                <button onClick={() => {
+                  setResult(null); setLastTopic(""); setActiveHistoryId(null);
+                  setTopic(""); setError(null); setSidebarOpen(false);
+                }} style={{
+                  width: "100%", padding: "10px 14px", borderRadius: 10,
+                  border: "1px solid #303030", background: "transparent",
+                  color: "#A3A3A3", fontSize: 13, fontWeight: 500, cursor: "pointer",
+                  display: "flex", alignItems: "center", gap: 8,
+                  transition: "all 0.15s",
+                }}>
+                  <Sparkles style={{ width: 14, height: 14 }} />
+                  New Script
+                </button>
+              </div>
+
+              {/* History list */}
+              <div style={{ flex: 1, overflowY: "auto", padding: "8px 0" }} className="custom-scrollbar">
+                {!isLoggedIn && (
+                  <div style={{ padding: "20px 16px", textAlign: "center" }}>
+                    <p style={{ fontSize: 12, color: "#525252", lineHeight: 1.5 }}>
+                      Log in to save and access your script history.
+                    </p>
+                  </div>
+                )}
+
+                {isLoggedIn && historyLoading && (
+                  <div style={{ padding: "20px 16px", textAlign: "center" }}>
+                    <Loader2 style={{ width: 16, height: 16, color: "#525252", animation: "spin 1s linear infinite", margin: "0 auto" }} />
+                  </div>
+                )}
+
+                {isLoggedIn && !historyLoading && history.length === 0 && (
+                  <div style={{ padding: "20px 16px", textAlign: "center" }}>
+                    <p style={{ fontSize: 12, color: "#525252", lineHeight: 1.5 }}>
+                      No scripts yet. Generate your first one!
+                    </p>
+                  </div>
+                )}
+
+                {isLoggedIn && !historyLoading && historyGroups.map((group) => (
+                  <div key={group.label}>
+                    <div style={{ padding: "10px 16px 6px", fontSize: 11, fontWeight: 600, color: "#525252", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                      {group.label}
+                    </div>
+                    {group.items.map((item) => (
+                      <div
+                        key={item._id}
+                        onClick={() => handleLoadHistory(item)}
+                        style={{
+                          padding: "10px 16px", cursor: "pointer", display: "flex",
+                          alignItems: "center", justifyContent: "space-between", gap: 8,
+                          transition: "background 0.1s",
+                          background: activeHistoryId === item._id ? "rgba(124,58,237,0.1)" : "transparent",
+                          borderLeft: activeHistoryId === item._id ? "2px solid #7C3AED" : "2px solid transparent",
+                        }}
+                        onMouseEnter={(e) => { if (activeHistoryId !== item._id) e.currentTarget.style.background = "#222"; }}
+                        onMouseLeave={(e) => { if (activeHistoryId !== item._id) e.currentTarget.style.background = "transparent"; }}
+                      >
+                        <span style={{
+                          fontSize: 13, color: activeHistoryId === item._id ? "#C4B5FD" : "#A3A3A3",
+                          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                          flex: 1,
+                        }}>
+                          {item.topic}
+                        </span>
+                        <button
+                          onClick={(e) => handleDeleteHistory(e, item._id)}
+                          style={{
+                            background: "none", border: "none", cursor: "pointer",
+                            color: "#404040", padding: 4, flexShrink: 0, borderRadius: 6,
+                            transition: "color 0.15s",
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.color = "#EF4444"}
+                          onMouseLeave={(e) => e.currentTarget.style.color = "#404040"}
+                        >
+                          <Trash2 style={{ width: 13, height: 13 }} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 ))}
               </div>
             </motion.div>
-          )}
+          </>
+        )}
+      </AnimatePresence>
 
-          {/* ─── Loading ─────────────────────────────── */}
-          <AnimatePresence>
-            {isGenerating && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ marginBottom: 24 }}>
-                {/* User message */}
-                <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 20 }}>
-                  <div style={{ padding: "12px 18px", borderRadius: "18px 18px 4px 18px", background: "#2A2A2A", color: "#E5E5E5", fontSize: 14, maxWidth: "80%", lineHeight: 1.5 }}>
-                    {lastTopic}
-                  </div>
-                </div>
-                {/* AI typing */}
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ width: 32, height: 32, borderRadius: 10, background: "rgba(139,92,246,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <Sparkles style={{ width: 16, height: 16, color: "#A78BFA" }} />
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#737373", fontSize: 14 }}>
-                    <Loader2 style={{ width: 16, height: 16, animation: "spin 1s linear infinite" }} />
-                    Writing your script...
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* ─── Error ───────────────────────────────── */}
-          <AnimatePresence>
-            {error && !isGenerating && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                style={{ padding: "14px 18px", borderRadius: 14, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", marginBottom: 20 }}>
-                <div style={{ fontSize: 14, color: "#FCA5A5", lineHeight: 1.5 }}>{error}</div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* ─── Script Result ───────────────────────── */}
-          <AnimatePresence>
-            {result && !isGenerating && (
-              <motion.div ref={resultRef} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-                {/* User message bubble */}
-                <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 20 }}>
-                  <div style={{ padding: "12px 18px", borderRadius: "18px 18px 4px 18px", background: "#2A2A2A", color: "#E5E5E5", fontSize: 14, maxWidth: "80%", lineHeight: 1.5 }}>
-                    {lastTopic}
-                  </div>
-                </div>
-
-                {/* AI response */}
-                <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                  <div style={{ width: 32, height: 32, borderRadius: 10, background: "rgba(139,92,246,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
-                    <Sparkles style={{ width: 16, height: 16, color: "#A78BFA" }} />
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    {/* Script content */}
-                    <div style={{ fontSize: 14, color: "#D4D4D4", lineHeight: 1.8, whiteSpace: "pre-line" }}>
-                      <div style={{ fontWeight: 600, color: "#F5F5F5", fontSize: 16, marginBottom: 12 }}>
-                        {result.hook.text}
-                      </div>
-                      <div style={{ marginBottom: result.cta.included ? 16 : 0 }}>
-                        {result.body.text}
-                      </div>
-                      {result.cta.included && result.cta.text && (
-                        <div style={{ fontStyle: "italic", color: "#A78BFA", paddingTop: 4 }}>
-                          {result.cta.text}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Action bar */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 16, paddingTop: 12, borderTop: "1px solid #262626" }}>
-                      <button
-                        onClick={handleCopy}
-                        style={{
-                          display: "flex", alignItems: "center", gap: 6, padding: "6px 12px",
-                          borderRadius: 8, border: "1px solid #303030", background: "transparent",
-                          color: copied ? "#22C55E" : "#737373", fontSize: 12, cursor: "pointer",
-                          transition: "all 0.15s",
-                        }}
-                        onMouseEnter={(e) => { if (!copied) e.currentTarget.style.color = "#E5E5E5"; }}
-                        onMouseLeave={(e) => { if (!copied) e.currentTarget.style.color = "#737373"; }}
-                      >
-                        {copied ? <Check style={{ width: 13, height: 13 }} /> : <Copy style={{ width: 13, height: 13 }} />}
-                        {copied ? "Copied" : "Copy"}
-                      </button>
-                      <span style={{ fontSize: 11, color: "#525252", marginLeft: 8 }}>
-                        {result.metadata.wordCount} words · {result.metadata.estimatedDuration}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+      {/* ─── Main Content ────────────────────────── */}
+      <div style={mainStyle} className="custom-scrollbar">
+        {/* Top bar with menu button */}
+        <div style={{
+          position: "sticky", top: 0, zIndex: 5, padding: "12px 16px",
+          background: "rgba(23,23,23,0.85)", backdropFilter: "blur(10px)",
+          display: "flex", alignItems: "center", gap: 10,
+        }}>
+          <button onClick={() => setSidebarOpen(true)} style={{
+            width: 36, height: 36, borderRadius: 10, border: "none",
+            background: "transparent", color: "#525252", cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            transition: "color 0.15s",
+          }}
+            onMouseEnter={(e) => e.currentTarget.style.color = "#E5E5E5"}
+            onMouseLeave={(e) => e.currentTarget.style.color = "#525252"}
+          >
+            <Menu style={{ width: 20, height: 20 }} />
+          </button>
+          <span style={{ fontSize: 14, fontWeight: 600, color: "#525252" }}>Soch AI Script</span>
         </div>
 
-        {/* ─── Input Bar (fixed at bottom) ───────────── */}
-        <div style={{
-          position: "fixed", bottom: 0, left: 0, right: 0,
-          background: "linear-gradient(to top, #171717 70%, transparent)",
-          padding: "20px 20px 24px",
-          zIndex: 10,
-        }}>
-          <div style={{ maxWidth: 680, margin: "0 auto", position: "relative" }}>
-            {/* Settings Popover */}
-            <AnimatePresence>
-              {showSettings && (
-                <motion.div
-                  ref={settingsRef}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 8 }}
-                  transition={{ duration: 0.15 }}
-                  style={{
-                    position: "absolute", bottom: "100%", left: 0, right: 0,
-                    marginBottom: 8, padding: 20, borderRadius: 16,
-                    background: "#1E1E1E", border: "1px solid #303030",
-                    boxShadow: "0 8px 30px rgba(0,0,0,0.4)",
-                    maxHeight: "60vh", overflowY: "auto" as const,
-                  }}
-                  className="custom-scrollbar"
-                >
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
-                    <span style={{ fontSize: 14, fontWeight: 600, color: "#E5E5E5" }}>Settings</span>
-                    <button onClick={() => setShowSettings(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#737373", padding: 4 }}>
-                      <X style={{ width: 16, height: 16 }} />
-                    </button>
-                  </div>
+        <div style={container}>
+          {/* ─── Main content area ─────────────────────── */}
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: result || isGenerating || error ? "flex-start" : "center", paddingTop: result || isGenerating || error ? 16 : 0, paddingBottom: 140 }}>
 
-                  {/* Duration */}
-                  <div style={{ marginBottom: 16 }}>
-                    <div style={{ fontSize: 12, color: "#737373", marginBottom: 8, fontWeight: 500 }}>Duration</div>
-                    <div style={{ display: "flex", gap: 6 }}>
-                      {DURATIONS.map((d) => (
-                        <button key={d.value} onClick={() => setDuration(d.value)} style={{
-                          padding: "7px 14px", borderRadius: 8, fontSize: 13, cursor: "pointer",
-                          transition: "all 0.15s", fontWeight: 500,
-                          border: duration === d.value ? "1px solid #7C3AED" : "1px solid #303030",
-                          background: duration === d.value ? "rgba(124,58,237,0.12)" : "transparent",
-                          color: duration === d.value ? "#C4B5FD" : "#A3A3A3",
-                        }}>
-                          {d.label}
-                        </button>
-                      ))}
-                    </div>
-                    {duration === "custom" && (
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
-                        <input type="number" min={0.5} max={10} step={0.5} value={customDuration}
-                          onChange={(e) => setCustomDuration(parseFloat(e.target.value) || 1)}
-                          style={{
-                            width: 70, padding: "6px 10px", borderRadius: 8, fontSize: 13,
-                            background: "#262626", border: "1px solid #303030", color: "#E5E5E5", outline: "none",
-                          }} />
-                        <span style={{ fontSize: 12, color: "#737373" }}>minutes</span>
-                      </div>
-                    )}
-                  </div>
+            {/* ─── Empty State ─────────────────────────── */}
+            {!result && !isGenerating && !error && (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ textAlign: "center" }}>
+                <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 52, height: 52, borderRadius: 14, background: "rgba(139,92,246,0.12)", marginBottom: 24 }}>
+                  <Sparkles style={{ width: 26, height: 26, color: "#A78BFA" }} />
+                </div>
+                <h1 style={{ fontSize: 28, fontWeight: 700, margin: "0 0 10px", color: "#F5F5F5", letterSpacing: "-0.01em" }}>
+                  What script do you need?
+                </h1>
+                <p style={{ fontSize: 15, color: "#737373", margin: "0 0 36px", lineHeight: 1.5 }}>
+                  Describe your topic and get a ready-to-use video script instantly.
+                </p>
 
-                  {/* Language */}
-                  <div style={{ marginBottom: 16 }}>
-                    <div style={{ fontSize: 12, color: "#737373", marginBottom: 8, fontWeight: 500 }}>Language</div>
-                    <div style={{ display: "flex", gap: 6 }}>
-                      {LANGUAGES.map((l) => (
-                        <button key={l.value} onClick={() => setLanguage(l.value)} style={{
-                          padding: "7px 14px", borderRadius: 8, fontSize: 13, cursor: "pointer",
-                          transition: "all 0.15s", fontWeight: 500,
-                          border: language === l.value ? "1px solid #7C3AED" : "1px solid #303030",
-                          background: language === l.value ? "rgba(124,58,237,0.12)" : "transparent",
-                          color: language === l.value ? "#C4B5FD" : "#A3A3A3",
-                        }}>
-                          {l.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Tone */}
-                  <div style={{ marginBottom: 16 }}>
-                    <div style={{ fontSize: 12, color: "#737373", marginBottom: 8, fontWeight: 500 }}>Tone</div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                      {TONES.map((t) => (
-                        <button key={t} onClick={() => setTone(t)} style={{
-                          padding: "7px 14px", borderRadius: 8, fontSize: 13, cursor: "pointer",
-                          transition: "all 0.15s", fontWeight: 500,
-                          border: tone === t ? "1px solid #7C3AED" : "1px solid #303030",
-                          background: tone === t ? "rgba(124,58,237,0.12)" : "transparent",
-                          color: tone === t ? "#C4B5FD" : "#A3A3A3",
-                        }}>
-                          {t}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Audience */}
-                  <div style={{ marginBottom: 16 }}>
-                    <div style={{ fontSize: 12, color: "#737373", marginBottom: 8, fontWeight: 500 }}>Target Audience</div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                      {AUDIENCES.map((a) => (
-                        <button key={a.value} onClick={() => setAudience(a.value)} style={{
-                          padding: "7px 14px", borderRadius: 8, fontSize: 13, cursor: "pointer",
-                          transition: "all 0.15s", fontWeight: 500,
-                          border: audience === a.value ? "1px solid #7C3AED" : "1px solid #303030",
-                          background: audience === a.value ? "rgba(124,58,237,0.12)" : "transparent",
-                          color: audience === a.value ? "#C4B5FD" : "#A3A3A3",
-                        }}>
-                          {a.label}
-                        </button>
-                      ))}
-                    </div>
-                    {audience === "custom" && (
-                      <input type="text" value={customAudience} onChange={(e) => setCustomAudience(e.target.value)}
-                        placeholder="Describe your audience..."
-                        style={{
-                          width: "100%", marginTop: 8, padding: "8px 12px", borderRadius: 8, fontSize: 13,
-                          background: "#262626", border: "1px solid #303030", color: "#E5E5E5", outline: "none",
-                          boxSizing: "border-box" as const,
-                        }} />
-                    )}
-                  </div>
-
-                  {/* Emotional Intensity */}
-                  <div style={{ marginBottom: 16 }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                      <span style={{ fontSize: 12, color: "#737373", fontWeight: 500 }}>Emotional Intensity</span>
-                      <span style={{
-                        fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 10,
-                        background: `${INTENSITY_COLORS[emotionalIntensity]}20`,
-                        color: INTENSITY_COLORS[emotionalIntensity],
-                      }}>
-                        {emotionalIntensity} – {INTENSITY_LABELS[emotionalIntensity]}
-                      </span>
-                    </div>
-                    <input
-                      type="range" min={1} max={5} value={emotionalIntensity}
-                      onChange={(e) => setEmotionalIntensity(parseInt(e.target.value))}
+                {/* Suggestion Chips */}
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center" }}>
+                  {SUGGESTIONS.map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => handleGenerate(s)}
                       style={{
-                        width: "100%", height: 5, borderRadius: 3, appearance: "none" as any, cursor: "pointer",
-                        background: `linear-gradient(to right, ${INTENSITY_COLORS[emotionalIntensity]} ${((emotionalIntensity - 1) / 4) * 100}%, #303030 ${((emotionalIntensity - 1) / 4) * 100}%)`,
-                        outline: "none",
+                        padding: "10px 18px", borderRadius: 20,
+                        border: "1px solid #303030", background: "transparent",
+                        color: "#A3A3A3", fontSize: 13, cursor: "pointer",
+                        transition: "all 0.15s", lineHeight: 1.3,
                       }}
-                    />
-                    {emotionalIntensity === 5 && (
-                      <input type="text" value={customIntensity} onChange={(e) => setCustomIntensity(e.target.value)}
-                        placeholder="Describe your custom intensity..."
-                        style={{
-                          width: "100%", marginTop: 8, padding: "8px 12px", borderRadius: 8, fontSize: 13,
-                          background: "#262626", border: "1px solid #303030", color: "#E5E5E5", outline: "none",
-                          boxSizing: "border-box" as const,
-                        }} />
-                    )}
-                  </div>
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#525252"; e.currentTarget.style.color = "#E5E5E5"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#303030"; e.currentTarget.style.color = "#A3A3A3"; }}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
 
-                  {/* CTA */}
-                  <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: ctaEnabled ? 10 : 0 }}>
-                      <span style={{ fontSize: 12, color: "#737373", fontWeight: 500 }}>Call to Action</span>
-                      <button onClick={() => setCtaEnabled(!ctaEnabled)} style={{
-                        position: "relative" as const, width: 36, height: 20, borderRadius: 10, border: "none", cursor: "pointer",
-                        transition: "background 0.2s",
-                        background: ctaEnabled ? "#7C3AED" : "#303030",
-                      }}>
-                        <div style={{
-                          position: "absolute" as const, top: 2, width: 16, height: 16, borderRadius: 8,
-                          background: "#fff", transition: "left 0.2s", boxShadow: "0 1px 2px rgba(0,0,0,0.3)",
-                          left: ctaEnabled ? 18 : 2,
-                        }} />
-                      </button>
-                      <span style={{ fontSize: 11, color: "#525252" }}>{ctaEnabled ? "On" : "Off"}</span>
+            {/* ─── Loading ─────────────────────────────── */}
+            <AnimatePresence>
+              {isGenerating && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ marginBottom: 24 }}>
+                  <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 20 }}>
+                    <div style={{ padding: "12px 18px", borderRadius: "18px 18px 4px 18px", background: "#2A2A2A", color: "#E5E5E5", fontSize: 14, maxWidth: "80%", lineHeight: 1.5 }}>
+                      {lastTopic}
                     </div>
-                    {ctaEnabled && (
-                      <div>
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                          {CTA_OPTIONS.map((c) => (
-                            <button key={c} onClick={() => setCtaType(c)} style={{
-                              padding: "7px 14px", borderRadius: 8, fontSize: 13, cursor: "pointer",
-                              transition: "all 0.15s", fontWeight: 500,
-                              border: ctaType === c ? "1px solid #7C3AED" : "1px solid #303030",
-                              background: ctaType === c ? "rgba(124,58,237,0.12)" : "transparent",
-                              color: ctaType === c ? "#C4B5FD" : "#A3A3A3",
-                            }}>
-                              {c === "custom" ? "Custom" : c}
-                            </button>
-                          ))}
-                        </div>
-                        {ctaType === "custom" && (
-                          <input type="text" value={customCta} onChange={(e) => setCustomCta(e.target.value)}
-                            placeholder="Enter your custom CTA..."
-                            style={{
-                              width: "100%", marginTop: 8, padding: "8px 12px", borderRadius: 8, fontSize: 13,
-                              background: "#262626", border: "1px solid #303030", color: "#E5E5E5", outline: "none",
-                              boxSizing: "border-box" as const,
-                            }} />
-                        )}
-                      </div>
-                    )}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 10, background: "rgba(139,92,246,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Sparkles style={{ width: 16, height: 16, color: "#A78BFA" }} />
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#737373", fontSize: 14 }}>
+                      <Loader2 style={{ width: 16, height: 16, animation: "spin 1s linear infinite" }} />
+                      Writing your script...
+                    </div>
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* Input area */}
-            <div style={{
-              display: "flex", alignItems: "flex-end", gap: 8,
-              padding: "10px 10px 10px 16px", borderRadius: 16,
-              background: "#1E1E1E", border: "1px solid #303030",
-              transition: "border-color 0.15s",
-            }}>
-              <button
-                onClick={() => setShowSettings(!showSettings)}
-                style={{
-                  width: 36, height: 36, borderRadius: 10,
-                  border: "none", background: showSettings ? "rgba(124,58,237,0.15)" : "transparent",
-                  color: showSettings ? "#C4B5FD" : "#525252",
-                  cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                  transition: "all 0.15s", flexShrink: 0,
-                }}
-                title="Settings"
-              >
-                <Settings2 style={{ width: 18, height: 18 }} />
-              </button>
+            {/* ─── Error ───────────────────────────────── */}
+            <AnimatePresence>
+              {error && !isGenerating && (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                  style={{ padding: "14px 18px", borderRadius: 14, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", marginBottom: 20 }}>
+                  <div style={{ fontSize: 14, color: "#FCA5A5", lineHeight: 1.5 }}>{error}</div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-              <textarea
-                ref={inputRef}
-                className="custom-scrollbar"
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Describe your script topic..."
-                rows={1}
-                style={{
-                  flex: 1, border: "none", background: "transparent", color: "#E5E5E5",
-                  fontSize: 14, outline: "none", resize: "none", lineHeight: 1.5,
-                  padding: "8px 0", maxHeight: 120, fontFamily: "inherit",
-                }}
-                onInput={(e) => {
-                  const el = e.currentTarget;
-                  el.style.height = "auto";
-                  el.style.height = Math.min(el.scrollHeight, 120) + "px";
-                }}
-              />
+            {/* ─── Script Result ───────────────────────── */}
+            <AnimatePresence>
+              {result && !isGenerating && (
+                <motion.div ref={resultRef} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+                  <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 20 }}>
+                    <div style={{ padding: "12px 18px", borderRadius: "18px 18px 4px 18px", background: "#2A2A2A", color: "#E5E5E5", fontSize: 14, maxWidth: "80%", lineHeight: 1.5 }}>
+                      {lastTopic}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 10, background: "rgba(139,92,246,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
+                      <Sparkles style={{ width: 16, height: 16, color: "#A78BFA" }} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, color: "#D4D4D4", lineHeight: 1.8, whiteSpace: "pre-line" }}>
+                        <div style={{ fontWeight: 600, color: "#F5F5F5", fontSize: 16, marginBottom: 12 }}>
+                          {result.hook.text}
+                        </div>
+                        <div style={{ marginBottom: result.cta.included ? 16 : 0 }}>
+                          {result.body.text}
+                        </div>
+                        {result.cta.included && result.cta.text && (
+                          <div style={{ fontStyle: "italic", color: "#A78BFA", paddingTop: 4 }}>
+                            {result.cta.text}
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 16, paddingTop: 12, borderTop: "1px solid #262626" }}>
+                        <button
+                          onClick={handleCopy}
+                          style={{
+                            display: "flex", alignItems: "center", gap: 6, padding: "6px 12px",
+                            borderRadius: 8, border: "1px solid #303030", background: "transparent",
+                            color: copied ? "#22C55E" : "#737373", fontSize: 12, cursor: "pointer",
+                            transition: "all 0.15s",
+                          }}
+                          onMouseEnter={(e) => { if (!copied) e.currentTarget.style.color = "#E5E5E5"; }}
+                          onMouseLeave={(e) => { if (!copied) e.currentTarget.style.color = "#737373"; }}
+                        >
+                          {copied ? <Check style={{ width: 13, height: 13 }} /> : <Copy style={{ width: 13, height: 13 }} />}
+                          {copied ? "Copied" : "Copy"}
+                        </button>
+                        <span style={{ fontSize: 11, color: "#525252", marginLeft: 8 }}>
+                          {result.metadata.wordCount} words · {result.metadata.estimatedDuration}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
-              <motion.button
-                whileTap={{ scale: 0.92 }}
-                onClick={() => handleGenerate()}
-                disabled={!topic.trim() || isGenerating}
-                style={{
-                  width: 36, height: 36, borderRadius: 10,
-                  border: "none", cursor: topic.trim() && !isGenerating ? "pointer" : "default",
-                  background: topic.trim() && !isGenerating ? "#7C3AED" : "#303030",
-                  color: topic.trim() && !isGenerating ? "#fff" : "#525252",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  transition: "all 0.15s", flexShrink: 0,
-                }}
-              >
-                {isGenerating ? (
-                  <Loader2 style={{ width: 16, height: 16, animation: "spin 1s linear infinite" }} />
-                ) : (
-                  <Send style={{ width: 16, height: 16 }} />
+          {/* ─── Input Bar (fixed at bottom) ───────────── */}
+          <div style={{
+            position: "fixed", bottom: 0, left: 0, right: 0,
+            background: "linear-gradient(to top, #171717 70%, transparent)",
+            padding: "20px 20px 24px",
+            zIndex: 10,
+          }}>
+            <div style={{ maxWidth: 680, margin: "0 auto", position: "relative" }}>
+              {/* Settings Popover */}
+              <AnimatePresence>
+                {showSettings && (
+                  <motion.div
+                    ref={settingsRef}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 8 }}
+                    transition={{ duration: 0.15 }}
+                    style={{
+                      position: "absolute", bottom: "100%", left: 0, right: 0,
+                      marginBottom: 8, padding: 20, borderRadius: 16,
+                      background: "#1E1E1E", border: "1px solid #303030",
+                      boxShadow: "0 8px 30px rgba(0,0,0,0.4)",
+                      maxHeight: "60vh", overflowY: "auto" as const,
+                    }}
+                    className="custom-scrollbar"
+                  >
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: "#E5E5E5" }}>Settings</span>
+                      <button onClick={() => setShowSettings(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#737373", padding: 4 }}>
+                        <X style={{ width: 16, height: 16 }} />
+                      </button>
+                    </div>
+
+                    {/* Duration */}
+                    <div style={{ marginBottom: 16 }}>
+                      <div style={{ fontSize: 12, color: "#737373", marginBottom: 8, fontWeight: 500 }}>Duration</div>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        {DURATIONS.map((d) => (
+                          <button key={d.value} onClick={() => setDuration(d.value)} style={{
+                            padding: "7px 14px", borderRadius: 8, fontSize: 13, cursor: "pointer",
+                            transition: "all 0.15s", fontWeight: 500,
+                            border: duration === d.value ? "1px solid #7C3AED" : "1px solid #303030",
+                            background: duration === d.value ? "rgba(124,58,237,0.12)" : "transparent",
+                            color: duration === d.value ? "#C4B5FD" : "#A3A3A3",
+                          }}>
+                            {d.label}
+                          </button>
+                        ))}
+                      </div>
+                      {duration === "custom" && (
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
+                          <input type="number" min={0.5} max={10} step={0.5} value={customDuration}
+                            onChange={(e) => setCustomDuration(parseFloat(e.target.value) || 1)}
+                            style={{
+                              width: 70, padding: "6px 10px", borderRadius: 8, fontSize: 13,
+                              background: "#262626", border: "1px solid #303030", color: "#E5E5E5", outline: "none",
+                            }} />
+                          <span style={{ fontSize: 12, color: "#737373" }}>minutes</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Language */}
+                    <div style={{ marginBottom: 16 }}>
+                      <div style={{ fontSize: 12, color: "#737373", marginBottom: 8, fontWeight: 500 }}>Language</div>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        {LANGUAGES.map((l) => (
+                          <button key={l.value} onClick={() => setLanguage(l.value)} style={{
+                            padding: "7px 14px", borderRadius: 8, fontSize: 13, cursor: "pointer",
+                            transition: "all 0.15s", fontWeight: 500,
+                            border: language === l.value ? "1px solid #7C3AED" : "1px solid #303030",
+                            background: language === l.value ? "rgba(124,58,237,0.12)" : "transparent",
+                            color: language === l.value ? "#C4B5FD" : "#A3A3A3",
+                          }}>
+                            {l.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Tone */}
+                    <div style={{ marginBottom: 16 }}>
+                      <div style={{ fontSize: 12, color: "#737373", marginBottom: 8, fontWeight: 500 }}>Tone</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                        {TONES.map((t) => (
+                          <button key={t} onClick={() => setTone(t)} style={{
+                            padding: "7px 14px", borderRadius: 8, fontSize: 13, cursor: "pointer",
+                            transition: "all 0.15s", fontWeight: 500,
+                            border: tone === t ? "1px solid #7C3AED" : "1px solid #303030",
+                            background: tone === t ? "rgba(124,58,237,0.12)" : "transparent",
+                            color: tone === t ? "#C4B5FD" : "#A3A3A3",
+                          }}>
+                            {t}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Audience */}
+                    <div style={{ marginBottom: 16 }}>
+                      <div style={{ fontSize: 12, color: "#737373", marginBottom: 8, fontWeight: 500 }}>Target Audience</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                        {AUDIENCES.map((a) => (
+                          <button key={a.value} onClick={() => setAudience(a.value)} style={{
+                            padding: "7px 14px", borderRadius: 8, fontSize: 13, cursor: "pointer",
+                            transition: "all 0.15s", fontWeight: 500,
+                            border: audience === a.value ? "1px solid #7C3AED" : "1px solid #303030",
+                            background: audience === a.value ? "rgba(124,58,237,0.12)" : "transparent",
+                            color: audience === a.value ? "#C4B5FD" : "#A3A3A3",
+                          }}>
+                            {a.label}
+                          </button>
+                        ))}
+                      </div>
+                      {audience === "custom" && (
+                        <input type="text" value={customAudience} onChange={(e) => setCustomAudience(e.target.value)}
+                          placeholder="Describe your audience..."
+                          style={{
+                            width: "100%", marginTop: 8, padding: "8px 12px", borderRadius: 8, fontSize: 13,
+                            background: "#262626", border: "1px solid #303030", color: "#E5E5E5", outline: "none",
+                            boxSizing: "border-box" as const,
+                          }} />
+                      )}
+                    </div>
+
+                    {/* Emotional Intensity */}
+                    <div style={{ marginBottom: 16 }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                        <span style={{ fontSize: 12, color: "#737373", fontWeight: 500 }}>Emotional Intensity</span>
+                        <span style={{
+                          fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 10,
+                          background: `${INTENSITY_COLORS[emotionalIntensity]}20`,
+                          color: INTENSITY_COLORS[emotionalIntensity],
+                        }}>
+                          {emotionalIntensity} – {INTENSITY_LABELS[emotionalIntensity]}
+                        </span>
+                      </div>
+                      <input
+                        type="range" min={1} max={5} value={emotionalIntensity}
+                        onChange={(e) => setEmotionalIntensity(parseInt(e.target.value))}
+                        style={{
+                          width: "100%", height: 5, borderRadius: 3, appearance: "none" as any, cursor: "pointer",
+                          background: `linear-gradient(to right, ${INTENSITY_COLORS[emotionalIntensity]} ${((emotionalIntensity - 1) / 4) * 100}%, #303030 ${((emotionalIntensity - 1) / 4) * 100}%)`,
+                          outline: "none",
+                        }}
+                      />
+                      {emotionalIntensity === 5 && (
+                        <input type="text" value={customIntensity} onChange={(e) => setCustomIntensity(e.target.value)}
+                          placeholder="Describe your custom intensity..."
+                          style={{
+                            width: "100%", marginTop: 8, padding: "8px 12px", borderRadius: 8, fontSize: 13,
+                            background: "#262626", border: "1px solid #303030", color: "#E5E5E5", outline: "none",
+                            boxSizing: "border-box" as const,
+                          }} />
+                      )}
+                    </div>
+
+                    {/* CTA */}
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: ctaEnabled ? 10 : 0 }}>
+                        <span style={{ fontSize: 12, color: "#737373", fontWeight: 500 }}>Call to Action</span>
+                        <button onClick={() => setCtaEnabled(!ctaEnabled)} style={{
+                          position: "relative" as const, width: 36, height: 20, borderRadius: 10, border: "none", cursor: "pointer",
+                          transition: "background 0.2s",
+                          background: ctaEnabled ? "#7C3AED" : "#303030",
+                        }}>
+                          <div style={{
+                            position: "absolute" as const, top: 2, width: 16, height: 16, borderRadius: 8,
+                            background: "#fff", transition: "left 0.2s", boxShadow: "0 1px 2px rgba(0,0,0,0.3)",
+                            left: ctaEnabled ? 18 : 2,
+                          }} />
+                        </button>
+                        <span style={{ fontSize: 11, color: "#525252" }}>{ctaEnabled ? "On" : "Off"}</span>
+                      </div>
+                      {ctaEnabled && (
+                        <div>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                            {CTA_OPTIONS.map((c) => (
+                              <button key={c} onClick={() => setCtaType(c)} style={{
+                                padding: "7px 14px", borderRadius: 8, fontSize: 13, cursor: "pointer",
+                                transition: "all 0.15s", fontWeight: 500,
+                                border: ctaType === c ? "1px solid #7C3AED" : "1px solid #303030",
+                                background: ctaType === c ? "rgba(124,58,237,0.12)" : "transparent",
+                                color: ctaType === c ? "##C4B5FD" : "#A3A3A3",
+                              }}>
+                                {c === "custom" ? "Custom" : c}
+                              </button>
+                            ))}
+                          </div>
+                          {ctaType === "custom" && (
+                            <input type="text" value={customCta} onChange={(e) => setCustomCta(e.target.value)}
+                              placeholder="Enter your custom CTA..."
+                              style={{
+                                width: "100%", marginTop: 8, padding: "8px 12px", borderRadius: 8, fontSize: 13,
+                                background: "#262626", border: "1px solid #303030", color: "#E5E5E5", outline: "none",
+                                boxSizing: "border-box" as const,
+                              }} />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
                 )}
-              </motion.button>
-            </div>
+              </AnimatePresence>
 
-            {/* Footer */}
-            <div style={{ textAlign: "center", marginTop: 10 }}>
-              <span style={{ fontSize: 11, color: "#404040" }}>Powered by Soch AI</span>
+              {/* Input area */}
+              <div style={{
+                display: "flex", alignItems: "flex-end", gap: 8,
+                padding: "10px 10px 10px 16px", borderRadius: 16,
+                background: "#1E1E1E", border: "1px solid #303030",
+                transition: "border-color 0.15s",
+              }}>
+                <button
+                  onClick={() => setShowSettings(!showSettings)}
+                  style={{
+                    width: 36, height: 36, borderRadius: 10,
+                    border: "none", background: showSettings ? "rgba(124,58,237,0.15)" : "transparent",
+                    color: showSettings ? "#C4B5FD" : "#525252",
+                    cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                    transition: "all 0.15s", flexShrink: 0,
+                  }}
+                  title="Settings"
+                >
+                  <Settings2 style={{ width: 18, height: 18 }} />
+                </button>
+
+                <textarea
+                  ref={inputRef}
+                  className="custom-scrollbar"
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Describe your script topic..."
+                  rows={1}
+                  style={{
+                    flex: 1, border: "none", background: "transparent", color: "#E5E5E5",
+                    fontSize: 14, outline: "none", resize: "none", lineHeight: 1.5,
+                    padding: "8px 0", maxHeight: 120, fontFamily: "inherit",
+                  }}
+                  onInput={(e) => {
+                    const el = e.currentTarget;
+                    el.style.height = "auto";
+                    el.style.height = Math.min(el.scrollHeight, 120) + "px";
+                  }}
+                />
+
+                <motion.button
+                  whileTap={{ scale: 0.92 }}
+                  onClick={() => handleGenerate()}
+                  disabled={!topic.trim() || isGenerating}
+                  style={{
+                    width: 36, height: 36, borderRadius: 10,
+                    border: "none", cursor: topic.trim() && !isGenerating ? "pointer" : "default",
+                    background: topic.trim() && !isGenerating ? "#7C3AED" : "#303030",
+                    color: topic.trim() && !isGenerating ? "#fff" : "#525252",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    transition: "all 0.15s", flexShrink: 0,
+                  }}
+                >
+                  {isGenerating ? (
+                    <Loader2 style={{ width: 16, height: 16, animation: "spin 1s linear infinite" }} />
+                  ) : (
+                    <Send style={{ width: 16, height: 16 }} />
+                  )}
+                </motion.button>
+              </div>
+
+              {/* Footer */}
+              <div style={{ textAlign: "center", marginTop: 10 }}>
+                <span style={{ fontSize: 11, color: "#404040" }}>Powered by Soch AI</span>
+              </div>
             </div>
           </div>
         </div>
@@ -593,6 +847,9 @@ const ScriptGenerator = () => {
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: #525252;
+        }
+        @media (max-width: 768px) {
+          .sidebar-overlay { display: block !important; }
         }
       `}</style>
     </div>

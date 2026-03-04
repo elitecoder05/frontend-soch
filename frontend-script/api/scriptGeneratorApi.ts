@@ -84,3 +84,92 @@ export const checkScriptGeneratorHealth = async (): Promise<boolean> => {
         return false;
     }
 };
+
+// ─── Script History API ─────────────────────────────────────────
+
+import Cookies from 'js-cookie';
+
+const getAuthHeaders = () => {
+    const token = Cookies.get('authToken');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+export interface ScriptHistoryItem {
+    _id: string;
+    topic: string;
+    result?: ScriptResult;
+    createdAt: string;
+}
+
+export interface ScriptHistoryListResponse {
+    success: boolean;
+    data?: ScriptHistoryItem[];
+    pagination?: { page: number; limit: number; total: number; totalPages: number };
+    error?: string;
+}
+
+export const saveScriptHistory = async (
+    topic: string,
+    params: Partial<ScriptGenerationParams>,
+    result: ScriptResult
+): Promise<{ success: boolean; error?: string }> => {
+    try {
+        const headers = getAuthHeaders();
+        if (!headers.Authorization) return { success: false, error: 'Not authenticated' };
+
+        const response = await axios.post(
+            `${API_BASE}/api/script-history/save`,
+            { topic, params, result },
+            { headers: { 'Content-Type': 'application/json', ...headers }, timeout: 10000 }
+        );
+        return response.data;
+    } catch {
+        return { success: false, error: 'Failed to save script.' };
+    }
+};
+
+export const getScriptHistory = async (page = 1): Promise<ScriptHistoryListResponse> => {
+    try {
+        const headers = getAuthHeaders();
+        if (!headers.Authorization) return { success: false, error: 'Not authenticated' };
+
+        const response = await axios.get(
+            `${API_BASE}/api/script-history?page=${page}&limit=30`,
+            { headers, timeout: 10000 }
+        );
+        return response.data;
+    } catch {
+        return { success: false, error: 'Failed to fetch history.' };
+    }
+};
+
+export const getScriptHistoryItem = async (id: string): Promise<{ success: boolean; data?: ScriptHistoryItem; error?: string }> => {
+    try {
+        const headers = getAuthHeaders();
+        if (!headers.Authorization) return { success: false, error: 'Not authenticated' };
+
+        const response = await axios.get(
+            `${API_BASE}/api/script-history/${id}`,
+            { headers, timeout: 10000 }
+        );
+        return response.data;
+    } catch {
+        return { success: false, error: 'Failed to fetch script.' };
+    }
+};
+
+export const deleteScriptHistory = async (id: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+        const headers = getAuthHeaders();
+        if (!headers.Authorization) return { success: false, error: 'Not authenticated' };
+
+        const response = await axios.delete(
+            `${API_BASE}/api/script-history/${id}`,
+            { headers, timeout: 10000 }
+        );
+        return response.data;
+    } catch {
+        return { success: false, error: 'Failed to delete script.' };
+    }
+};
+
