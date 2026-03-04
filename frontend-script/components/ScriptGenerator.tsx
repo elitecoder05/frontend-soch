@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import {
   generateScript, saveScriptHistory, getScriptHistory, getScriptHistoryItem, deleteScriptHistory,
+  regenerateSectionApi,
   type ScriptGenerationParams, type ScriptResult, type ScriptHistoryItem
 } from "../api/scriptGeneratorApi";
 import Cookies from "js-cookie";
@@ -76,6 +77,98 @@ const groupByDate = (items: ScriptHistoryItem[]) => {
   return groups;
 };
 
+// ─── Section Block Sub-component ───────────────────────────────
+interface SectionBlockProps {
+  label: string;
+  isRegenerating: boolean;
+  showInput: boolean;
+  instruction: string;
+  onInstructionChange: (v: string) => void;
+  onToggleInput: () => void;
+  onRegenerate: () => void;
+  canRegenerate: boolean;
+  children: React.ReactNode;
+}
+
+const SectionBlock = ({
+  label, isRegenerating, showInput, instruction,
+  onInstructionChange, onToggleInput, onRegenerate, canRegenerate, children
+}: SectionBlockProps) => (
+  <div style={{ marginBottom: 18, paddingBottom: 18, borderBottom: "1px solid #262626" }}>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+      <span style={{ fontSize: 10, fontWeight: 700, color: "#525252", textTransform: "uppercase", letterSpacing: 1 }}>
+        {label}
+      </span>
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <button
+          onClick={onToggleInput}
+          disabled={isRegenerating}
+          title="Add custom instruction"
+          style={{
+            padding: "3px 9px", borderRadius: 6, fontSize: 11, cursor: isRegenerating ? "default" : "pointer",
+            border: showInput ? "1px solid #7C3AED" : "1px solid #303030",
+            background: showInput ? "rgba(124,58,237,0.1)" : "transparent",
+            color: showInput ? "#C4B5FD" : "#525252",
+            transition: "all 0.15s",
+          }}
+        >
+          Edit prompt
+        </button>
+        <button
+          onClick={onRegenerate}
+          disabled={!canRegenerate || isRegenerating}
+          title={`Regenerate ${label}`}
+          style={{
+            display: "flex", alignItems: "center", gap: 5,
+            padding: "3px 10px", borderRadius: 6, fontSize: 11,
+            border: "1px solid #303030", background: "transparent",
+            color: isRegenerating ? "#A78BFA" : "#737373",
+            cursor: !canRegenerate || isRegenerating ? "default" : "pointer",
+            transition: "all 0.15s",
+          }}
+          onMouseEnter={(e) => { if (canRegenerate && !isRegenerating) e.currentTarget.style.color = "#E5E5E5"; }}
+          onMouseLeave={(e) => { if (!isRegenerating) e.currentTarget.style.color = "#737373"; }}
+        >
+          {isRegenerating ? (
+            <>
+              <span style={{ display: "inline-block", animation: "spin 1s linear infinite", fontSize: 11 }}>↻</span>
+              Regenerating…
+            </>
+          ) : "↻ Regenerate"}
+        </button>
+      </div>
+    </div>
+    {showInput && (
+      <div style={{ marginBottom: 8, display: "flex", gap: 6 }}>
+        <input
+          type="text"
+          value={instruction}
+          onChange={(e) => onInstructionChange(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); onRegenerate(); } }}
+          placeholder={`Specific instruction for ${label.toLowerCase()}... (optional)`}
+          style={{
+            flex: 1, padding: "7px 12px", borderRadius: 8, fontSize: 12,
+            background: "#262626", border: "1px solid #404040", color: "#E5E5E5",
+            outline: "none", fontFamily: "inherit",
+          }}
+        />
+        <button
+          onClick={onRegenerate}
+          disabled={!canRegenerate || isRegenerating}
+          style={{
+            padding: "7px 14px", borderRadius: 8, fontSize: 12,
+            border: "none", background: "#7C3AED", color: "#fff", cursor: "pointer",
+            transition: "opacity 0.15s", opacity: !canRegenerate ? 0.5 : 1,
+          }}
+        >
+          Go
+        </button>
+      </div>
+    )}
+    {children}
+  </div>
+);
+
 // ─── Main Component ──────────────────────────────────────────────
 const ScriptGenerator = () => {
   const [topic, setTopic] = useState("");
@@ -97,6 +190,16 @@ const ScriptGenerator = () => {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [lastTopic, setLastTopic] = useState("");
+  const [lastParams, setLastParams] = useState<Partial<ScriptGenerationParams>>({});
+
+  // Section regeneration state
+  const [regeneratingSection, setRegeneratingSection] = useState<'hook' | 'body' | 'cta' | null>(null);
+  const [sectionInstructions, setSectionInstructions] = useState<{ hook: string; body: string; cta: string }>({
+    hook: "", body: "", cta: ""
+  });
+  const [showSectionInput, setShowSectionInput] = useState<{ hook: boolean; body: boolean; cta: boolean }>({
+    hook: false, body: false, cta: false
+  });
 
   // History state
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -160,6 +263,7 @@ const ScriptGenerator = () => {
       ctaType: ctaEnabled ? ctaType : undefined,
       customCta: ctaEnabled && ctaType === "custom" ? customCta : undefined,
     };
+    setLastParams(params);
 
     try {
       const response = await generateScript(params);
@@ -215,6 +319,25 @@ const ScriptGenerator = () => {
         setActiveHistoryId(null);
       }
     }
+  };
+
+  const handleSectionRegenerate = async (section: 'hook' | 'body' | 'cta') => {
+    if (!result || regeneratingSection) return;
+    setRegeneratingSection(section);
+    const instruction = sectionInstructions[section];
+
+    const res = await regenerateSectionApi(section, lastParams, result, instruction);
+
+    if (res.success && res.data) {
+      setResult((prev) => {
+        if (!prev) return prev;
+        return { ...prev, ...res.data };
+      });
+      // Clear instruction after use
+      setSectionInstructions((prev) => ({ ...prev, [section]: "" }));
+      setShowSectionInput((prev) => ({ ...prev, [section]: false }));
+    }
+    setRegeneratingSection(null);
   };
 
   const handleCopy = async () => {
@@ -515,20 +638,61 @@ const ScriptGenerator = () => {
                       <Sparkles style={{ width: 16, height: 16, color: "#A78BFA" }} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, color: "#D4D4D4", lineHeight: 1.8, whiteSpace: "pre-line" }}>
-                        <div style={{ fontWeight: 600, color: "#F5F5F5", fontSize: 16, marginBottom: 12 }}>
+
+                      {/* Hook Section */}
+                      <SectionBlock
+                        label="Hook"
+                        isRegenerating={regeneratingSection === "hook"}
+                        showInput={showSectionInput.hook}
+                        instruction={sectionInstructions.hook}
+                        onInstructionChange={(v) => setSectionInstructions((p) => ({ ...p, hook: v }))}
+                        onToggleInput={() => setShowSectionInput((p) => ({ ...p, hook: !p.hook }))}
+                        onRegenerate={() => handleSectionRegenerate("hook")}
+                        canRegenerate={!regeneratingSection}
+                      >
+                        <div style={{ fontWeight: 600, color: "#F5F5F5", fontSize: 16, lineHeight: 1.8 }}>
                           {result.hook.text}
                         </div>
-                        <div style={{ marginBottom: result.cta.included ? 16 : 0 }}>
+                      </SectionBlock>
+
+                      {/* Body Section */}
+                      <SectionBlock
+                        label="Body"
+                        isRegenerating={regeneratingSection === "body"}
+                        showInput={showSectionInput.body}
+                        instruction={sectionInstructions.body}
+                        onInstructionChange={(v) => setSectionInstructions((p) => ({ ...p, body: v }))}
+                        onToggleInput={() => setShowSectionInput((p) => ({ ...p, body: !p.body }))}
+                        onRegenerate={() => handleSectionRegenerate("body")}
+                        canRegenerate={!regeneratingSection}
+                      >
+                        <div style={{ color: "#D4D4D4", fontSize: 14, lineHeight: 1.8, whiteSpace: "pre-line" }}>
                           {result.body.text}
                         </div>
-                        {result.cta.included && result.cta.text && (
-                          <div style={{ fontStyle: "italic", color: "#A78BFA", paddingTop: 4 }}>
+                      </SectionBlock>
+
+                      {/* CTA Section */}
+                      <SectionBlock
+                        label="CTA"
+                        isRegenerating={regeneratingSection === "cta"}
+                        showInput={showSectionInput.cta}
+                        instruction={sectionInstructions.cta}
+                        onInstructionChange={(v) => setSectionInstructions((p) => ({ ...p, cta: v }))}
+                        onToggleInput={() => setShowSectionInput((p) => ({ ...p, cta: !p.cta }))}
+                        onRegenerate={() => handleSectionRegenerate("cta")}
+                        canRegenerate={!regeneratingSection}
+                      >
+                        {result.cta.included && result.cta.text ? (
+                          <div style={{ fontStyle: "italic", color: "#A78BFA", fontSize: 14, lineHeight: 1.8 }}>
                             {result.cta.text}
                           </div>
+                        ) : (
+                          <div style={{ fontSize: 12, color: "#525252", fontStyle: "italic" }}>No CTA (disabled)</div>
                         )}
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 16, paddingTop: 12, borderTop: "1px solid #262626" }}>
+                      </SectionBlock>
+
+                      {/* Footer actions */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4, paddingTop: 12, borderTop: "1px solid #262626" }}>
                         <button
                           onClick={handleCopy}
                           style={{
@@ -541,7 +705,7 @@ const ScriptGenerator = () => {
                           onMouseLeave={(e) => { if (!copied) e.currentTarget.style.color = "#737373"; }}
                         >
                           {copied ? <Check style={{ width: 13, height: 13 }} /> : <Copy style={{ width: 13, height: 13 }} />}
-                          {copied ? "Copied" : "Copy"}
+                          {copied ? "Copied" : "Copy all"}
                         </button>
                         <span style={{ fontSize: 11, color: "#525252", marginLeft: 8 }}>
                           {result.metadata.wordCount} words · {result.metadata.estimatedDuration}
@@ -550,7 +714,7 @@ const ScriptGenerator = () => {
                     </div>
                   </div>
                 </motion.div>
-              )}
+            )}
             </AnimatePresence>
           </div>
 

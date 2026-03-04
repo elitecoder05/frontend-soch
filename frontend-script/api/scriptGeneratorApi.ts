@@ -173,3 +173,21 @@ export const deleteScriptHistory = async (id: string): Promise<{ success: boolea
     }
 };
 
+export const regenerateSectionApi = async (
+    section: 'hook' | 'body' | 'cta',
+    params: Partial<ScriptGenerationParams>,
+    currentScript: ScriptResult,
+    instruction?: string
+): Promise<{ success: boolean; data?: Partial<ScriptResult>; error?: string }> => {
+    try {
+        const response = await axios.post(
+            `${API_BASE}/api/script-generator/regenerate-section`,
+            { section, params, currentScript, instruction: instruction || '' },
+            { headers: { 'Content-Type': 'application/json' }, timeout: 60000 }
+        );
+        return response.data;
+    } catch (error: any) {
+        return { success: false, error: error.response?.data?.error || 'Failed to regenerate section.' };
+    }
+};
+
