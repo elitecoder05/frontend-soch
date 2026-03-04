@@ -91,6 +91,7 @@ const ScriptGenerator = () => {
   const [ctaEnabled, setCtaEnabled] = useState(false);
   const [ctaType, setCtaType] = useState("Follow for more");
   const [customCta, setCustomCta] = useState("");
+  const [referenceUrl, setReferenceUrl] = useState("");
   const [showSettings, setShowSettings] = useState(false);
 
   const [isGenerating, setIsGenerating] = useState(false);
@@ -113,6 +114,7 @@ const ScriptGenerator = () => {
   const [editCtaEnabled, setEditCtaEnabled] = useState(false);
   const [editCtaType, setEditCtaType] = useState("Follow for more");
   const [editCustomCta, setEditCustomCta] = useState("");
+  const [editReferenceUrl, setEditReferenceUrl] = useState("");
 
   // History state
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -187,6 +189,7 @@ const ScriptGenerator = () => {
       ctaEnabled,
       ctaType: ctaEnabled ? ctaType : undefined,
       customCta: ctaEnabled && ctaType === "custom" ? customCta : undefined,
+      referenceUrl: referenceUrl.trim() || undefined,
     };
     setLastParams(params);
 
@@ -259,6 +262,7 @@ const ScriptGenerator = () => {
     setEditCtaEnabled(ctaEnabled);
     setEditCtaType(ctaType);
     setEditCustomCta(customCta);
+    setEditReferenceUrl(referenceUrl);
     setShowEditPopup(true);
   };
 
@@ -276,6 +280,7 @@ const ScriptGenerator = () => {
     setCtaEnabled(editCtaEnabled);
     setCtaType(editCtaType);
     setCustomCta(editCustomCta);
+    setReferenceUrl(editReferenceUrl);
     setShowEditPopup(false);
 
     // Build params with edited values and regenerate
@@ -292,6 +297,7 @@ const ScriptGenerator = () => {
       ctaEnabled: editCtaEnabled,
       ctaType: editCtaEnabled ? editCtaType : undefined,
       customCta: editCtaEnabled && editCtaType === "custom" ? editCustomCta : undefined,
+      referenceUrl: editReferenceUrl.trim() || undefined,
     };
 
     setIsGenerating(true);
@@ -579,13 +585,32 @@ const ScriptGenerator = () => {
                       {lastTopic}
                     </div>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
                     <div style={{ width: 32, height: 32, borderRadius: 10, background: "rgba(139,92,246,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                       <Sparkles style={{ width: 16, height: 16, color: "#A78BFA" }} />
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#737373", fontSize: 14 }}>
-                      <Loader2 style={{ width: 16, height: 16, animation: "spin 1s linear infinite" }} />
-                      Writing your script...
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#737373", fontSize: 14, marginBottom: 12 }}>
+                        <Loader2 style={{ width: 16, height: 16, animation: "spin 1s linear infinite" }} />
+                        Writing your script...
+                      </div>
+                      {/* Theme tags */}
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                        {[
+                          { label: tone, color: "#7C3AED" },
+                          { label: language, color: "#6366F1" },
+                          { label: duration === "custom" ? `${customDuration}min` : duration === "30s" ? "30 sec" : "1 min", color: "#8B5CF6" },
+                          { label: audience === "custom" ? (customAudience || "Custom") : audience, color: "#A78BFA" },
+                          ...(referenceUrl ? [{ label: "🔗 Reference", color: "#EC4899" }] : []),
+                        ].map((tag, i) => (
+                          <span key={i} style={{
+                            fontSize: 11, fontWeight: 500, padding: "3px 10px", borderRadius: 20,
+                            background: `${tag.color}15`, color: tag.color, border: `1px solid ${tag.color}30`,
+                          }}>
+                            {tag.label}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </motion.div>
@@ -830,6 +855,29 @@ const ScriptGenerator = () => {
                             </div>
 
                             {/* Save & Regenerate button */}
+
+                            {/* Reference URL in edit popup */}
+                            <div style={{ marginBottom: 20 }}>
+                              <div style={{ fontSize: 12, color: "#737373", marginBottom: 8, fontWeight: 500 }}>Reference Link <span style={{ fontSize: 10, color: "#525252", fontWeight: 400 }}>(optional)</span></div>
+                              <input
+                                type="url"
+                                value={editReferenceUrl}
+                                onChange={(e) => setEditReferenceUrl(e.target.value)}
+                                placeholder="Paste a reel or video link for inspiration..."
+                                style={{
+                                  width: "100%", padding: "9px 12px", borderRadius: 8, fontSize: 13,
+                                  background: "#262626", border: "1px solid #303030", color: "#E5E5E5",
+                                  outline: "none", boxSizing: "border-box" as const, fontFamily: "inherit",
+                                }}
+                              />
+                              {editReferenceUrl && (
+                                <div style={{ fontSize: 10, color: "#525252", marginTop: 4 }}>
+                                  AI will draw tonal and structural inspiration from this link
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Save & Regenerate button */}
                             <motion.button
                               whileTap={{ scale: 0.96 }}
                               onClick={handleSaveAndRegenerate}
@@ -1056,6 +1104,28 @@ const ScriptGenerator = () => {
                         </div>
                       )}
                     </div>
+
+                    {/* Reference URL in bottom settings */}
+                    <div style={{ marginBottom: 4 }}>
+                      <div style={{ fontSize: 12, color: "#737373", marginBottom: 8, fontWeight: 500 }}>Reference Link <span style={{ fontSize: 10, color: "#525252", fontWeight: 400 }}>(optional)</span></div>
+                      <input
+                        type="url"
+                        value={referenceUrl}
+                        onChange={(e) => setReferenceUrl(e.target.value)}
+                        placeholder="Paste a reel or video link for inspiration..."
+                        style={{
+                          width: "100%", padding: "9px 12px", borderRadius: 8, fontSize: 13,
+                          background: "#262626", border: "1px solid #303030", color: "#E5E5E5",
+                          outline: "none", boxSizing: "border-box" as const, fontFamily: "inherit",
+                        }}
+                      />
+                      {referenceUrl && (
+                        <div style={{ fontSize: 10, color: "#525252", marginTop: 4 }}>
+                          AI will draw tonal and structural inspiration from this link
+                        </div>
+                      )}
+                    </div>
+
                   </motion.div>
                 )}
               </AnimatePresence>

@@ -15,6 +15,7 @@ export interface ScriptGenerationParams {
     ctaEnabled: boolean;
     ctaType?: string;
     customCta?: string;
+    referenceUrl?: string;
 }
 
 export interface ScriptResult {
