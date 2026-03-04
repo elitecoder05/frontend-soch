@@ -6,7 +6,6 @@ import {
 } from "lucide-react";
 import {
   generateScript, saveScriptHistory, getScriptHistory, getScriptHistoryItem, deleteScriptHistory,
-  regenerateSectionApi,
   type ScriptGenerationParams, type ScriptResult, type ScriptHistoryItem
 } from "../api/scriptGeneratorApi";
 import Cookies from "js-cookie";
@@ -77,97 +76,6 @@ const groupByDate = (items: ScriptHistoryItem[]) => {
   return groups;
 };
 
-// ─── Section Block Sub-component ───────────────────────────────
-interface SectionBlockProps {
-  label: string;
-  isRegenerating: boolean;
-  showInput: boolean;
-  instruction: string;
-  onInstructionChange: (v: string) => void;
-  onToggleInput: () => void;
-  onRegenerate: () => void;
-  canRegenerate: boolean;
-  children: React.ReactNode;
-}
-
-const SectionBlock = ({
-  label, isRegenerating, showInput, instruction,
-  onInstructionChange, onToggleInput, onRegenerate, canRegenerate, children
-}: SectionBlockProps) => (
-  <div style={{ marginBottom: 18, paddingBottom: 18, borderBottom: "1px solid #262626" }}>
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-      <span style={{ fontSize: 10, fontWeight: 700, color: "#525252", textTransform: "uppercase", letterSpacing: 1 }}>
-        {label}
-      </span>
-      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-        <button
-          onClick={onToggleInput}
-          disabled={isRegenerating}
-          title="Add custom instruction"
-          style={{
-            padding: "3px 9px", borderRadius: 6, fontSize: 11, cursor: isRegenerating ? "default" : "pointer",
-            border: showInput ? "1px solid #7C3AED" : "1px solid #303030",
-            background: showInput ? "rgba(124,58,237,0.1)" : "transparent",
-            color: showInput ? "#C4B5FD" : "#525252",
-            transition: "all 0.15s",
-          }}
-        >
-          Edit prompt
-        </button>
-        <button
-          onClick={onRegenerate}
-          disabled={!canRegenerate || isRegenerating}
-          title={`Regenerate ${label}`}
-          style={{
-            display: "flex", alignItems: "center", gap: 5,
-            padding: "3px 10px", borderRadius: 6, fontSize: 11,
-            border: "1px solid #303030", background: "transparent",
-            color: isRegenerating ? "#A78BFA" : "#737373",
-            cursor: !canRegenerate || isRegenerating ? "default" : "pointer",
-            transition: "all 0.15s",
-          }}
-          onMouseEnter={(e) => { if (canRegenerate && !isRegenerating) e.currentTarget.style.color = "#E5E5E5"; }}
-          onMouseLeave={(e) => { if (!isRegenerating) e.currentTarget.style.color = "#737373"; }}
-        >
-          {isRegenerating ? (
-            <>
-              <span style={{ display: "inline-block", animation: "spin 1s linear infinite", fontSize: 11 }}>↻</span>
-              Regenerating…
-            </>
-          ) : "↻ Regenerate"}
-        </button>
-      </div>
-    </div>
-    {showInput && (
-      <div style={{ marginBottom: 8, display: "flex", gap: 6 }}>
-        <input
-          type="text"
-          value={instruction}
-          onChange={(e) => onInstructionChange(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); onRegenerate(); } }}
-          placeholder={`Specific instruction for ${label.toLowerCase()}... (optional)`}
-          style={{
-            flex: 1, padding: "7px 12px", borderRadius: 8, fontSize: 12,
-            background: "#262626", border: "1px solid #404040", color: "#E5E5E5",
-            outline: "none", fontFamily: "inherit",
-          }}
-        />
-        <button
-          onClick={onRegenerate}
-          disabled={!canRegenerate || isRegenerating}
-          style={{
-            padding: "7px 14px", borderRadius: 8, fontSize: 12,
-            border: "none", background: "#7C3AED", color: "#fff", cursor: "pointer",
-            transition: "opacity 0.15s", opacity: !canRegenerate ? 0.5 : 1,
-          }}
-        >
-          Go
-        </button>
-      </div>
-    )}
-    {children}
-  </div>
-);
 
 // ─── Main Component ──────────────────────────────────────────────
 const ScriptGenerator = () => {
@@ -192,14 +100,19 @@ const ScriptGenerator = () => {
   const [lastTopic, setLastTopic] = useState("");
   const [lastParams, setLastParams] = useState<Partial<ScriptGenerationParams>>({});
 
-  // Section regeneration state
-  const [regeneratingSection, setRegeneratingSection] = useState<'hook' | 'body' | 'cta' | null>(null);
-  const [sectionInstructions, setSectionInstructions] = useState<{ hook: string; body: string; cta: string }>({
-    hook: "", body: "", cta: ""
-  });
-  const [showSectionInput, setShowSectionInput] = useState<{ hook: boolean; body: boolean; cta: boolean }>({
-    hook: false, body: false, cta: false
-  });
+  // Edit popup state
+  const [showEditPopup, setShowEditPopup] = useState(false);
+  const [editDuration, setEditDuration] = useState("1min");
+  const [editCustomDuration, setEditCustomDuration] = useState(2);
+  const [editLanguage, setEditLanguage] = useState("English");
+  const [editTone, setEditTone] = useState("Inspirational");
+  const [editAudience, setEditAudience] = useState("Creators");
+  const [editCustomAudience, setEditCustomAudience] = useState("");
+  const [editIntensity, setEditIntensity] = useState(3);
+  const [editCustomIntensity, setEditCustomIntensity] = useState("");
+  const [editCtaEnabled, setEditCtaEnabled] = useState(false);
+  const [editCtaType, setEditCtaType] = useState("Follow for more");
+  const [editCustomCta, setEditCustomCta] = useState("");
 
   // History state
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -210,6 +123,7 @@ const ScriptGenerator = () => {
   const resultRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
+  const editPopupRef = useRef<HTMLDivElement>(null);
 
   const isLoggedIn = !!Cookies.get("authToken");
 
@@ -236,6 +150,17 @@ const ScriptGenerator = () => {
     if (showSettings) document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, [showSettings]);
+
+  // Close edit popup on outside click
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (editPopupRef.current && !editPopupRef.current.contains(e.target as Node)) {
+        setShowEditPopup(false);
+      }
+    };
+    if (showEditPopup) document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [showEditPopup]);
 
   const handleGenerate = async (customTopic?: string) => {
     const finalTopic = (customTopic || topic).trim();
@@ -321,23 +246,76 @@ const ScriptGenerator = () => {
     }
   };
 
-  const handleSectionRegenerate = async (section: 'hook' | 'body' | 'cta') => {
-    if (!result || regeneratingSection) return;
-    setRegeneratingSection(section);
-    const instruction = sectionInstructions[section];
+  // Edit: open dedicated edit popup with current settings prefilled
+  const handleEdit = () => {
+    setEditDuration(duration);
+    setEditCustomDuration(customDuration);
+    setEditLanguage(language);
+    setEditTone(tone);
+    setEditAudience(audience);
+    setEditCustomAudience(customAudience);
+    setEditIntensity(emotionalIntensity);
+    setEditCustomIntensity(customIntensity);
+    setEditCtaEnabled(ctaEnabled);
+    setEditCtaType(ctaType);
+    setEditCustomCta(customCta);
+    setShowEditPopup(true);
+  };
 
-    const res = await regenerateSectionApi(section, lastParams, result, instruction);
+  // Save & Regenerate: apply edited settings, then regenerate with same topic
+  const handleSaveAndRegenerate = () => {
+    // Apply edits to main state
+    setDuration(editDuration);
+    setCustomDuration(editCustomDuration);
+    setLanguage(editLanguage);
+    setTone(editTone);
+    setAudience(editAudience);
+    setCustomAudience(editCustomAudience);
+    setEmotionalIntensity(editIntensity);
+    setCustomIntensity(editCustomIntensity);
+    setCtaEnabled(editCtaEnabled);
+    setCtaType(editCtaType);
+    setCustomCta(editCustomCta);
+    setShowEditPopup(false);
 
-    if (res.success && res.data) {
-      setResult((prev) => {
-        if (!prev) return prev;
-        return { ...prev, ...res.data };
-      });
-      // Clear instruction after use
-      setSectionInstructions((prev) => ({ ...prev, [section]: "" }));
-      setShowSectionInput((prev) => ({ ...prev, [section]: false }));
-    }
-    setRegeneratingSection(null);
+    // Build params with edited values and regenerate
+    const params: ScriptGenerationParams = {
+      topic: lastTopic,
+      duration: editDuration as "30s" | "1min" | "custom",
+      customDuration: editDuration === "custom" ? editCustomDuration : undefined,
+      language: editLanguage as "English" | "Hindi" | "Hinglish",
+      audience: editAudience as "Students" | "Entrepreneurs" | "Creators" | "custom",
+      customAudience: editAudience === "custom" ? editCustomAudience : undefined,
+      emotionalIntensity: editIntensity,
+      customIntensity: editIntensity === 5 ? editCustomIntensity : undefined,
+      tone: editTone,
+      ctaEnabled: editCtaEnabled,
+      ctaType: editCtaEnabled ? editCtaType : undefined,
+      customCta: editCtaEnabled && editCtaType === "custom" ? editCustomCta : undefined,
+    };
+
+    setIsGenerating(true);
+    setError(null);
+    setResult(null);
+    setLastParams(params);
+
+    generateScript(params).then((response) => {
+      if (response.success && response.data) {
+        setResult(response.data);
+        setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 300);
+        if (isLoggedIn) {
+          saveScriptHistory(lastTopic, params, response.data).then((saveRes) => {
+            if (saveRes.success) loadHistory();
+          });
+        }
+      } else {
+        setError(response.error || "Something went wrong.");
+      }
+      setIsGenerating(false);
+    }).catch((err: any) => {
+      setError(err.message || "Connection failed.");
+      setIsGenerating(false);
+    });
   };
 
   const handleCopy = async () => {
@@ -638,65 +616,55 @@ const ScriptGenerator = () => {
                       <Sparkles style={{ width: 16, height: 16, color: "#A78BFA" }} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-
-                      {/* Hook Section */}
-                      <SectionBlock
-                        label="Hook"
-                        isRegenerating={regeneratingSection === "hook"}
-                        showInput={showSectionInput.hook}
-                        instruction={sectionInstructions.hook}
-                        onInstructionChange={(v) => setSectionInstructions((p) => ({ ...p, hook: v }))}
-                        onToggleInput={() => setShowSectionInput((p) => ({ ...p, hook: !p.hook }))}
-                        onRegenerate={() => handleSectionRegenerate("hook")}
-                        canRegenerate={!regeneratingSection}
-                      >
-                        <div style={{ fontWeight: 600, color: "#F5F5F5", fontSize: 16, lineHeight: 1.8 }}>
+                      <div style={{ fontSize: 14, color: "#D4D4D4", lineHeight: 1.8, whiteSpace: "pre-line" }}>
+                        <div style={{ fontWeight: 600, color: "#F5F5F5", fontSize: 16, marginBottom: 12 }}>
                           {result.hook.text}
                         </div>
-                      </SectionBlock>
-
-                      {/* Body Section */}
-                      <SectionBlock
-                        label="Body"
-                        isRegenerating={regeneratingSection === "body"}
-                        showInput={showSectionInput.body}
-                        instruction={sectionInstructions.body}
-                        onInstructionChange={(v) => setSectionInstructions((p) => ({ ...p, body: v }))}
-                        onToggleInput={() => setShowSectionInput((p) => ({ ...p, body: !p.body }))}
-                        onRegenerate={() => handleSectionRegenerate("body")}
-                        canRegenerate={!regeneratingSection}
-                      >
-                        <div style={{ color: "#D4D4D4", fontSize: 14, lineHeight: 1.8, whiteSpace: "pre-line" }}>
+                        <div style={{ marginBottom: result.cta.included ? 16 : 0 }}>
                           {result.body.text}
                         </div>
-                      </SectionBlock>
-
-                      {/* CTA Section */}
-                      <SectionBlock
-                        label="CTA"
-                        isRegenerating={regeneratingSection === "cta"}
-                        showInput={showSectionInput.cta}
-                        instruction={sectionInstructions.cta}
-                        onInstructionChange={(v) => setSectionInstructions((p) => ({ ...p, cta: v }))}
-                        onToggleInput={() => setShowSectionInput((p) => ({ ...p, cta: !p.cta }))}
-                        onRegenerate={() => handleSectionRegenerate("cta")}
-                        canRegenerate={!regeneratingSection}
-                      >
-                        {result.cta.included && result.cta.text ? (
-                          <div style={{ fontStyle: "italic", color: "#A78BFA", fontSize: 14, lineHeight: 1.8 }}>
+                        {result.cta.included && result.cta.text && (
+                          <div style={{ fontStyle: "italic", color: "#A78BFA", paddingTop: 4 }}>
                             {result.cta.text}
                           </div>
-                        ) : (
-                          <div style={{ fontSize: 12, color: "#525252", fontStyle: "italic" }}>No CTA (disabled)</div>
                         )}
-                      </SectionBlock>
+                      </div>
 
-                      {/* Footer actions */}
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4, paddingTop: 12, borderTop: "1px solid #262626" }}>
+                      {/* Action buttons */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 16, paddingTop: 12, borderTop: "1px solid #262626", flexWrap: "wrap" }}>
+                        <button
+                          onClick={handleEdit}
+                          style={{
+                            display: "flex", alignItems: "center", gap: 6, padding: "6px 14px",
+                            borderRadius: 8, border: "1px solid #303030", background: "transparent",
+                            color: "#737373", fontSize: 12, cursor: "pointer",
+                            transition: "all 0.15s",
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.color = "#E5E5E5"}
+                          onMouseLeave={(e) => e.currentTarget.style.color = "#737373"}
+                        >
+                          <Settings2 style={{ width: 13, height: 13 }} />
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleGenerate(lastTopic)}
+                          disabled={isGenerating}
+                          style={{
+                            display: "flex", alignItems: "center", gap: 6, padding: "6px 14px",
+                            borderRadius: 8, border: "1px solid #303030", background: "transparent",
+                            color: "#737373", fontSize: 12, cursor: isGenerating ? "default" : "pointer",
+                            transition: "all 0.15s",
+                          }}
+                          onMouseEnter={(e) => { if (!isGenerating) e.currentTarget.style.color = "#E5E5E5"; }}
+                          onMouseLeave={(e) => { if (!isGenerating) e.currentTarget.style.color = "#737373"; }}
+                        >
+                          <Sparkles style={{ width: 13, height: 13 }} />
+                          Regenerate
+                        </button>
                         <button
                           onClick={handleCopy}
                           style={{
-                            display: "flex", alignItems: "center", gap: 6, padding: "6px 12px",
+                            display: "flex", alignItems: "center", gap: 6, padding: "6px 14px",
                             borderRadius: 8, border: "1px solid #303030", background: "transparent",
                             color: copied ? "#22C55E" : "#737373", fontSize: 12, cursor: "pointer",
                             transition: "all 0.15s",
@@ -705,12 +673,181 @@ const ScriptGenerator = () => {
                           onMouseLeave={(e) => { if (!copied) e.currentTarget.style.color = "#737373"; }}
                         >
                           {copied ? <Check style={{ width: 13, height: 13 }} /> : <Copy style={{ width: 13, height: 13 }} />}
-                          {copied ? "Copied" : "Copy all"}
+                          {copied ? "Copied" : "Copy"}
                         </button>
-                        <span style={{ fontSize: 11, color: "#525252", marginLeft: 8 }}>
+                        <span style={{ fontSize: 11, color: "#525252", marginLeft: 4 }}>
                           {result.metadata.wordCount} words · {result.metadata.estimatedDuration}
                         </span>
                       </div>
+
+                      {/* Edit Popup */}
+                      <AnimatePresence>
+                        {showEditPopup && (
+                          <motion.div
+                            ref={editPopupRef}
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 8 }}
+                            transition={{ duration: 0.15 }}
+                            style={{
+                              marginTop: 16, padding: 20, borderRadius: 16,
+                              background: "#1E1E1E", border: "1px solid #303030",
+                              boxShadow: "0 8px 30px rgba(0,0,0,0.4)",
+                              maxHeight: 400, overflowY: "auto" as const,
+                            }}
+                            className="custom-scrollbar"
+                          >
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
+                              <span style={{ fontSize: 14, fontWeight: 600, color: "#E5E5E5" }}>Edit Settings</span>
+                              <button onClick={() => setShowEditPopup(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#737373", padding: 4 }}>
+                                <X style={{ width: 16, height: 16 }} />
+                              </button>
+                            </div>
+
+                            {/* Duration */}
+                            <div style={{ marginBottom: 16 }}>
+                              <div style={{ fontSize: 12, color: "#737373", marginBottom: 8, fontWeight: 500 }}>Duration</div>
+                              <div style={{ display: "flex", gap: 6 }}>
+                                {DURATIONS.map((d) => (
+                                  <button key={d.value} onClick={() => setEditDuration(d.value)} style={{
+                                    padding: "7px 14px", borderRadius: 8, fontSize: 13, cursor: "pointer",
+                                    transition: "all 0.15s", fontWeight: 500,
+                                    border: editDuration === d.value ? "1px solid #7C3AED" : "1px solid #303030",
+                                    background: editDuration === d.value ? "rgba(124,58,237,0.12)" : "transparent",
+                                    color: editDuration === d.value ? "#C4B5FD" : "#A3A3A3",
+                                  }}>{d.label}</button>
+                                ))}
+                              </div>
+                              {editDuration === "custom" && (
+                                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
+                                  <input type="number" min={0.5} max={10} step={0.5} value={editCustomDuration}
+                                    onChange={(e) => setEditCustomDuration(parseFloat(e.target.value) || 1)}
+                                    style={{ width: 70, padding: "6px 10px", borderRadius: 8, fontSize: 13, background: "#262626", border: "1px solid #303030", color: "#E5E5E5", outline: "none" }} />
+                                  <span style={{ fontSize: 12, color: "#737373" }}>minutes</span>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Language */}
+                            <div style={{ marginBottom: 16 }}>
+                              <div style={{ fontSize: 12, color: "#737373", marginBottom: 8, fontWeight: 500 }}>Language</div>
+                              <div style={{ display: "flex", gap: 6 }}>
+                                {LANGUAGES.map((l) => (
+                                  <button key={l.value} onClick={() => setEditLanguage(l.value)} style={{
+                                    padding: "7px 14px", borderRadius: 8, fontSize: 13, cursor: "pointer",
+                                    transition: "all 0.15s", fontWeight: 500,
+                                    border: editLanguage === l.value ? "1px solid #7C3AED" : "1px solid #303030",
+                                    background: editLanguage === l.value ? "rgba(124,58,237,0.12)" : "transparent",
+                                    color: editLanguage === l.value ? "#C4B5FD" : "#A3A3A3",
+                                  }}>{l.label}</button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Tone */}
+                            <div style={{ marginBottom: 16 }}>
+                              <div style={{ fontSize: 12, color: "#737373", marginBottom: 8, fontWeight: 500 }}>Tone</div>
+                              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                                {TONES.map((t) => (
+                                  <button key={t} onClick={() => setEditTone(t)} style={{
+                                    padding: "7px 14px", borderRadius: 8, fontSize: 13, cursor: "pointer",
+                                    transition: "all 0.15s", fontWeight: 500,
+                                    border: editTone === t ? "1px solid #7C3AED" : "1px solid #303030",
+                                    background: editTone === t ? "rgba(124,58,237,0.12)" : "transparent",
+                                    color: editTone === t ? "#C4B5FD" : "#A3A3A3",
+                                  }}>{t}</button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Audience */}
+                            <div style={{ marginBottom: 16 }}>
+                              <div style={{ fontSize: 12, color: "#737373", marginBottom: 8, fontWeight: 500 }}>Target Audience</div>
+                              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                                {AUDIENCES.map((a) => (
+                                  <button key={a.value} onClick={() => setEditAudience(a.value)} style={{
+                                    padding: "7px 14px", borderRadius: 8, fontSize: 13, cursor: "pointer",
+                                    transition: "all 0.15s", fontWeight: 500,
+                                    border: editAudience === a.value ? "1px solid #7C3AED" : "1px solid #303030",
+                                    background: editAudience === a.value ? "rgba(124,58,237,0.12)" : "transparent",
+                                    color: editAudience === a.value ? "#C4B5FD" : "#A3A3A3",
+                                  }}>{a.label}</button>
+                                ))}
+                              </div>
+                              {editAudience === "custom" && (
+                                <input type="text" value={editCustomAudience} onChange={(e) => setEditCustomAudience(e.target.value)}
+                                  placeholder="Describe your audience..."
+                                  style={{ width: "100%", marginTop: 8, padding: "8px 12px", borderRadius: 8, fontSize: 13, background: "#262626", border: "1px solid #303030", color: "#E5E5E5", outline: "none", boxSizing: "border-box" as const }} />
+                              )}
+                            </div>
+
+                            {/* Emotional Intensity */}
+                            <div style={{ marginBottom: 16 }}>
+                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                                <span style={{ fontSize: 12, color: "#737373", fontWeight: 500 }}>Emotional Intensity</span>
+                                <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 10, background: `${INTENSITY_COLORS[editIntensity]}20`, color: INTENSITY_COLORS[editIntensity] }}>
+                                  {editIntensity} – {INTENSITY_LABELS[editIntensity]}
+                                </span>
+                              </div>
+                              <input type="range" min={1} max={5} value={editIntensity} onChange={(e) => setEditIntensity(parseInt(e.target.value))}
+                                style={{ width: "100%", height: 5, borderRadius: 3, appearance: "none" as any, cursor: "pointer", background: `linear-gradient(to right, ${INTENSITY_COLORS[editIntensity]} ${((editIntensity - 1) / 4) * 100}%, #303030 ${((editIntensity - 1) / 4) * 100}%)`, outline: "none" }} />
+                              {editIntensity === 5 && (
+                                <input type="text" value={editCustomIntensity} onChange={(e) => setEditCustomIntensity(e.target.value)}
+                                  placeholder="Describe your custom intensity..."
+                                  style={{ width: "100%", marginTop: 8, padding: "8px 12px", borderRadius: 8, fontSize: 13, background: "#262626", border: "1px solid #303030", color: "#E5E5E5", outline: "none", boxSizing: "border-box" as const }} />
+                              )}
+                            </div>
+
+                            {/* CTA */}
+                            <div style={{ marginBottom: 20 }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: editCtaEnabled ? 10 : 0 }}>
+                                <span style={{ fontSize: 12, color: "#737373", fontWeight: 500 }}>Call to Action</span>
+                                <button onClick={() => setEditCtaEnabled(!editCtaEnabled)} style={{ position: "relative" as const, width: 36, height: 20, borderRadius: 10, border: "none", cursor: "pointer", transition: "background 0.2s", background: editCtaEnabled ? "#7C3AED" : "#303030" }}>
+                                  <div style={{ position: "absolute" as const, top: 2, width: 16, height: 16, borderRadius: 8, background: "#fff", transition: "left 0.2s", boxShadow: "0 1px 2px rgba(0,0,0,0.3)", left: editCtaEnabled ? 18 : 2 }} />
+                                </button>
+                                <span style={{ fontSize: 11, color: "#525252" }}>{editCtaEnabled ? "On" : "Off"}</span>
+                              </div>
+                              {editCtaEnabled && (
+                                <div>
+                                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                                    {CTA_OPTIONS.map((c) => (
+                                      <button key={c} onClick={() => setEditCtaType(c)} style={{
+                                        padding: "7px 14px", borderRadius: 8, fontSize: 13, cursor: "pointer",
+                                        transition: "all 0.15s", fontWeight: 500,
+                                        border: editCtaType === c ? "1px solid #7C3AED" : "1px solid #303030",
+                                        background: editCtaType === c ? "rgba(124,58,237,0.12)" : "transparent",
+                                        color: editCtaType === c ? "#C4B5FD" : "#A3A3A3",
+                                      }}>{c === "custom" ? "Custom" : c}</button>
+                                    ))}
+                                  </div>
+                                  {editCtaType === "custom" && (
+                                    <input type="text" value={editCustomCta} onChange={(e) => setEditCustomCta(e.target.value)}
+                                      placeholder="Enter your custom CTA..."
+                                      style={{ width: "100%", marginTop: 8, padding: "8px 12px", borderRadius: 8, fontSize: 13, background: "#262626", border: "1px solid #303030", color: "#E5E5E5", outline: "none", boxSizing: "border-box" as const }} />
+                                  )}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Save & Regenerate button */}
+                            <motion.button
+                              whileTap={{ scale: 0.96 }}
+                              onClick={handleSaveAndRegenerate}
+                              style={{
+                                width: "100%", padding: "11px 0", borderRadius: 10,
+                                border: "none", background: "#7C3AED",
+                                color: "#fff", fontSize: 13, fontWeight: 600,
+                                cursor: "pointer", display: "flex",
+                                alignItems: "center", justifyContent: "center", gap: 8,
+                                transition: "opacity 0.15s",
+                              }}
+                            >
+                              <Sparkles style={{ width: 14, height: 14 }} />
+                              Save & Regenerate
+                            </motion.button>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   </div>
                 </motion.div>
