@@ -584,12 +584,12 @@ const ScriptGenerator = () => {
                       onClick={() => handleGenerate(s)}
                       style={{
                         padding: "10px 18px", borderRadius: 20,
-                        border: "1px solid #E5E7EB", background: "transparent",
-                        color: "#6B7280", fontSize: 13, cursor: "pointer",
+                        border: "1px solid #D1D5DB", background: "transparent",
+                        color: "#374151", fontSize: 13, cursor: "pointer",
                         transition: "all 0.15s", lineHeight: 1.3,
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#9CA3AF"; e.currentTarget.style.color = "#1A1A1A"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#E5E7EB"; e.currentTarget.style.color = "#6B7280"; }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#7C3AED"; e.currentTarget.style.color = "#111827"; e.currentTarget.style.background = "rgba(124,58,237,0.04)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#D1D5DB"; e.currentTarget.style.color = "#374151"; e.currentTarget.style.background = "transparent"; }}
                     >
                       {s}
                     </button>
@@ -1278,7 +1278,7 @@ const ScriptGenerator = () => {
 
               {/* Footer */}
               <div style={{ textAlign: "center", marginTop: 10 }}>
-                <span style={{ fontSize: 11, color: "#D1D5DB" }}>Powered by Soch AI</span>
+                <a href="/" style={{ fontSize: 11, color: "#9CA3AF", textDecoration: "none", transition: "color 0.15s" }} onMouseEnter={(e) => e.currentTarget.style.color = "#7C3AED"} onMouseLeave={(e) => e.currentTarget.style.color = "#9CA3AF"}>Powered by Soch AI</a>
               </div>
             </div>
           </div>
