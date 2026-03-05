@@ -4,9 +4,11 @@ import { Footer } from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Zap, Image as ImageIcon, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const SochAIApps = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
 
   const apps = [
     {
@@ -22,7 +24,8 @@ const SochAIApps = () => {
         "Customizable tone and style"
       ],
       badge: "Popular",
-      comingSoon: true
+      comingSoon: false,
+      href: "/script-generator"
     },
     {
       id: 2,
@@ -135,7 +138,7 @@ const SochAIApps = () => {
                     </div>
                   </div>
                 ) : (
-                  <Button className="w-full rounded-lg group/btn">
+                  <Button className="w-full rounded-lg group/btn" onClick={() => app.href ? navigate(app.href) : null}>
                     <span>Try Now</span>
                     <ArrowRight className="w-4 h-4 ml-2 group-hover/btn:translate-x-1 transition-transform" />
                   </Button>
