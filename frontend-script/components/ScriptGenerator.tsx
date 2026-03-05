@@ -1278,7 +1278,7 @@ const ScriptGenerator = () => {
 
               {/* Footer */}
               <div style={{ textAlign: "center", marginTop: 10 }}>
-                <a href="/" style={{ fontSize: 11, color: "#9CA3AF", textDecoration: "none", transition: "color 0.15s" }} onMouseEnter={(e) => e.currentTarget.style.color = "#7C3AED"} onMouseLeave={(e) => e.currentTarget.style.color = "#9CA3AF"}>Powered by Soch AI</a>
+                <a href="/" style={{ fontSize: 11, fontWeight: "bold", color: "#111827", textDecoration: "none", transition: "color 0.15s" }} onMouseEnter={(e) => e.currentTarget.style.color = "#7C3AED"} onMouseLeave={(e) => e.currentTarget.style.color = "#111827"}>Powered by Soch AI Store</a>
               </div>
             </div>
           </div>
