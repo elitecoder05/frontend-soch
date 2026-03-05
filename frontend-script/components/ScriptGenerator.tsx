@@ -556,7 +556,7 @@ const ScriptGenerator = () => {
           >
             <Menu style={{ width: 20, height: 20 }} />
           </button>
-          <span style={{ fontSize: 14, fontWeight: 600, color: "#9CA3AF" }}>Soch AI Script</span>
+          <span style={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>Soch AI Script</span>
         </div>
 
         <div style={container}>

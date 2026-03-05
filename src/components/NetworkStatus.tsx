@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { checkApiHealth, getNetworkDiagnostics, getApiBaseUrl, getConnectionDiagnostics, switchToWorkingEndpoint } from '@/api';
-import { WifiOff, RefreshCw, AlertTriangle, Info, CheckCircle, XCircle } from 'lucide-react';
+import { getNetworkDiagnostics, getConnectionDiagnostics, switchToWorkingEndpoint } from '@/api';
+import { WifiOff, RefreshCw } from 'lucide-react';
 
 interface NetworkStatusProps {
   onRetry?: () => void;
@@ -18,7 +18,6 @@ const NetworkStatus: React.FC<NetworkStatusProps> = ({ onRetry }) => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [apiReachable, setApiReachable] = useState(true);
   const [isChecking, setIsChecking] = useState(false);
-  const [showDiagnostics, setShowDiagnostics] = useState(false);
   const [diagnostics, setDiagnostics] = useState<DiagnosticInfo | null>(null);
   const [consecutiveFailures, setConsecutiveFailures] = useState(0);
 
@@ -117,55 +116,26 @@ const NetworkStatus: React.FC<NetworkStatusProps> = ({ onRetry }) => {
   const isSerious = consecutiveFailures >= 2;
 
   return (
-    <div className={`fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 ${isSerious ? 'bg-orange-50 border-orange-300' : 'bg-red-50 border-red-200'} border rounded-lg p-4 shadow-lg z-50`}>
+    <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80 bg-white border border-gray-200 rounded-xl p-4 shadow-2xl z-50 font-sans">
       <div className="flex items-start gap-3">
-        {isSerious ? (
-          <AlertTriangle className="h-5 w-5 text-orange-500 mt-0.5 flex-shrink-0" />
-        ) : (
-          <WifiOff className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
-        )}
+        <div className="bg-gray-100 p-2 rounded-full flex-shrink-0 mt-0.5">
+          <WifiOff className="h-4 w-4 text-gray-600" />
+        </div>
         <div className="flex-1">
-          <h4 className={`text-sm font-medium ${isSerious ? 'text-orange-800' : 'text-red-800'}`}>
-            {!isOnline ? 'No Internet Connection' : 'Server Unreachable'}
+          <h4 className="text-sm font-semibold text-gray-900">
+            {!isOnline ? 'No Internet Connection' : 'Connection Unstable'}
           </h4>
-          <p className={`text-xs ${isSerious ? 'text-orange-600' : 'text-red-600'} mt-1`}>
-            {!isOnline
-              ? 'Please check your internet connection and try again.'
-              : isSerious 
-                ? 'Persistent connection issues. This might be caused by your ISP or network. Try switching to mobile data or a different network.'
-                : 'Unable to connect to the server. This might be a temporary issue.'}
+          <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+            Please check your internet connection and try again.
           </p>
-          
-          {/* Diagnostic info toggle */}
-          {isOnline && diagnostics && (
-            <button
-              onClick={() => setShowDiagnostics(!showDiagnostics)}
-              className={`mt-2 inline-flex items-center gap-1 text-xs ${isSerious ? 'text-orange-600' : 'text-red-600'} hover:underline`}
-            >
-              <Info className="h-3 w-3" />
-              {showDiagnostics ? 'Hide' : 'Show'} details
-            </button>
-          )}
-          
-          {/* Diagnostic details */}
-          {showDiagnostics && diagnostics && (
-            <div className={`mt-2 p-2 ${isSerious ? 'bg-orange-100' : 'bg-red-100'} rounded text-xs space-y-1`}>
-              <p><strong>API Server:</strong> {getApiBaseUrl()}</p>
-              <p><strong>Latency:</strong> {diagnostics.latency ? `${diagnostics.latency}ms` : 'N/A'}</p>
-              <p><strong>Error:</strong> {diagnostics.error || 'Unknown'}</p>
-              <p className="mt-1 text-[10px] opacity-75">
-                If using Jio, Airtel, or similar ISP, try switching to mobile data or use a VPN.
-              </p>
-            </div>
-          )}
           
           <button
             onClick={() => checkApi()}
             disabled={isChecking}
-            className={`mt-2 inline-flex items-center gap-1.5 text-xs font-medium ${isSerious ? 'text-orange-700 hover:text-orange-800' : 'text-red-700 hover:text-red-800'} disabled:opacity-50`}
+            className="mt-3 w-full py-2 bg-gray-900 text-white rounded-lg text-xs font-medium hover:bg-gray-800 disabled:opacity-70 transition-colors flex items-center justify-center gap-2"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${isChecking ? 'animate-spin' : ''}`} />
-            {isChecking ? 'Checking...' : 'Try Again'}
+            {isChecking ? 'Connecting...' : 'Try Again'}
           </button>
         </div>
       </div>
