@@ -41,7 +41,7 @@ export const PromotionDashboard = () => {
         <PromoCard 
           icon={Star} 
           title="Get Featured" 
-          desc="Pin your tool to the top of the homepage. (₹50/day)"
+          desc="Pin your tool to the top of the homepage. ($1/day)"
           color="bg-yellow-500 text-yellow-500"
         />
         <PromoCard 
@@ -66,7 +66,7 @@ export const PromotionDashboard = () => {
             <p className="text-muted-foreground">Get 10x more clicks by featuring your tool on the homepage.</p>
           </div>
           <div className="text-right">
-            <span className="text-3xl font-bold text-primary">₹50</span>
+            <span className="text-3xl font-bold text-primary">$1</span>
             <span className="text-muted-foreground">/day</span>
             <div className="mt-2">
               <Button>Configure Ad</Button>

@@ -100,7 +100,7 @@ Goals: ${formData.goals}
                 </div>
                 <div>
                     <label className="text-sm font-medium mb-2 block">Budget</label>
-                    <Input value={formData.budget} onChange={e => setFormData({...formData, budget: e.target.value})} placeholder="e.g. ₹50,000" />
+                    <Input value={formData.budget} onChange={e => setFormData({...formData, budget: e.target.value})} placeholder="e.g. $10,000" />
                 </div>
                 <div>
                     <label className="text-sm font-medium mb-2 block">Goals</label>

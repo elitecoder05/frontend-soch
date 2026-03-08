@@ -630,7 +630,7 @@ export const GetFeaturedPage = () => {
           <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 text-center">
              <div className="p-4 rounded-xl bg-green-500/5 border border-green-500/20">
                 <h4 className="font-bold text-green-600 mb-1">Budget Friendly</h4>
-                <p className="text-sm text-muted-foreground">Start from just ₹50/day</p>
+                <p className="text-sm text-muted-foreground">Start from just $1/day</p>
              </div>
              <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/20">
                 <h4 className="font-bold text-blue-600 mb-1">Flexible Duration</h4>

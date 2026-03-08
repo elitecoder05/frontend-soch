@@ -447,7 +447,7 @@ import { AdminMessages } from './AdminMessages';
 const Admin = () => {
 
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'models' | 'users' | 'inquiries'>('models');
+  const [activeTab, setActiveTab] = useState<'models' | 'users' | 'inquiries' | 'pricing'>('models');
   
   // Models State
   const [models, setModels] = useState<Model[]>([]);
@@ -624,6 +624,13 @@ const handleTrendingUpdate = async (modelId: string) => {
               className={activeTab === 'inquiries' ? 'bg-card shadow-sm' : 'hover:bg-card text-muted-foreground'}
             >
               Inquiries
+            </Button>
+            <Button 
+              variant={activeTab === 'pricing' ? 'default' : 'ghost'} 
+              onClick={() => setActiveTab('pricing')}
+              className={activeTab === 'pricing' ? 'bg-card shadow-sm' : 'hover:bg-card text-muted-foreground'}
+            >
+              Pricing
             </Button>
           </div>
         </div>
@@ -826,6 +833,218 @@ const handleTrendingUpdate = async (modelId: string) => {
 
         {activeTab === 'inquiries' && (
             <AdminMessages />
+        )}
+
+        {/* --- PRICING TAB --- */}
+        {activeTab === 'pricing' && (
+          <div className="space-y-6">
+            <div className="flex flex-col md:flex-row justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-semibold text-foreground">Pricing Plan Management</h2>
+                <p className="text-muted-foreground">Manage Store and Script Generator pricing plans</p>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline">
+                  Add Store Plan
+                </Button>
+                <Button variant="outline">
+                  Add Script Plan
+                </Button>
+                <Button variant="default">
+                  Sync with Database
+                </Button>
+              </div>
+            </div>
+
+            {/* Store Plans */}
+            <Card className="bg-card border-border">
+              <CardHeader>
+                <CardTitle className="text-lg">Store Listing Plans</CardTitle>
+                <CardDescription>Plans for AI tool listing and discovery</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <Card className="border-border bg-muted/30">
+                      <CardHeader className="pb-3">
+                        <div className="flex justify-between items-start">
+                          <CardTitle className="text-base">Monthly</CardTitle>
+                          <Badge variant="secondary">Active</Badge>
+                        </div>
+                        <div className="text-2xl font-bold">$5</div>
+                        <p className="text-sm text-muted-foreground">per month</p>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <div className="text-sm space-y-1">
+                          <p>✓ 30 days listing</p>
+                          <p>✓ Basic analytics</p>
+                          <p>✓ 50-100 clicks</p>
+                        </div>
+                        <div className="flex gap-2 mt-4">
+                          <Button size="sm" variant="outline">Edit</Button>
+                          <Button size="sm" variant="ghost">Disable</Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-border bg-muted/30">
+                      <CardHeader className="pb-3">
+                        <div className="flex justify-between items-start">
+                          <CardTitle className="text-base">6 Months</CardTitle>
+                          <Badge variant="default">Popular</Badge>
+                        </div>
+                        <div className="text-2xl font-bold">$12</div>
+                        <p className="text-sm text-muted-foreground">6 months</p>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <div className="text-sm space-y-1">
+                          <p>✓ 6 months listing</p>
+                          <p>✓ Enhanced analytics</p>
+                          <p>✓ 700-3000+ clicks</p>
+                        </div>
+                        <div className="flex gap-2 mt-4">
+                          <Button size="sm" variant="outline">Edit</Button>
+                          <Button size="sm" variant="ghost">Disable</Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-border bg-muted/30">
+                      <CardHeader className="pb-3">
+                        <div className="flex justify-between items-start">
+                          <CardTitle className="text-base">Annual</CardTitle>
+                          <Badge variant="secondary">Active</Badge>
+                        </div>
+                        <div className="text-2xl font-bold">$20</div>
+                        <p className="text-sm text-muted-foreground">12 months</p>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <div className="text-sm space-y-1">
+                          <p>✓ 12 months listing</p>
+                          <p>✓ Advanced insights</p>
+                          <p>✓ 800-10,000+ clicks</p>
+                        </div>
+                        <div className="flex gap-2 mt-4">
+                          <Button size="sm" variant="outline">Edit</Button>
+                          <Button size="sm" variant="ghost">Disable</Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-border bg-muted/30">
+                      <CardHeader className="pb-3">
+                        <div className="flex justify-between items-start">
+                          <CardTitle className="text-base">Lifetime</CardTitle>
+                          <Badge variant="secondary">Limited</Badge>
+                        </div>
+                        <div className="text-2xl font-bold">$99</div>
+                        <p className="text-sm text-muted-foreground">one-time</p>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <div className="text-sm space-y-1">
+                          <p>✓ Lifetime access</p>
+                          <p>✓ Priority support</p>
+                          <p>✓ Pro badge</p>
+                        </div>
+                        <div className="flex gap-2 mt-4">
+                          <Button size="sm" variant="outline">Edit</Button>
+                          <Button size="sm" variant="ghost">Disable</Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Script Generator Plans */}
+            <Card className="bg-card border-border">
+              <CardHeader>
+                <CardTitle className="text-lg">Script Generator Plans</CardTitle>
+                <CardDescription>Plans for AI script generation service</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Card className="border-border bg-muted/30">
+                      <CardHeader className="pb-3">
+                        <div className="flex justify-between items-start">
+                          <CardTitle className="text-base">FREE</CardTitle>
+                          <Badge variant="secondary">Active</Badge>
+                        </div>
+                        <div className="text-2xl font-bold">$0</div>
+                        <p className="text-sm text-muted-foreground">per month</p>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <div className="text-sm space-y-1">
+                          <p>✓ 5 generations/month</p>
+                          <p>✓ Basic hook + body</p>
+                          <p>✓ Language selection</p>
+                          <p>✓ Save history</p>
+                        </div>
+                        <div className="flex gap-2 mt-4">
+                          <Button size="sm" variant="outline">Edit</Button>
+                          <Button size="sm" variant="ghost">Disable</Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-border bg-muted/30">
+                      <CardHeader className="pb-3">
+                        <div className="flex justify-between items-start">
+                          <CardTitle className="text-base">CREATOR</CardTitle>
+                          <Badge variant="default">Best Value</Badge>
+                        </div>
+                        <div className="text-2xl font-bold">$4</div>
+                        <p className="text-sm text-muted-foreground">launch price</p>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <div className="text-sm space-y-1">
+                          <p>✓ Unlimited generation</p>
+                          <p>✓ Hook, Body, CTA</p>
+                          <p>✓ Video analysis</p>
+                          <p>✓ Tone settings</p>
+                          <p>✓ Script editing</p>
+                        </div>
+                        <div className="flex gap-2 mt-4">
+                          <Button size="sm" variant="outline">Edit</Button>
+                          <Button size="sm" variant="ghost">Disable</Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Pricing Analytics */}
+            <Card className="bg-card border-border">
+              <CardHeader>
+                <CardTitle className="text-lg">Pricing Analytics</CardTitle>
+                <CardDescription>Revenue and subscription insights</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="p-4 bg-muted/30 rounded-lg text-center">
+                    <div className="text-2xl font-bold text-foreground">$2,450</div>
+                    <div className="text-sm text-muted-foreground">Monthly Revenue</div>
+                  </div>
+                  <div className="p-4 bg-muted/30 rounded-lg text-center">
+                    <div className="text-2xl font-bold text-foreground">186</div>
+                    <div className="text-sm text-muted-foreground">Active Subscriptions</div>
+                  </div>
+                  <div className="p-4 bg-muted/30 rounded-lg text-center">
+                    <div className="text-2xl font-bold text-foreground">24</div>
+                    <div className="text-sm text-muted-foreground">Script Subscriptions</div>
+                  </div>
+                  <div className="p-4 bg-muted/30 rounded-lg text-center">
+                    <div className="text-2xl font-bold text-foreground">162</div>
+                    <div className="text-sm text-muted-foreground">Store Subscriptions</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         )}
 
       </main>

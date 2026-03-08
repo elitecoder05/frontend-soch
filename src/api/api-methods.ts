@@ -658,3 +658,106 @@ export const adminAPI = {
     }
   }
 };
+// Pricing Plan API for dynamic pricing management
+export const pricingAPI = {
+  // Get all pricing plans
+  getAllPlans: async (): Promise<{ success: boolean; data: { plans: any[]; categories: { store: any[]; scriptGenerator: any[] } } }> => {
+    try {
+      const response = await apiClient.get('/api/payments/pricing-plans');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || 
+        error.message || 
+        'Failed to fetch pricing plans.'
+      );
+    }
+  },
+
+  // Get plans by category
+  getPlansByCategory: async (category: 'store' | 'script-generator'): Promise<{ success: boolean; data: { plans: any[] } }> => {
+    try {
+      const response = await apiClient.get(`/api/payments/pricing-plans?category=${category}`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || 
+        error.message || 
+        'Failed to fetch pricing plans by category.'
+      );
+    }
+  },
+
+  // Admin: Get all plans (including inactive)
+  getAdminPlans: async (category?: string): Promise<{ success: boolean; data: { plans: any[] } }> => {
+    try {
+      const url = category 
+        ? `/api/admin/pricing/plans/${category}?active=false`
+        : '/api/admin/pricing/plans?active=false';
+      const response = await apiClient.get(url);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || 
+        error.message || 
+        'Failed to fetch admin pricing plans.'
+      );
+    }
+  },
+
+  // Admin: Create new plan
+  createPlan: async (planData: any): Promise<{ success: boolean; message: string; data: { plan: any } }> => {
+    try {
+      const response = await apiClient.post('/api/admin/pricing/plans', planData);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || 
+        error.message || 
+        'Failed to create pricing plan.'
+      );
+    }
+  },
+
+  // Admin: Update plan
+  updatePlan: async (planId: string, planData: any): Promise<{ success: boolean; message: string; data: { plan: any } }> => {
+    try {
+      const response = await apiClient.put(`/api/admin/pricing/plans/${planId}`, planData);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || 
+        error.message || 
+        'Failed to update pricing plan.'
+      );
+    }
+  },
+
+  // Admin: Delete/disable plan
+  deletePlan: async (planId: string, permanent = false): Promise<{ success: boolean; message: string }> => {
+    try {
+      const response = await apiClient.delete(`/api/admin/pricing/plans/${planId}?permanent=${permanent}`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || 
+        error.message || 
+        'Failed to delete pricing plan.'
+      );
+    }
+  },
+
+  // Admin: Seed initial plans
+  seedPlans: async (): Promise<{ success: boolean; message: string; data: { plans: any[] } }> => {
+    try {
+      const response = await apiClient.post('/api/admin/pricing/seed');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || 
+        error.message || 
+        'Failed to seed pricing plans.'
+      );
+    }
+  }
+};

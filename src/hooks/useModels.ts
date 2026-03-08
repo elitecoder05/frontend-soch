@@ -5,7 +5,7 @@ import { modelsAPI, Model, AllModelsResponse } from '@/api/api-methods';
 export const modelKeys = {
   all: ['models'] as const,
   lists: () => [...modelKeys.all, 'list'] as const,
-  list: (params?: { category?: string; pricing?: string; limit?: number }) => 
+  list: (params?: { category?: string; pricing?: string; limit?: number }) =>
     [...modelKeys.lists(), params] as const,
   details: () => [...modelKeys.all, 'detail'] as const,
   detail: (id: string) => [...modelKeys.details(), id] as const,
@@ -17,12 +17,14 @@ export const useAllModels = (params?: {
   pricing?: string;
   search?: string;
   limit?: number;
+  page?: number;
   includePending?: string;
   randomize?: boolean;
-}) => {
+}, options?: { enabled?: boolean }) => {
   return useQuery<AllModelsResponse, Error>({
     queryKey: modelKeys.list(params),
     queryFn: () => modelsAPI.getAllModels(params),
+    enabled: options?.enabled !== undefined ? options.enabled : true,
     staleTime: params?.randomize ? 0 : 5 * 60 * 1000, // Don't cache randomized results, cache others for 5 min
     gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes (previously cacheTime)
     refetchOnWindowFocus: params?.randomize ? true : false, // Refetch randomized on focus for fresh results

@@ -72,7 +72,7 @@ const SubscriptionPlans = () => {
                       <div className="text-sm text-muted-foreground mt-1">
                         <span className="line-through">{plan.originalPrice}</span>
                         <span className="ml-2 text-green-600 font-medium">
-                          Save {Math.round(((parseInt(plan.originalPrice.replace('₹', '')) - parseInt(plan.price.replace('₹', ''))) / parseInt(plan.originalPrice.replace('₹', ''))) * 100)}%
+                          Save {Math.round(((parseInt(plan.originalPrice.replace('$', '')) - parseInt(plan.price.replace('$', ''))) / parseInt(plan.originalPrice.replace('$', ''))) * 100)}%
                         </span>
                       </div>
                     )}
@@ -100,7 +100,7 @@ const SubscriptionPlans = () => {
                     }`}
                     size="lg"
                   >
-                    {plan.price === '₹0' ? 'Start Free Trial' : 'Choose This Plan'}
+                    {plan.price === '$0' ? 'Start Free Trial' : 'Choose This Plan'}
                   </Button>
                 </CardContent>
               </Card>
