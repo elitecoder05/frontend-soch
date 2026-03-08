@@ -5,7 +5,7 @@ import {
   Menu, Trash2, Clock
 } from "lucide-react";
 import {
-  generateScript, saveScriptHistory, getScriptHistory, getScriptHistoryItem, deleteScriptHistory,
+  generateScript, saveScriptHistory, getScriptHistory, getScriptHistoryItem, deleteScriptHistory, regenerateSection,
   type ScriptGenerationParams, type ScriptResult, type ScriptHistoryItem
 } from "../api/scriptGeneratorApi";
 import Cookies from "js-cookie";
@@ -98,6 +98,7 @@ const ScriptGenerator = () => {
   const [generationStep, setGenerationStep] = useState(0);
   const [result, setResult] = useState<ScriptResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
   const [copied, setCopied] = useState(false);
   const [lastTopic, setLastTopic] = useState("");
   const [lastParams, setLastParams] = useState<Partial<ScriptGenerationParams>>({});
@@ -127,6 +128,10 @@ const ScriptGenerator = () => {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
   const editPopupRef = useRef<HTMLDivElement>(null);
+
+  // Individual section regeneration state
+  const [regeneratingSection, setRegeneratingSection] = useState<string | null>(null);
+  const [sectionAbortController, setSectionAbortController] = useState<AbortController | null>(null);
 
   const isLoggedIn = !!Cookies.get("authToken");
 
@@ -190,6 +195,10 @@ const ScriptGenerator = () => {
     const finalTopic = (customTopic || topic).trim();
     if (!finalTopic) return;
 
+    // Create abort controller for cancellation
+    const controller = new AbortController();
+    setAbortController(controller);
+
     setIsGenerating(true);
     setError(null);
     setResult(null);
@@ -216,7 +225,7 @@ const ScriptGenerator = () => {
     setLastParams(params);
 
     try {
-      const response = await generateScript(params);
+      const response = await generateScript(params, controller.signal);
       if (response.success && response.data) {
         setResult(response.data);
         setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 300);
@@ -231,9 +240,25 @@ const ScriptGenerator = () => {
         setError(response.error || "Something went wrong. Please try again.");
       }
     } catch (err: any) {
-      setError(err.message || "Connection failed.");
+      if (err.name === 'AbortError' || err.code === 'ERR_CANCELED') {
+        setError("Generation cancelled by user.");
+      } else {
+        setError(err.message || "Connection failed.");
+      }
     } finally {
       setIsGenerating(false);
+      setAbortController(null);
+    }
+  };
+
+  // Cancel generation
+  const handleCancel = () => {
+    if (abortController) {
+      abortController.abort();
+      setAbortController(null);
+      setIsGenerating(false);
+      setGenerationStep(0);
+      setError("Generation cancelled by user.");
     }
   };
 
@@ -286,6 +311,14 @@ const ScriptGenerator = () => {
     setEditCustomCta(customCta);
     setEditReferenceUrl(referenceUrl);
     setShowEditPopup(true);
+    
+    // Auto-scroll to edit popup
+    setTimeout(() => {
+      editPopupRef.current?.scrollIntoView({ 
+        behavior: "smooth", 
+        block: "start" 
+      });
+    }, 100);
   };
 
   // Save & Regenerate: apply edited settings, then regenerate with same topic
@@ -344,6 +377,63 @@ const ScriptGenerator = () => {
       setError(err.message || "Connection failed.");
       setIsGenerating(false);
     });
+  };
+
+  // Handle individual section regeneration
+  const handleRegenerateSection = async (section: 'hook' | 'body' | 'cta') => {
+    if (!result || !lastParams) return;
+
+    const controller = new AbortController();
+    setSectionAbortController(controller);
+    setRegeneratingSection(section);
+    setError(null);
+
+    try {
+      const response = await regenerateSection(section, lastParams, result, undefined, controller.signal);
+      
+      if (response.success && response.data) {
+        // Update the specific section in the result
+        setResult(prevResult => {
+          if (!prevResult) return prevResult;
+          return {
+            ...prevResult,
+            [section]: response.data[section]
+          };
+        });
+
+        // Auto-save if logged in
+        if (isLoggedIn && result) {
+          const updatedResult = {
+            ...result,
+            [section]: response.data[section]
+          };
+          saveScriptHistory(lastTopic, lastParams, updatedResult).then((saveRes) => {
+            if (saveRes.success) loadHistory();
+          });
+        }
+      } else {
+        setError(response.error || `Failed to regenerate ${section}. Please try again.`);
+      }
+    } catch (err: any) {
+      if (err.name === 'AbortError' || err.code === 'ERR_CANCELED') {
+        setError(`${section} regeneration cancelled by user.`);
+      } else {
+        setError(err.message || `Connection failed while regenerating ${section}.`);
+      }
+    } finally {
+      setRegeneratingSection(null);
+      setSectionAbortController(null);
+    }
+  };
+
+  // Cancel section regeneration
+  const handleCancelSectionRegeneration = () => {
+    if (sectionAbortController) {
+      sectionAbortController.abort();
+      setSectionAbortController(null);
+      setRegeneratingSection(null);
+      setError("Section regeneration cancelled by user.");
+    }
   };
 
   const handleCopy = async () => {
@@ -706,9 +796,42 @@ const ScriptGenerator = () => {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       {/* Hook Section */}
                       <div style={{ marginBottom: 16, padding: "14px 16px", borderRadius: 12, background: "#F9FAFB", border: "1px solid #E5E7EB" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-                          <div style={{ width: 6, height: 6, borderRadius: 3, background: "#7C3AED" }} />
-                          <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: 0.8, color: "#7C3AED" }}>Hook</span>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <div style={{ width: 6, height: 6, borderRadius: 3, background: "#7C3AED" }} />
+                            <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: 0.8, color: "#7C3AED" }}>Hook</span>
+                          </div>
+                          {regeneratingSection === 'hook' ? (
+                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <Loader2 style={{ width: 12, height: 12, color: "#7C3AED", animation: "spin 1s linear infinite" }} />
+                              <span style={{ fontSize: 10, color: "#7C3AED", fontWeight: 500 }}>Regenerating...</span>
+                              <button
+                                onClick={handleCancelSectionRegeneration}
+                                style={{
+                                  background: "none", border: "1px solid #E5E7EB", borderRadius: 4,
+                                  padding: "2px 6px", fontSize: 9, color: "#6B7280", cursor: "pointer"
+                                }}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => handleRegenerateSection('hook')}
+                              disabled={isGenerating || regeneratingSection !== null}
+                              style={{
+                                display: "flex", alignItems: "center", gap: 4, padding: "4px 8px",
+                                borderRadius: 6, border: "1px solid #E5E7EB", background: "transparent",
+                                color: "#6B7280", fontSize: 10, cursor: regeneratingSection !== null ? "default" : "pointer",
+                                transition: "all 0.15s", opacity: regeneratingSection !== null ? 0.5 : 1,
+                              }}
+                              onMouseEnter={(e) => { if (regeneratingSection === null && !isGenerating) e.currentTarget.style.color = "#7C3AED"; }}
+                              onMouseLeave={(e) => { if (regeneratingSection === null && !isGenerating) e.currentTarget.style.color = "#6B7280"; }}
+                            >
+                              <Sparkles style={{ width: 11, height: 11 }} />
+                              Regenerate
+                            </button>
+                          )}
                         </div>
                         <div style={{ fontSize: 15, fontWeight: 600, color: "#111827", lineHeight: 1.7, whiteSpace: "pre-line" }}>
                           {result.hook.text}
@@ -717,9 +840,42 @@ const ScriptGenerator = () => {
 
                       {/* Body Section */}
                       <div style={{ marginBottom: result.cta.included ? 16 : 0, padding: "14px 16px", borderRadius: 12, background: "#F9FAFB", border: "1px solid #E5E7EB" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-                          <div style={{ width: 6, height: 6, borderRadius: 3, background: "#3B82F6" }} />
-                          <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: 0.8, color: "#3B82F6" }}>Body</span>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <div style={{ width: 6, height: 6, borderRadius: 3, background: "#3B82F6" }} />
+                            <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: 0.8, color: "#3B82F6" }}>Body</span>
+                          </div>
+                          {regeneratingSection === 'body' ? (
+                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <Loader2 style={{ width: 12, height: 12, color: "#3B82F6", animation: "spin 1s linear infinite" }} />
+                              <span style={{ fontSize: 10, color: "#3B82F6", fontWeight: 500 }}>Regenerating...</span>
+                              <button
+                                onClick={handleCancelSectionRegeneration}
+                                style={{
+                                  background: "none", border: "1px solid #E5E7EB", borderRadius: 4,
+                                  padding: "2px 6px", fontSize: 9, color: "#6B7280", cursor: "pointer"
+                                }}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => handleRegenerateSection('body')}
+                              disabled={isGenerating || regeneratingSection !== null}
+                              style={{
+                                display: "flex", alignItems: "center", gap: 4, padding: "4px 8px",
+                                borderRadius: 6, border: "1px solid #E5E7EB", background: "transparent",
+                                color: "#6B7280", fontSize: 10, cursor: regeneratingSection !== null ? "default" : "pointer",
+                                transition: "all 0.15s", opacity: regeneratingSection !== null ? 0.5 : 1,
+                              }}
+                              onMouseEnter={(e) => { if (regeneratingSection === null && !isGenerating) e.currentTarget.style.color = "#3B82F6"; }}
+                              onMouseLeave={(e) => { if (regeneratingSection === null && !isGenerating) e.currentTarget.style.color = "#6B7280"; }}
+                            >
+                              <Sparkles style={{ width: 11, height: 11 }} />
+                              Regenerate
+                            </button>
+                          )}
                         </div>
                         <div style={{ fontSize: 14, color: "#374151", lineHeight: 1.8, whiteSpace: "pre-line" }}>
                           {result.body.text}
@@ -1257,19 +1413,19 @@ const ScriptGenerator = () => {
 
                 <motion.button
                   whileTap={{ scale: 0.92 }}
-                  onClick={() => handleGenerate()}
-                  disabled={!topic.trim() || isGenerating}
+                  onClick={isGenerating ? handleCancel : () => handleGenerate()}
+                  disabled={!topic.trim() && !isGenerating}
                   style={{
                     width: 36, height: 36, borderRadius: 10,
-                    border: "none", cursor: topic.trim() && !isGenerating ? "pointer" : "default",
-                    background: topic.trim() && !isGenerating ? "#7C3AED" : "#E5E7EB",
-                    color: topic.trim() && !isGenerating ? "#fff" : "#9CA3AF",
+                    border: "none", cursor: (topic.trim() || isGenerating) ? "pointer" : "default",
+                    background: isGenerating ? "#EF4444" : (topic.trim() ? "#7C3AED" : "#E5E7EB"),
+                    color: isGenerating ? "#fff" : (topic.trim() ? "#fff" : "#9CA3AF"),
                     display: "flex", alignItems: "center", justifyContent: "center",
                     transition: "all 0.15s", flexShrink: 0,
                   }}
                 >
                   {isGenerating ? (
-                    <Loader2 style={{ width: 16, height: 16, animation: "spin 1s linear infinite" }} />
+                    <X style={{ width: 16, height: 16 }} />
                   ) : (
                     <Send style={{ width: 16, height: 16 }} />
                   )}

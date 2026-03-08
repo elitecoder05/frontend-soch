@@ -14,16 +14,18 @@ const SochAIApps = () => {
     {
       id: 1,
       name: "Soch AI Script Generator",
-      description: "Generate professional scripts for videos, presentations, and content creation. Perfect for creators, marketers, and businesses.",
+      description: "Create your script in 30 seconds",
+      subtitle: "Built for creators who want faster script writing without losing natural storytelling.",
       icon: <Sparkles className="w-12 h-12 text-purple-500" />,
       color: "from-purple-600 to-blue-600",
       features: [
-        "AI-powered script writing",
-        "Multiple formats (YouTube, TikTok, etc.)",
-        "SEO optimization",
-        "Customizable tone and style"
+        "Generates scripts using hook + story + CTA structure",
+        "Lets you add a reference video link to match the creator's style",
+        "Control duration, language, tone and audience",
+        "Supports English, Hindi and Hinglish scripts",
+        "Designed for Reels, Shorts and YouTube videos"
       ],
-      badge: "Popular",
+      badge: "Hot 🔥",
       comingSoon: false,
       href: "/script-generator"
     },
@@ -93,6 +95,7 @@ const SochAIApps = () => {
               {/* Badge */}
               <div className="absolute top-4 right-4 z-10">
                 <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold text-white ${
+                  app.badge === "Hot 🔥" ? "bg-red-500" :
                   app.badge === "Popular" ? "bg-purple-500" :
                   app.badge === "Featured" ? "bg-blue-500" :
                   "bg-pink-500"
@@ -111,9 +114,14 @@ const SochAIApps = () => {
                 <CardTitle className="text-xl text-foreground group-hover:text-primary transition-colors duration-300">
                   {app.name}
                 </CardTitle>
-                <CardDescription className="text-muted-foreground">
+                <CardDescription className="text-muted-foreground text-lg font-medium mb-2">
                   {app.description}
                 </CardDescription>
+                {(app as any).subtitle && (
+                  <p className="text-sm text-muted-foreground/80 leading-relaxed">
+                    {(app as any).subtitle}
+                  </p>
+                )}
               </CardHeader>
 
               <CardContent className="relative z-10 space-y-6 flex-grow">

@@ -55,7 +55,7 @@ export interface ScriptResponse {
     error?: string;
 }
 
-export const generateScript = async (params: ScriptGenerationParams): Promise<ScriptResponse> => {
+export const generateScript = async (params: ScriptGenerationParams, signal?: AbortSignal): Promise<ScriptResponse> => {
     try {
         const response = await axios.post<ScriptResponse>(
             `${API_BASE}/api/script-generator/generate`,
@@ -63,6 +63,7 @@ export const generateScript = async (params: ScriptGenerationParams): Promise<Sc
             {
                 headers: { 'Content-Type': 'application/json' },
                 timeout: 60000, // 60s timeout for AI generation
+                signal, // Add abort signal support
             }
         );
         return response.data;
@@ -70,9 +71,56 @@ export const generateScript = async (params: ScriptGenerationParams): Promise<Sc
         if (error.response?.data) {
             return error.response.data;
         }
+        // Handle abort errors
+        if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
+            return {
+                success: false,
+                error: 'Generation cancelled by user.',
+            };
+        }
         return {
             success: false,
             error: error.message || 'Failed to connect to the server. Please try again.',
+        };
+    }
+};
+
+export const regenerateSection = async (
+    section: 'hook' | 'body' | 'cta',
+    params: ScriptGenerationParams,
+    currentScript: ScriptResult,
+    instruction?: string,
+    signal?: AbortSignal
+): Promise<ScriptResponse> => {
+    try {
+        const response = await axios.post<ScriptResponse>(
+            `${API_BASE}/api/script-generator/regenerate-section`,
+            {
+                section,
+                params,
+                currentScript,
+                instruction
+            },
+            {
+                headers: { 'Content-Type': 'application/json' },
+                timeout: 30000, // 30s timeout for section regeneration
+                signal,
+            }
+        );
+        return response.data;
+    } catch (error: any) {
+        if (error.response?.data) {
+            return error.response.data;
+        }
+        if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
+            return {
+                success: false,
+                error: 'Regeneration cancelled by user.',
+            };
+        }
+        return {
+            success: false,
+            error: error.message || 'Failed to regenerate section. Please try again.',
         };
     }
 };
