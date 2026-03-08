@@ -32,7 +32,7 @@ export const ModelCard = ({ model }: ModelCardProps) => {
   return (
     <Card className="group overflow-hidden border-card-border bg-card hover:bg-card-hover hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1">
       <CardContent className="p-4">
-        <Link to={`/model/${model.id}`} state={{ from: fromState }} className="block text-inherit" onClick={recordClickIfNeeded}>
+        <Link to={`/model/${model.slug}`} state={{ from: fromState }} className="block text-inherit" onClick={recordClickIfNeeded}>
           <div className="flex gap-3 mb-3">
             <div className="w-14 h-14 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0 border border-primary/20 bg-gradient-to-br from-primary/20 to-primary/5">
               {model.iconUrl ? (
@@ -91,7 +91,7 @@ export const ModelCard = ({ model }: ModelCardProps) => {
       </CardContent>
 
       <CardFooter className="p-4 pt-0 flex gap-2 items-center">
-        <Link to={`/model/${model.id}`} state={{ from: fromState }} className="flex-1" onClick={recordClickIfNeeded}>
+        <Link to={`/model/${model.slug}`} state={{ from: fromState }} className="flex-1" onClick={recordClickIfNeeded}>
           <Button
             variant="outline"
             size="sm"
@@ -103,7 +103,7 @@ export const ModelCard = ({ model }: ModelCardProps) => {
         </Link>
 
         <div>
-          <ShareDialog url={getModelUrl(model.id)} title={model.name}>
+          <ShareDialog url={getModelUrl(model.slug)} title={model.name}>
             <Button variant="ghost" size="sm" aria-label={`Share ${model.name}`}>
               <Share2 className="w-4 h-4" />
             </Button>

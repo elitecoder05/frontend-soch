@@ -99,7 +99,7 @@ export const SearchBar = ({
     onChange('');
     setShowDropdown(false);
     setSuggestions([]);
-    navigate(`/model/${suggestion.id}`);
+    navigate(`/model/${suggestion.slug}`);
   };
 
   return (

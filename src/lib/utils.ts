@@ -5,11 +5,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const getModelUrl = (id: string) => {
+export const getModelUrl = (slug: string) => {
   try {
     const origin = typeof window !== "undefined" && window.location ? window.location.origin : "";
-    return `${origin}/model/${id}`;
+    return `${origin}/model/${slug}`;
   } catch (e) {
-    return `/model/${id}`;
+    return `/model/${slug}`;
   }
 };

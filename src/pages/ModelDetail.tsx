@@ -518,7 +518,7 @@ const ModelDetail = () => {
                 </div>
               </div>
               <div className="flex gap-3 items-center">
-                <ShareDialog url={getModelUrl(model._id)} title={model.name}>
+                <ShareDialog url={getModelUrl(model.slug)} title={model.name}>
                   <Button variant="outline" size="lg" className="rounded-full w-12 h-12 p-0"><Share2 className="w-5 h-5" /></Button>
                 </ShareDialog>
                 {model.externalUrl && (

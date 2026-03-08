@@ -61,7 +61,7 @@ export const ToolColumnList = ({ title, icon, tools, viewAllLink, isScrollable =
                   </div>
 
                   {/* Content */}
-                  <Link to={`/model/${tool._id}`} className="flex-1 min-w-0">
+                  <Link to={`/model/${tool.slug}`} className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <h4 className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
                         {tool.name}

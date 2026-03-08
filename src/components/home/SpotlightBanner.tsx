@@ -56,7 +56,7 @@ export const SpotlightBanner = ({ tools }: { tools: Model[] }) => {
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
                 <button 
-                  onClick={() => navigate(`/model/${tool._id}`)}
+                  onClick={() => navigate(`/model/${tool.slug}`)}
                   className="px-8 py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-100 transition-colors flex items-center gap-2"
                 >
                   Try It Now <ArrowRight className="w-4 h-4" />

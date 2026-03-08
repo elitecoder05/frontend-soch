@@ -1100,7 +1100,7 @@ const Profile = () => {
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
-                            <h3 className="font-bold text-base md:text-lg truncate hover:text-primary cursor-pointer" onClick={() => navigate(`/model/${model._id}`)}>
+                            <h3 className="font-bold text-base md:text-lg truncate hover:text-primary cursor-pointer" onClick={() => navigate(`/model/${model.slug}`)}>
                                 {model.name}
                             </h3>
                             <div className="flex items-center gap-2">
@@ -1139,7 +1139,7 @@ const Profile = () => {
                            </Button>
                         )}
 
-                        <Button variant="ghost" size="sm" onClick={() => navigate(`/model/${model._id}`)} className="h-8 text-xs">
+                        <Button variant="ghost" size="sm" onClick={() => navigate(`/model/${model.slug}`)} className="h-8 text-xs">
                             View
                         </Button>
                         

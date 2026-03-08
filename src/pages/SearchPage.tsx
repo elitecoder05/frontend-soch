@@ -255,7 +255,7 @@ const response = await modelsAPI.getAllModels({ search: query, limit: 10 });    
                         {results.map((tool) => (
                             <Card 
                                 key={tool._id}
-                                onClick={() => navigate(`/model/${tool._id}`)}
+                                onClick={() => navigate(`/model/${tool.slug}`)}
                                 className="flex items-start p-4 hover:bg-muted/50 cursor-pointer transition-colors border-border/40 shadow-sm animate-in fade-in slide-in-from-bottom-2"
                             >
                                 {/* Tool Icon / First Letter */}
