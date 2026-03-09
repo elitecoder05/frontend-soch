@@ -6,14 +6,15 @@ import { Footer } from "@/components/Footer";
 import { AixploriaHero } from "@/components/home/AixploriaHero";
 import { CategoryBoxes } from "@/components/home/CategoryBoxes";
 import { ToolColumnList } from "@/components/home/ToolColumnList";
+import { PlatformStats } from "@/components/home/PlatformStats";
 import { InfoSection } from "@/components/home/InfoSection";
-import AdSense from "@/components/AdSense"; 
+import AdSense from "@/components/AdSense";
 import { useAllModels } from "@/hooks/useModels";
 // Removed FeaturedToolsSection import
-import { 
-  Sparkles, Trophy, Zap, MessageCircle, 
-  BookOpen, Search, CheckCircle2, 
-  ListOrdered, Loader2, Crown 
+import {
+  Sparkles, Trophy, Zap, MessageCircle,
+  BookOpen, Search, CheckCircle2,
+  ListOrdered, Loader2, Crown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -116,7 +117,12 @@ const Home = () => {
             )}
           </section>
 
-          {/* 3. Informational Sections */}
+          {/* 3. Platform Stats */}
+          <section>
+            <PlatformStats />
+          </section>
+
+          {/* 4. Informational Sections */}
           <section className="pt-8 border-t border-border/40">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <InfoSection 
