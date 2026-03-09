@@ -365,6 +365,7 @@ const ModelDetail = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [screenshotOrientations, setScreenshotOrientations] = useState<Record<number, 'landscape' | 'portrait' | 'square'>>({});
   const [creatorTools, setCreatorTools] = useState<Model[]>([]);
+  const [peopleAlsoViewed, setPeopleAlsoViewed] = useState<Model[]>([]);
 
   // Fetching Hooks
   const { data: modelData, isLoading, error: modelError } = useModelById(id);
@@ -389,6 +390,41 @@ const ModelDetail = () => {
     };
     if (model) fetchCreatorTools();
   }, [model]);
+
+  useEffect(() => {
+    const fetchPeopleAlsoViewed = async () => {
+      if (!model) return;
+      try {
+        const res = await modelsAPI.getPeopleAlsoViewed(model._id, 6);
+        const recs = res.data.models || [];
+
+        // Ensure we don't include the current model and keep uniqueness
+        let filtered = recs.filter((m: Model) => m._id !== model._id);
+
+        // If fewer than 4 recommendations, fetch random models from same category to fill
+        if (filtered.length < 4) {
+          try {
+            const randRes = await modelsAPI.getAllModels({ category: model.category, limit: 6, randomize: true });
+            const rand = randRes.data.models || [];
+            const randFiltered = rand.filter((r: Model) => r._id !== model._id && !filtered.find((f: Model) => f._id === r._id));
+            filtered = [...filtered, ...randFiltered].slice(0, 6);
+          } catch (err) {
+            // ignore filler errors, use whatever we have
+            console.error('Failed to fetch random same-category fillers', err);
+          }
+        } else {
+          filtered = filtered.slice(0, 6);
+        }
+
+        // Final set (may be <4) — we will show the section whenever we have at least 1
+        setPeopleAlsoViewed(filtered);
+      } catch (err) {
+        console.error('Failed to fetch people also viewed', err);
+      }
+    };
+
+    fetchPeopleAlsoViewed();
+  }, [model, similarModels]);
 
   useEffect(() => {
     if (modelError) {
@@ -684,6 +720,20 @@ const ModelDetail = () => {
                         ))}
                     </div>
                 </section>
+            )}
+
+            {peopleAlsoViewed.length >= 4 && (
+              <section className="w-full">
+                <div className="flex items-center justify-between mb-8">
+                  <h3 className="text-2xl font-bold">People Also Viewed</h3>
+                  <Link to="/explorer" className="text-primary hover:underline text-sm font-medium">Explore All</Link>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {peopleAlsoViewed.map((p) => (
+                    <ModelCard key={p._id} model={transformModelForCard(p)} />
+                  ))}
+                </div>
+              </section>
             )}
         </div>
 

@@ -457,6 +457,20 @@ promoteModel: async (modelId: string): Promise<{success: boolean; message: strin
     }
   },
 
+  // Get 'People also viewed' recommendations for a model
+  getPeopleAlsoViewed: async (id: string, limit = 6): Promise<AllModelsResponse> => {
+    try {
+      const response = await apiClient.get(`/api/models/${id}/people-also-viewed?limit=${limit}`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message ||
+        error.message ||
+        'Failed to fetch recommendations.'
+      );
+    }
+  },
+
   // Upload a new model
   uploadModel: async (data: ModelUploadData): Promise<ModelUploadResponse> => {
     try {

@@ -1,4 +1,4 @@
-import { Sparkles, ArrowRight } from "lucide-react";
+import { Sparkles, ArrowRight, Cpu } from "lucide-react";
 import { motion } from "framer-motion";
 
 export const AixploriaHero = () => {
@@ -96,6 +96,17 @@ export const AixploriaHero = () => {
             transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
             className="w-2 h-2 bg-purple-400 rounded-full"
           />
+        </motion.div>
+
+        {/* Powered by AI Technologies */}
+        <motion.div variants={itemVariants} className="mt-6 flex flex-col items-center gap-1">
+          <div className="flex items-center gap-2 text-foreground text-xs uppercase tracking-widest font-semibold">
+            <Cpu className="w-3.5 h-3.5 text-foreground" />
+            <span>Powered by Leading AI Technologies</span>
+          </div>
+          <p className="text-foreground text-sm">
+            Built using technologies and platforms widely used by modern AI products.
+          </p>
         </motion.div>
 
       </motion.div>
