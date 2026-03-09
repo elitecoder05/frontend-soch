@@ -15,6 +15,14 @@ export interface LoginData {
   password: string;
 }
 
+
+
+
+
+
+
+
+
 export interface User {
   id: string;
   firstName: string;
