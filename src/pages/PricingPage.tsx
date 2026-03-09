@@ -38,26 +38,16 @@ const PricingPage = () => {
     });
   };
 
-  // Currency conversion for Indian users
-  const USD_TO_INR_RATE = 83;
-  
-  const convertUSDPriceToINR = (usdPriceString: string) => {
-    // Extract number from price string like "$4" or "$5"
-    const numericValue = parseFloat(usdPriceString.replace('$', ''));
-    const inrValue = Math.round(numericValue * USD_TO_INR_RATE);
-    return `₹${inrValue}`;
-  };
-  
+  // Display prices should always be in USD as per requirements
   const getDisplayPrice = (plan: any) => {
-    if (plan.launchPrice) {
-      return convertUSDPriceToINR(plan.launchPrice);
-    }
-    return convertUSDPriceToINR(plan.price);
+    // Show launch price if available, otherwise regular price
+    return plan.launchPrice || plan.price;
   };
   
   const getOriginalPrice = (plan: any) => {
+    // Show original price if there's a launch price
     if (plan.launchPrice) {
-      return convertUSDPriceToINR(plan.price);
+      return plan.price;
     }
     return null;
   };
@@ -91,7 +81,7 @@ const PricingPage = () => {
   const currentStorePlans = dynamicPlans?.store || subscriptionPlans;
   const currentScriptPlans = dynamicPlans?.scriptGenerator || scriptGeneratorPlans;
 
-  const handlePlanSelect = async (planId: string) => {
+  const handlePlanSelect = async (planId: string, category: 'store' | 'script-generator') => {
     try {
       setLoadingPlanId(planId);
 
@@ -102,8 +92,30 @@ const PricingPage = () => {
         return;
       }
 
-      // 2. Create Subscription Order
-      const res = await api.post('/api/payments/create-order', { planId });
+      // 2. Check if it's a free plan (e.g., script-free)
+      if (planId === 'script-free' || planId === 'store-free') {
+        const res = await api.post('/api/payments/activate-free-plan', { planId, category });
+        const data = res.data;
+        
+        if (data.success) {
+          if (data.data?.user) {
+            Cookies.set('userData', JSON.stringify(data.data.user), { expires: 7 });
+            await updateAuthState();
+          }
+          
+          toast({
+            title: "🎉 Free Plan Activated!",
+            description: `Your ${category === 'script-generator' ? 'Script Generator' : 'Store'} free plan is now active.`,
+            className: "bg-green-50 border-green-200 text-green-900"
+          });
+        } else {
+          throw new Error(data.message);
+        }
+        return;
+      }
+
+      // 3. Create Subscription Order for paid plans
+      const res = await api.post('/api/payments/create-order', { planId, category });
       const data = res.data;
 
       if (!data || !data.success) throw new Error(data?.message || 'Failed to initialize payment');
@@ -129,8 +141,9 @@ const PricingPage = () => {
           try {
             toast({ title: "Processing...", description: "Verifying your subscription status." });
 
-            const completeRes = await api.post('/api/payments/complete-subscription', {
+            const completeRes = await api.post('/api/payments/verify-payment', {
               planId,
+              category,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_order_id: response.razorpay_order_id,
               razorpay_signature: response.razorpay_signature
@@ -318,7 +331,7 @@ const PricingPage = () => {
                   <Button
                     variant={plan.popular ? 'default' : 'outline'}
                     className="w-full font-semibold"
-                    onClick={() => handlePlanSelect(plan.id)}
+                    onClick={() => handlePlanSelect(plan.id, 'script-generator')}
                     disabled={loadingPlanId === plan.id}
                   >
                     {loadingPlanId === plan.id ? (
@@ -457,7 +470,7 @@ const PricingPage = () => {
                   <Button
                     variant={isPopular ? 'default' : 'outline'}
                     className={`w-full font-semibold transition-all ${isPopular ? '' : styles.btn}`}
-                    onClick={() => handlePlanSelect(plan.id)}
+                    onClick={() => handlePlanSelect(plan.id, 'store')}
                     disabled={loadingPlanId === plan.id}
                   >
                     {loadingPlanId === plan.id ? (

@@ -1,68 +1,54 @@
 export const subscriptionPlans = [
   {
-    id: 'monthly',
-    name: 'Monthly',
-    price: '$5',
-    duration: 'Month',
-    description: 'Perfect to get started',
+    id: 'starter',
+    name: 'Starter Listing',
+    price: '$2.99',
+    duration: 'month',
+    description: 'Best for early projects',
     features: [
-      'List your AI tool for 30 days',
-      '50–100 estimated clicks (discovery traffic in first week)',
-      'Basic visibility and analytics',
-      'Edit or update your listing anytime'
+      'AI tool listed for 30 days',
+      'Basic discovery traffic',
+      'Tool description + link',
+      'Edit listing anytime'
     ],
     popular: false,
-    color: 'blue'
+    color: 'blue',
+    buttonText: 'Start Listing'
   },
   {
-    id: 'six_months',
-    name: '6 Months',
-    price: '$12',
-    duration: '6 Months',
-    description: 'Best value for serious builders',
+    id: 'builder',
+    name: 'Builder Listing',
+    price: '$8.99',
+    duration: '6 months',
+    description: 'For founders serious about traffic',
     features: [
-      '700–3,000+ estimated clicks',
-      'Website-only focused traffic',
-      'Longer listing visibility',
-      'Faster updates for new features',
-      'Enhanced analytics'
+      '6 month listing visibility',
+      'Higher ranking in directory',
+      'Estimated 1k–5k discovery clicks',
+      'Feature updates allowed',
+      'Basic analytics'
     ],
     popular: true,
-    badge: '⭐ Most Popular',
-    color: 'primary'
+    badge: '⭐ Recommended',
+    color: 'primary',
+    buttonText: 'Choose Builder'
   },
   {
-    id: 'annual',
-    name: '1 Year Plan',
-    price: '$20',
-    duration: '12 Months',
-    description: 'Built for long-term growth',
+    id: 'pro',
+    name: 'Pro Listing',
+    price: '$23.99',
+    duration: 'year',
+    description: 'For long-term exposure',
     features: [
-      '800–10,000+ estimated clicks',
-      'Extra 25 days listing bonus',
-      'Free homepage feature',
-      'Stronger brand credibility',
-      'Advanced performance insights'
+      '12 month listing',
+      'Homepage feature (limited slots)',
+      'Estimated 5k–20k discovery clicks',
+      'Priority approval',
+      'Advanced analytics'
     ],
     popular: false,
-    color: 'orange'
-  },
-  {
-    id: 'lifetime',
-    name: 'Lifetime',
-    price: '$99',
-    duration: 'One-time',
-    description: 'Limited Time – Lifetime',
-    features: [
-      'Lifetime listing access',
-      'Priority review and faster approval',
-      'Lifetime Pro badge',
-      'Early access to beta features',
-      'Direct developer support'
-    ],
-    popular: false,
-    badge: '♾️ Limited Time',
-    color: 'purple'
+    color: 'orange',
+    buttonText: 'Go Pro'
   }
 ];
 
@@ -86,7 +72,7 @@ export const scriptGeneratorPlans = [
   {
     id: 'script-creator',
     name: 'CREATOR',
-    price: '$5',
+    price: '$2.16',
     duration: 'month',
     description: 'Best for content creator',
     features: [
@@ -100,6 +86,19 @@ export const scriptGeneratorPlans = [
     popular: true,
     badge: 'Best Value',
     buttonText: 'Upgrade to Creator',
-    launchPrice: '$4'
+    trustLine: 'Used by thousands of creators to create scripts',
+    launchOffer: '$2.16'
   }
 ];
+
+// Script Generator Pricing Page Configuration
+export const scriptGeneratorPricingConfig = {
+  header: {
+    title: 'Pick Your Plan',
+    subtitle: 'Create viral video scripts in seconds with Soch AI Script Generator'
+  },
+  offerBanner: {
+    text: 'Launch Offer – $2.16 /month',
+    show: true
+  }
+};

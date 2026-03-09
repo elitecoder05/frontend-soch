@@ -77,7 +77,7 @@ export const PromotionCards = () => {
           title="Get Featured" 
           desc="Pin your tool to the top of the homepage for maximum visibility."
           color="bg-yellow-500 text-yellow-500"
-          buttonText="Boost (₹50/day)"
+          buttonText="Boost ($1/day)"
           onClick={() => navigate('/pricing')} 
         />
 

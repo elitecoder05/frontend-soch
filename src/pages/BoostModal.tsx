@@ -429,22 +429,20 @@ export const BoostModal = ({ isOpen, onClose, toolId, toolName }: BoostModalProp
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   
-  const PRICE_PER_DAY_USD = 1; // $1 per day
-  const USD_TO_INR_RATE = 83; // Current exchange rate
-  const PRICE_PER_DAY_INR = PRICE_PER_DAY_USD * USD_TO_INR_RATE; // ₹83 per day
+  const PRICE_PER_DAY_USD = 1; // $1 per day - UI always shows USD prices
   
-  // For Indian users, show INR prices
-  const pricePerDay = PRICE_PER_DAY_INR;
+  // For display purposes, always show USD prices
+  const pricePerDay = PRICE_PER_DAY_USD;
   const totalPrice = days * pricePerDay;
 
   const endDate = new Date();
   endDate.setDate(endDate.getDate() + days);
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'INR',
-      maximumFractionDigits: 0
+      currency: 'USD',
+      maximumFractionDigits: 2
     }).format(amount);
   };
 

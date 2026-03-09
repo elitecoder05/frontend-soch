@@ -33,12 +33,12 @@ export interface User {
 
 export const paymentAPI = {
   // 1. Subscription Flow
-  createOrder: async (planId: string) => {
+  createOrder: async (planId: string, category: 'store' | 'script-generator') => {
     // Note the PLURAL 'payments'
-    try { const response = await apiClient.post('/api/payments/create-order', { planId }); return response.data; } catch (error: any) { throw new Error(error.response?.data?.message || 'Failed to create order'); }
+    try { const response = await apiClient.post('/api/payments/create-order', { planId, category }); return response.data; } catch (error: any) { throw new Error(error.response?.data?.message || 'Failed to create order'); }
   },
   completeSubscription: async (data: any) => {
-    try { const response = await apiClient.post('/api/payments/complete-subscription', data); return response.data; } catch (error: any) { throw new Error(error.response?.data?.message || 'Failed to complete subscription'); }
+    try { const response = await apiClient.post('/api/payments/verify-payment', data); return response.data; } catch (error: any) { throw new Error(error.response?.data?.message || 'Failed to complete subscription'); }
   },
 
   // 2. Promotion Flow (Get Featured)
