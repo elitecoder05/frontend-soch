@@ -1010,7 +1010,7 @@ const ScriptGenerator = () => {
                             </div>
 
                             {/* Tone */}
-                            <div style={{ marginBottom: 16 }}>
+                            {/* <div style={{ marginBottom: 16 }}>
                               <div style={{ fontSize: 12, color: "#6B7280", marginBottom: 8, fontWeight: 500 }}>Tone</div>
                               <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                                 {TONES.map((t) => (
@@ -1023,7 +1023,7 @@ const ScriptGenerator = () => {
                                   }}>{t}</button>
                                 ))}
                               </div>
-                            </div>
+                            </div> */}
 
                             {/* Audience */}
                             <div style={{ marginBottom: 16 }}>
@@ -1047,7 +1047,7 @@ const ScriptGenerator = () => {
                             </div>
 
                             {/* Emotional Intensity */}
-                            <div style={{ marginBottom: 16 }}>
+                            {/* <div style={{ marginBottom: 16 }}>
                               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
                                 <span style={{ fontSize: 12, color: "#6B7280", fontWeight: 500 }}>Emotional Intensity</span>
                                 <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 10, background: `${INTENSITY_COLORS[editIntensity]}20`, color: INTENSITY_COLORS[editIntensity] }}>
@@ -1061,7 +1061,7 @@ const ScriptGenerator = () => {
                                   placeholder="Describe your custom intensity..."
                                   style={{ width: "100%", marginTop: 8, padding: "8px 12px", borderRadius: 8, fontSize: 13, background: "#F5F5F5", border: "1px solid #D4D4D8", color: "#1A1A1A", outline: "none", boxSizing: "border-box" as const }} />
                               )}
-                            </div>
+                            </div> */}
 
                             {/* CTA */}
                             <div style={{ marginBottom: 20 }}>
@@ -1224,7 +1224,7 @@ const ScriptGenerator = () => {
                     </div>
 
                     {/* Tone */}
-                    <div style={{ marginBottom: 16 }}>
+                    {/* <div style={{ marginBottom: 16 }}>
                       <div style={{ fontSize: 12, color: "#6B7280", marginBottom: 8, fontWeight: 500 }}>Tone</div>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                         {TONES.map((t) => (
@@ -1239,7 +1239,7 @@ const ScriptGenerator = () => {
                           </button>
                         ))}
                       </div>
-                    </div>
+                    </div> */}
 
                     {/* Audience */}
                     <div style={{ marginBottom: 16 }}>
@@ -1269,7 +1269,7 @@ const ScriptGenerator = () => {
                     </div>
 
                     {/* Emotional Intensity */}
-                    <div style={{ marginBottom: 16 }}>
+                    {/* <div style={{ marginBottom: 16 }}>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
                         <span style={{ fontSize: 12, color: "#6B7280", fontWeight: 500 }}>Emotional Intensity</span>
                         <span style={{
@@ -1298,7 +1298,7 @@ const ScriptGenerator = () => {
                             boxSizing: "border-box" as const,
                           }} />
                       )}
-                    </div>
+                    </div> */}
 
                     {/* CTA */}
                     <div>
