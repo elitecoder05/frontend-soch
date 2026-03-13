@@ -408,14 +408,11 @@
 
 
 import { useState } from "react";
-// 👇 IMPORT DialogDescription to fix accessibility error
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
-import { Rocket, Loader2, Calendar, Wallet } from "lucide-react";
+import { Rocket, Loader2, Calendar, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import api from "@/lib/api"; 
+import { modelsAPI } from "@/api/api-methods";
 
 interface BoostModalProps {
   isOpen: boolean;
@@ -424,91 +421,35 @@ interface BoostModalProps {
   toolName: string;
 }
 
+const DURATION_OPTIONS = [
+  { days: 7,  label: "7 Days",  description: "1 week spotlight" },
+  { days: 14, label: "14 Days", description: "2 week spotlight" },
+  { days: 30, label: "30 Days", description: "Full month spotlight" },
+];
+
 export const BoostModal = ({ isOpen, onClose, toolId, toolName }: BoostModalProps) => {
-  const [days, setDays] = useState(7); 
+  const [selectedDays, setSelectedDays] = useState(7);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  
-  const PRICE_PER_DAY_USD = 1; // $1 per day - UI always shows USD prices
-  
-  // For display purposes, always show USD prices
-  const pricePerDay = PRICE_PER_DAY_USD;
-  const totalPrice = days * pricePerDay;
 
   const endDate = new Date();
-  endDate.setDate(endDate.getDate() + days);
+  endDate.setDate(endDate.getDate() + selectedDays);
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 2
-    }).format(amount);
-  };
-
-  const loadRazorpayScript = () => {
-    return new Promise<boolean>((resolve) => {
-      if ((window as any).Razorpay) return resolve(true);
-      const script = document.createElement('script');
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
-      document.body.appendChild(script);
-    });
-  };
-
-  const handlePayment = async () => {
+  const handleBoost = async () => {
     setIsLoading(true);
     try {
-      // ✅ FIX: Load the SDK first!
-      const isLoaded = await loadRazorpayScript();
-      if (!isLoaded) {
-        toast({ title: "Error", description: "Razorpay SDK failed to load. Check connection.", variant: "destructive" });
-        setIsLoading(false);
-        return;
-      }
-
-      // 1. Create Order
-      const { data } = await api.post('/api/payments/create-boost-order', {
-        toolId,
-        days,
-        amount: totalPrice // Backend now expects simple toolId/days strings
+      await modelsAPI.boostModel(toolId, selectedDays);
+      toast({
+        title: "Boost Activated! 🚀",
+        description: `"${toolName}" is now featured for ${selectedDays} days.`,
       });
-
-      // 2. Open Razorpay
-      const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-        amount: data.order.amount,
-        currency: "INR",
-        name: "Soch AI Boost",
-        description: `Boost ${toolName} for ${days} days`,
-        order_id: data.order.id,
-        handler: async function (response: any) {
-             // ... existing handler code ...
-             await api.post('/api/payments/verify-boost', {
-               razorpay_payment_id: response.razorpay_payment_id,
-               razorpay_order_id: response.razorpay_order_id,
-               razorpay_signature: response.razorpay_signature,
-               toolId,
-               days
-             });
-             
-             toast({ 
-               title: "Boost Activated! 🚀", 
-               description: `Your tool is now featured for ${days} days.`,
-               className: "bg-green-50 border-green-200 text-green-900"
-             });
-             onClose();
-        },
-        theme: { color: "#7c3aed" }
-      };
-
-      const rzp = new (window as any).Razorpay(options);
-      rzp.open();
-
-    } catch (error) {
-      console.error(error);
-      toast({ title: "Error", description: "Payment initiation failed.", variant: "destructive" });
+      onClose();
+    } catch (error: any) {
+      toast({
+        title: "Boost Failed",
+        description: error.message || "Could not activate boost. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -517,76 +458,68 @@ export const BoostModal = ({ isOpen, onClose, toolId, toolName }: BoostModalProp
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[400px] w-[95vw] p-0 overflow-hidden gap-0 rounded-xl">
-        
+
         {/* Header */}
-        <div className="bg-gradient-to-r from-primary/10 to-purple-500/10 p-6 border-b">
+        <div className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 p-6 border-b">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl">
-              <Rocket className="w-5 h-5 text-primary fill-primary" /> 
-              Boost Tool
+              <Rocket className="w-5 h-5 text-yellow-500" />
+              Boost Visibility
             </DialogTitle>
-            {/* 👇 ADDED Description here to satisfy Radix UI accessibility requirements */}
-            <DialogDescription className="text-sm text-muted-foreground mt-1 truncate">
-              Promoting <span className="font-semibold text-foreground">"{toolName}"</span>
+            <DialogDescription className="text-sm text-muted-foreground mt-1">
+              Feature <span className="font-semibold text-foreground">"{toolName}"</span> in its category
             </DialogDescription>
           </DialogHeader>
         </div>
 
-        <div className="p-6 space-y-8">
-          
-          {/* Slider */}
-          <div className="space-y-4">
-            <div className="flex justify-between items-end">
-              <Label className="text-base font-semibold">Duration</Label>
-              <span className="text-2xl font-bold text-primary">{days} <span className="text-sm font-normal text-muted-foreground">days</span></span>
-            </div>
-            
-            <Slider 
-              value={[days]} 
-              onValueChange={(val) => setDays(val[0])} 
-              min={1} 
-              max={30} 
-              step={1} 
-              className="py-2 cursor-pointer"
-            />
-            
-            <div className="flex justify-between text-xs text-muted-foreground font-medium">
-              <span>1 Day</span>
-              <span>30 Days</span>
-            </div>
+        <div className="p-6 space-y-4">
+          <p className="text-sm font-medium text-muted-foreground">Select boost duration</p>
 
-            <div className="flex items-center gap-2 text-xs bg-muted/50 p-2 rounded text-muted-foreground">
-              <Calendar className="w-3 h-3" />
-              <span>Runs until {endDate.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</span>
-            </div>
+          <div className="space-y-2">
+            {DURATION_OPTIONS.map(({ days, label, description }) => (
+              <button
+                key={days}
+                onClick={() => setSelectedDays(days)}
+                className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all ${
+                  selectedDays === days
+                    ? "border-yellow-500 bg-yellow-500/10"
+                    : "border-border hover:border-yellow-500/50"
+                }`}
+              >
+                <div>
+                  <p className="font-semibold text-sm">{label}</p>
+                  <p className="text-xs text-muted-foreground">{description}</p>
+                </div>
+                {selectedDays === days && (
+                  <CheckCircle2 className="w-4 h-4 text-yellow-500 shrink-0" />
+                )}
+              </button>
+            ))}
           </div>
 
-          {/* Budget */}
-          <div className="bg-card border rounded-xl p-4 space-y-3">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Daily Budget</span>
-              <span className="font-medium">{formatCurrency(PRICE_PER_DAY)}</span>
-            </div>
-            <div className="h-px bg-border/50" />
-            <div className="flex justify-between items-center">
-              <span className="font-semibold">Total Cost</span>
-              <div className="text-right">
-                <span className="text-xl font-bold block text-primary">{formatCurrency(totalPrice)}</span>
-              </div>
-            </div>
+          <div className="flex items-start gap-2 text-xs bg-muted/50 p-3 rounded-lg text-muted-foreground">
+            <Calendar className="w-3 h-3 mt-0.5 shrink-0" />
+            <span>
+              Featured until{" "}
+              <strong>
+                {endDate.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
+              </strong>
+              {" · "}Max 2 tools featured per category at a time
+            </span>
           </div>
-
         </div>
 
         <DialogFooter className="p-6 pt-0">
-          <Button 
-            className="w-full h-11 text-base font-semibold bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-lg" 
-            onClick={handlePayment} 
+          <Button
+            className="w-full h-11 text-base font-semibold bg-yellow-500 hover:bg-yellow-600 text-white shadow-lg"
+            onClick={handleBoost}
             disabled={isLoading}
           >
-            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+            {isLoading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
               <span className="flex items-center gap-2">
-                <Wallet className="w-4 h-4" /> Pay {formatCurrency(totalPrice)} & Boost
+                <Rocket className="w-4 h-4" /> Activate Boost for {selectedDays} Days
               </span>
             )}
           </Button>

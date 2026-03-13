@@ -366,6 +366,7 @@ const ModelDetail = () => {
   const [screenshotOrientations, setScreenshotOrientations] = useState<Record<number, 'landscape' | 'portrait' | 'square'>>({});
   const [creatorTools, setCreatorTools] = useState<Model[]>([]);
   const [peopleAlsoViewed, setPeopleAlsoViewed] = useState<Model[]>([]);
+  const [featuredAlternatives, setFeaturedAlternatives] = useState<Model[]>([]);
 
   // Fetching Hooks
   const { data: modelData, isLoading, error: modelError } = useModelById(id);
@@ -432,6 +433,21 @@ const ModelDetail = () => {
     }
     window.scrollTo(0, 0);
   }, [id, modelError, toast]);
+
+  useEffect(() => {
+    const fetchFeatured = async () => {
+      if (!model?.category) return;
+      try {
+        const res = await modelsAPI.getFeaturedByCategory(model.category);
+        // Exclude the current model from featured alternatives
+        const filtered = (res.data?.models || []).filter((m: Model) => m._id !== model._id);
+        setFeaturedAlternatives(filtered);
+      } catch {
+        // Silently ignore - featured alternatives are non-critical
+      }
+    };
+    fetchFeatured();
+  }, [model]);
 
   // --- 2. HELPERS ---
   const transformModelForCard = (m: Model): AiModel => ({
@@ -535,7 +551,42 @@ const ModelDetail = () => {
           </Button>
         </Link>
 
-        {/* HEADER */}
+        {/* Featured Alternatives (boosted tools in same category) */}
+        {featuredAlternatives.length > 0 && (
+          <div className="mb-8 bg-card/60 border border-border/60 rounded-2xl p-4">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-card border border-border text-xs font-semibold text-foreground mb-3">
+              Featured alternatives
+            </div>
+            <div className="space-y-2">
+              {featuredAlternatives.map((tool) => (
+                <button
+                  key={tool._id}
+                  onClick={() => navigate(`/model/${tool.slug}`)}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-muted/40 hover:bg-muted/70 transition-colors text-left"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-border/50 flex items-center justify-center overflow-hidden shrink-0">
+                    {tool.iconUrl
+                      ? <img src={tool.iconUrl} alt={tool.name} className="w-full h-full object-cover" />
+                      : <span className="text-base font-bold text-primary">{tool.name.charAt(0)}</span>
+                    }
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-semibold text-sm truncate">{tool.name}</span>
+                      {/* Featured badge (blue checkmark) */}
+                      <svg className="w-4 h-4 text-blue-500 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <p className="text-xs text-muted-foreground line-clamp-1">{tool.shortDescription}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+
         <div className="flex flex-col md:flex-row gap-6 md:gap-10 items-start mb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="w-24 h-24 md:w-32 md:h-32 rounded-3xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center flex-shrink-0 border border-primary/20 shadow-xl overflow-hidden">
             {model.iconUrl ? <img src={model.iconUrl} alt={model.name} className="w-full h-full object-cover" /> : <span className="text-4xl font-bold text-primary">{model.name.charAt(0)}</span>}

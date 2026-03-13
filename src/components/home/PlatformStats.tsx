@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useEffect, useState, useRef } from "react";
+import api from "@/lib/api";
 import { Bot, Users, Eye } from "lucide-react";
 
 interface StatCardProps {
@@ -10,14 +11,18 @@ interface StatCardProps {
   description: string;
   iconColor: string;
   delay: number;
+  loading?: boolean;
 }
 
-const StatCard = ({ icon, label, value, suffix = "", description, iconColor, delay }: StatCardProps) => {
+const StatCard = ({ icon, label, value, suffix = "", description, iconColor, delay, loading = false }: StatCardProps) => {
   const [displayValue, setDisplayValue] = useState(0);
   const hasAnimated = useRef(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Only start the count-up once we have real data (loading=false)
   useEffect(() => {
+    if (loading) return; // wait for real value
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting && !hasAnimated.current) {
@@ -50,7 +55,7 @@ const StatCard = ({ icon, label, value, suffix = "", description, iconColor, del
     }
 
     return () => observer.disconnect();
-  }, [value]);
+  }, [value, loading]);
 
   // Format number with commas
   const formatNumber = (num: number) => {
@@ -77,8 +82,21 @@ const StatCard = ({ icon, label, value, suffix = "", description, iconColor, del
       </p>
 
       {/* Animated Number */}
-      <div className="text-4xl lg:text-5xl font-bold text-foreground mb-3 tracking-tight">
-        {formatNumber(displayValue)}{suffix}
+      <div className="text-4xl lg:text-5xl font-bold text-foreground mb-3 tracking-tight flex items-baseline">
+        {loading ? (
+          <div className="h-12 w-28 rounded-lg bg-muted animate-pulse" />
+        ) : (
+          <>
+            <span>{formatNumber(displayValue)}</span>
+            {suffix === '+' ? (
+              <span className="ml-2 text-2xl lg:text-3xl font-extrabold text-primary" aria-hidden>
+                +
+              </span>
+            ) : (
+              <span className="ml-2 text-lg">{suffix}</span>
+            )}
+          </>
+        )}
       </div>
 
       {/* Description */}
@@ -93,6 +111,27 @@ const StatCard = ({ icon, label, value, suffix = "", description, iconColor, del
 };
 
 export const PlatformStats = () => {
+  const [totalTools, setTotalTools] = useState<number | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchStats = async () => {
+      try {
+        const res = await api.get('/api/models/stats/count');
+        const json = res.data;
+        if (!mounted) return;
+        if (json && json.success && json.data && typeof json.data.total === 'number') {
+          setTotalTools(json.data.total);
+        }
+      } catch (err) {
+        console.error('Failed to fetch platform stats via api client:', err);
+      }
+    };
+
+    fetchStats();
+    return () => { mounted = false; };
+  }, []);
+
   return (
     <section className="py-16 lg:py-24 relative">
       {/* Subtle background gradient */}
@@ -121,13 +160,14 @@ export const PlatformStats = () => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto">
-          {/* Total Tools Listed */}
+          {/* Total Tools Listed (fetched from API) */}
           <StatCard
             icon={<Bot className="w-7 h-7 text-white" />}
             iconColor="bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg shadow-purple-500/30"
             label="AI Tools Listed"
-            value={1000}
+            value={totalTools ?? 0}
             suffix="+"
+            loading={totalTools === null}
             description="Curated AI tools available for discovery"
             delay={0.1}
           />

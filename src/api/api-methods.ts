@@ -410,6 +410,34 @@ promoteModel: async (modelId: string): Promise<{success: boolean; message: strin
     }
   },
 
+  // Boost a model for N days (max 2 per category)
+  boostModel: async (id: string, days: number): Promise<{success: boolean; message: string; data: {model: Model; boostEndDate: string}}> => {
+    try {
+      const response = await apiClient.post(`/api/models/${id}/boost`, { days });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message ||
+        error.message ||
+        'Failed to boost model.'
+      );
+    }
+  },
+
+  // Get up to 2 actively boosted (featured) tools for a category
+  getFeaturedByCategory: async (category: string): Promise<{success: boolean; data: {models: Model[]}}> => {
+    try {
+      const response = await apiClient.get(`/api/models/featured-for/${encodeURIComponent(category)}`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message ||
+        error.message ||
+        'Failed to fetch featured models.'
+      );
+    }
+  },
+
   // Get user's uploaded models
   getUserModels: async (): Promise<ModelsResponse> => {
     try {
