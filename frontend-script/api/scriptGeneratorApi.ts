@@ -4,6 +4,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:1000';
 
 export interface ScriptGenerationParams {
     topic: string;
+    detailedInstructions?: string;
     duration: '30s' | '1min' | 'custom';
     customDuration?: number;
     language: 'English' | 'Hindi' | 'Hinglish';
@@ -61,11 +62,12 @@ export interface ScriptResponse {
 
 export const generateScript = async (params: ScriptGenerationParams, signal?: AbortSignal): Promise<ScriptResponse> => {
     try {
+        const headers = getAuthHeaders();
         const response = await axios.post<ScriptResponse>(
             `${API_BASE}/api/script-generator/generate`,
             params,
             {
-                headers: { 'Content-Type': 'application/json' },
+                headers: { ...headers, 'Content-Type': 'application/json' },
                 timeout: 60000, // 60s timeout for AI generation
                 signal, // Add abort signal support
             }
@@ -97,6 +99,7 @@ export const regenerateSection = async (
     signal?: AbortSignal
 ): Promise<ScriptResponse> => {
     try {
+        const headers = getAuthHeaders();
         const response = await axios.post<ScriptResponse>(
             `${API_BASE}/api/script-generator/regenerate-section`,
             {
@@ -106,7 +109,7 @@ export const regenerateSection = async (
                 instruction
             },
             {
-                headers: { 'Content-Type': 'application/json' },
+                headers: { ...headers, 'Content-Type': 'application/json' },
                 timeout: 30000, // 30s timeout for section regeneration
                 signal,
             }
@@ -275,14 +278,159 @@ export const regenerateSectionApi = async (
     instruction?: string
 ): Promise<{ success: boolean; data?: Partial<ScriptResult>; error?: string }> => {
     try {
+        const headers = getAuthHeaders();
         const response = await axios.post(
             `${API_BASE}/api/script-generator/regenerate-section`,
             { section, params, currentScript, instruction: instruction || '' },
-            { headers: { 'Content-Type': 'application/json' }, timeout: 60000 }
+            { headers: { ...headers, 'Content-Type': 'application/json' }, timeout: 60000 }
         );
         return response.data;
     } catch (error: any) {
         return { success: false, error: error.response?.data?.error || 'Failed to regenerate section.' };
+    }
+};
+
+// ─── Creator Style Profile API ──────────────────────────────────
+
+export interface CreatorStyleProfile {
+    language: {
+        primary: 'English' | 'Hindi' | 'Hinglish' | null;
+        confidence: number;
+        distribution: Record<string, number>;
+        samplesAnalyzed: number;
+    };
+    sentenceStructure: {
+        averageLength: number;
+        minLength: number;
+        maxLength: number;
+        complexity: 'Simple' | 'Moderate' | 'Complex';
+        preferredPatterns: Array<{ pattern: string; frequency: number }>;
+    };
+    tone: {
+        primary: 'Inspirational' | 'Dark' | 'Confident' | 'Vulnerable' | 'Raw' | 'Aggressive' | 'Storytelling' | null;
+        secondary: string[];
+        confidence: number;
+        characteristics: Record<string, number>;
+    };
+    commonPhrases: Array<{ phrase: string; frequency: number; category: string }>;
+    writingPatterns: Record<string, boolean | number>;
+    emotionalIntensity: {
+        average: number;
+        range: { min: number; max: number };
+        distribution: Record<string, number>;
+    };
+    preferredAudience: {
+        primary: 'Students' | 'Entrepreneurs' | 'Creators' | null;
+        secondary: string[];
+        customDescriptions: string[];
+    };
+    strictRestrictions: Record<string, boolean | number>;
+    totalScriptsAnalyzed: number;
+    profileStatus: 'initializing' | 'building' | 'established' | 'verified';
+    lastUpdated: string;
+    createdAt: string;
+}
+
+export interface CreatorProfileSummary {
+    status: string;
+    scriptsAnalyzed: number;
+    keyMetrics: {
+        primaryLanguage: string;
+        languageConfidence: number;
+        primaryTone: string;
+        toneConfidence: number;
+        averageSentenceLength: number;
+        sentenceComplexity: string;
+        emotionalIntensityLevel: number;
+        preferredAudience: string;
+    };
+    writingStyle: Record<string, boolean>;
+    signaturePhrases: Array<{ phrase: string; frequency: number }>;
+    restrictions: Record<string, boolean>;
+}
+
+export const getCreatorStyleProfile = async (): Promise<{
+    success: boolean;
+    data?: CreatorStyleProfile;
+    status?: string;
+    message?: string;
+    error?: string;
+}> => {
+    try {
+        const headers = getAuthHeaders();
+        const response = await axios.get(
+            `${API_BASE}/api/creator-style-profile/profile`,
+            { headers, timeout: 10000 }
+        );
+        return response.data;
+    } catch (error: any) {
+        return {
+            success: false,
+            error: error.response?.data?.error || 'Failed to fetch creator style profile.'
+        };
+    }
+};
+
+export const getCreatorStyleProfileSummary = async (): Promise<{
+    success: boolean;
+    summary?: CreatorProfileSummary;
+    message?: string;
+    error?: string;
+}> => {
+    try {
+        const headers = getAuthHeaders();
+        const response = await axios.get(
+            `${API_BASE}/api/creator-style-profile/profile/summary`,
+            { headers, timeout: 10000 }
+        );
+        return response.data;
+    } catch (error: any) {
+        return {
+            success: false,
+            error: error.response?.data?.error || 'Failed to fetch creator style profile summary.'
+        };
+    }
+};
+
+export const updateCreatorStyleRestrictions = async (restrictions: Record<string, boolean | number>): Promise<{
+    success: boolean;
+    data?: Record<string, boolean | number>;
+    message?: string;
+    error?: string;
+}> => {
+    try {
+        const headers = getAuthHeaders();
+        const response = await axios.patch(
+            `${API_BASE}/api/creator-style-profile/profile/restrictions`,
+            restrictions,
+            { headers, timeout: 10000 }
+        );
+        return response.data;
+    } catch (error: any) {
+        return {
+            success: false,
+            error: error.response?.data?.error || 'Failed to update restrictions.'
+        };
+    }
+};
+
+export const resetCreatorStyleProfile = async (): Promise<{
+    success: boolean;
+    message?: string;
+    error?: string;
+}> => {
+    try {
+        const headers = getAuthHeaders();
+        const response = await axios.delete(
+            `${API_BASE}/api/creator-style-profile/profile`,
+            { headers, timeout: 10000 }
+        );
+        return response.data;
+    } catch (error: any) {
+        return {
+            success: false,
+            error: error.response?.data?.error || 'Failed to reset creator style profile.'
+        };
     }
 };
 

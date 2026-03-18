@@ -85,6 +85,7 @@ const groupByDate = (items: ScriptHistoryItem[]) => {
 const ScriptGenerator = () => {
   const navigate = useNavigate();
   const [topic, setTopic] = useState("");
+  const [detailedInstructions, setDetailedInstructions] = useState("");
   const [duration, setDuration] = useState<string>("1min");
   const [customDuration, setCustomDuration] = useState<number>(2);
   const [language, setLanguage] = useState("English");
@@ -116,6 +117,7 @@ const ScriptGenerator = () => {
 
   // Edit popup state
   const [showEditPopup, setShowEditPopup] = useState(false);
+  const [editDetailedInstructions, setEditDetailedInstructions] = useState("");
   const [editDuration, setEditDuration] = useState("1min");
   const [editCustomDuration, setEditCustomDuration] = useState(2);
   const [editLanguage, setEditLanguage] = useState("English");
@@ -308,6 +310,7 @@ const ScriptGenerator = () => {
 
     const params: ScriptGenerationParams = {
       topic: rootTopic,
+      detailedInstructions: detailedInstructions.trim() || undefined,
       duration: duration as "30s" | "1min" | "custom",
       customDuration: duration === "custom" ? customDuration : undefined,
       language: language as "English" | "Hindi" | "Hinglish",
@@ -332,12 +335,19 @@ const ScriptGenerator = () => {
       if (response.success && response.data) {
         setResult(response.data);
         setSessionScript(response.data);
+        
+        // Backend automatically saves with correct metadata
+        const historyMetadata = (response as any).metadata || {};
+        const savedSessionId = historyMetadata.sessionId || resolvedSessionId;
+        const savedTurnNumber = historyMetadata.turnNumber || (sessionTurns.length + 1);
+        const savedHistoryId = historyMetadata.historyId;
+
         setSessionTurns((prev) => {
           const turn: ScriptHistoryItem = {
-            _id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            _id: savedHistoryId || `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
             topic: rootTopic,
-            sessionId: resolvedSessionId,
-            turnNumber: (prev.length || 0) + 1,
+            sessionId: savedSessionId,
+            turnNumber: savedTurnNumber,
             userPrompt: finalTopic,
             isFollowUp: hasExistingSession,
             result: response.data,
@@ -356,30 +366,10 @@ const ScriptGenerator = () => {
         }
         setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 300);
 
-        // Auto-save if logged in
+        // Update active session with saved IDs
         if (isLoggedIn) {
-          saveScriptHistory(rootTopic, params, response.data, {
-            sessionId: resolvedSessionId,
-            userPrompt: finalTopic,
-            isFollowUp: hasExistingSession,
-          }).then((saveRes) => {
-            if (saveRes.success && saveRes.data?.sessionId) {
-              setActiveSessionId(saveRes.data.sessionId);
-              setSessionTurns((prev) => {
-                if (prev.length === 0) return prev;
-                const cloned = [...prev];
-                const latest = cloned[cloned.length - 1];
-                cloned[cloned.length - 1] = {
-                  ...latest,
-                  _id: saveRes.data?.id || latest._id,
-                  sessionId: saveRes.data?.sessionId || latest.sessionId,
-                  turnNumber: saveRes.data?.turnNumber || latest.turnNumber,
-                };
-                return cloned;
-              });
-              loadHistory();
-            }
-          });
+          setActiveSessionId(savedSessionId);
+          loadHistory(); // Refresh history sidebar
         }
       } else {
         setError(response.error || "Something went wrong. Please try again.");
@@ -459,6 +449,7 @@ const ScriptGenerator = () => {
 
   // Edit: open dedicated edit popup with current settings prefilled
   const handleEdit = () => {
+    setEditDetailedInstructions(detailedInstructions);
     setEditDuration(duration);
     setEditCustomDuration(customDuration);
     setEditLanguage(language);
@@ -485,6 +476,7 @@ const ScriptGenerator = () => {
   // Save & Regenerate: apply edited settings, then regenerate with same topic
   const handleSaveAndRegenerate = () => {
     // Apply edits to main state
+    setDetailedInstructions(editDetailedInstructions);
     setDuration(editDuration);
     setCustomDuration(editCustomDuration);
     setLanguage(editLanguage);
@@ -504,6 +496,7 @@ const ScriptGenerator = () => {
     // Build params with edited values and regenerate
     const params: ScriptGenerationParams = {
       topic: sessionRootTopic || lastTopic,
+      detailedInstructions: editDetailedInstructions.trim() || undefined,
       duration: editDuration as "30s" | "1min" | "custom",
       customDuration: editDuration === "custom" ? editCustomDuration : undefined,
       language: editLanguage as "English" | "Hindi" | "Hinglish",
@@ -531,14 +524,21 @@ const ScriptGenerator = () => {
       if (response.success && response.data) {
         setResult(response.data);
         setSessionScript(response.data);
-        if (!activeSessionId) setActiveSessionId(resolvedSessionId);
+        
+        // Backend automatically saves with correct metadata
+        const historyMetadata = (response as any).metadata || {};
+        const savedSessionId = historyMetadata.sessionId || resolvedSessionId;
+        const savedTurnNumber = historyMetadata.turnNumber || undefined;
+        const savedHistoryId = historyMetadata.historyId;
+        
+        if (!activeSessionId) setActiveSessionId(savedSessionId);
         setSessionTurns((prev) => ([
           ...prev,
           {
-            _id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            _id: savedHistoryId || `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
             topic: sessionRootTopic || lastTopic,
-            sessionId: resolvedSessionId,
-            turnNumber: (prev.length || 0) + 1,
+            sessionId: savedSessionId,
+            turnNumber: savedTurnNumber || (prev.length + 1),
             userPrompt: `Regenerate: ${lastTopic}`,
             isFollowUp: true,
             result: response.data,
@@ -547,13 +547,7 @@ const ScriptGenerator = () => {
         ]));
         setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 300);
         if (isLoggedIn) {
-          saveScriptHistory(sessionRootTopic || lastTopic, params, response.data, {
-            sessionId: resolvedSessionId,
-            userPrompt: `Regenerate: ${lastTopic}`,
-            isFollowUp: true,
-          }).then((saveRes) => {
-            if (saveRes.success) loadHistory();
-          });
+          loadHistory(); // Refresh history sidebar
         }
       } else {
         setError(response.error || "Something went wrong.");
@@ -575,7 +569,7 @@ const ScriptGenerator = () => {
     setError(null);
 
     try {
-      const response = await regenerateSection(section, lastParams, result, undefined, controller.signal);
+      const response = await regenerateSection(section, lastParams as ScriptGenerationParams, result, undefined, controller.signal);
       
       if (response.success && response.data) {
         // Update the specific section in the result
@@ -808,6 +802,8 @@ const ScriptGenerator = () => {
                       (() => {
                         const itemSessionId = item.sessionId || item._id;
                         const isActiveSession = (activeSessionId || activeHistoryId || '') === itemSessionId;
+                        // Count turns for this session
+                        const sessionTurnCount = history.filter(h => (h.sessionId || h._id) === itemSessionId).length;
                         return (
                       <div
                         key={item._id}
@@ -822,13 +818,21 @@ const ScriptGenerator = () => {
                         onMouseEnter={(e) => { if (!isActiveSession) e.currentTarget.style.background = "#F3F4F6"; }}
                         onMouseLeave={(e) => { if (!isActiveSession) e.currentTarget.style.background = "transparent"; }}
                       >
-                        <span style={{
-                          fontSize: 13, color: isActiveSession ? "#7C3AED" : "#4B5563",
-                          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                          flex: 1,
-                        }}>
-                          {item.topic}
-                        </span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <span style={{
+                            fontSize: 13, color: isActiveSession ? "#7C3AED" : "#4B5563",
+                            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                            display: "block",
+                          }}>
+                            {item.topic}
+                          </span>
+                          <span style={{
+                            fontSize: 11, color: "#9CA3AF", fontWeight: 400,
+                            display: "block", marginTop: 3,
+                          }}>
+                            {sessionTurnCount} {sessionTurnCount === 1 ? "turn" : "turns"}
+                          </span>
+                        </div>
                         <button
                           onClick={(e) => handleDeleteHistory(e, item._id, itemSessionId)}
                           style={{
@@ -859,20 +863,46 @@ const ScriptGenerator = () => {
         <div style={{
           position: "sticky", top: 0, zIndex: 5, padding: "12px 16px",
           background: "rgba(255,255,255,0.85)", backdropFilter: "blur(10px)",
-          display: "flex", alignItems: "center", gap: 10,
+          display: "flex", alignItems: "center", gap: 10, justifyContent: "space-between",
         }}>
-          <button onClick={() => setSidebarOpen(true)} style={{
-            width: 36, height: 36, borderRadius: 10, border: "none",
-            background: "transparent", color: "#9CA3AF", cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            transition: "color 0.15s",
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <button onClick={() => setSidebarOpen(true)} style={{
+              width: 36, height: 36, borderRadius: 10, border: "none",
+              background: "transparent", color: "#9CA3AF", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              transition: "color 0.15s",
+            }}
+              onMouseEnter={(e) => e.currentTarget.style.color = "#1A1A1A"}
+              onMouseLeave={(e) => e.currentTarget.style.color = "#9CA3AF"}
+            >
+              <Menu style={{ width: 20, height: 20 }} />
+            </button>
+            <span style={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>Soch AI Script</span>
+            {/* Current session indicator */}
+            {activeSessionId && sessionTurns.length > 0 && (
+              <span style={{ fontSize: 11, color: "#9CA3AF", fontWeight: 500, paddingLeft: 12, borderLeft: "1px solid #E5E7EB", display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ width: 6, height: 6, borderRadius: 3, background: "#7C3AED" }} />
+                {sessionTurns.length} {sessionTurns.length === 1 ? "turn" : "turns"}
+              </span>
+            )}
+          </div>
+
+          {/* New Chat button - visible alongside menu */}
+          <button onClick={() => {
+            setResult(null); setSessionScript(null); setSessionTurns([]); setLastTopic(""); setSessionRootTopic(""); setActiveSessionId(null); setActiveHistoryId(null);
+            setTopic(""); setError(null);
+          }} style={{
+            padding: "7px 14px", borderRadius: 8, border: "1px solid #E5E7EB", 
+            background: "transparent", color: "#6B7280", fontSize: 12, fontWeight: 500, 
+            cursor: "pointer", display: "flex", alignItems: "center", gap: 6,
+            transition: "all 0.15s", whiteSpace: "nowrap",
           }}
-            onMouseEnter={(e) => e.currentTarget.style.color = "#1A1A1A"}
-            onMouseLeave={(e) => e.currentTarget.style.color = "#9CA3AF"}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#7C3AED"; e.currentTarget.style.color = "#7C3AED"; e.currentTarget.style.background = "rgba(124,58,237,0.04)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#E5E7EB"; e.currentTarget.style.color = "#6B7280"; e.currentTarget.style.background = "transparent"; }}
           >
-            <Menu style={{ width: 20, height: 20 }} />
+            <Sparkles style={{ width: 14, height: 14 }} />
+            New Chat
           </button>
-          <span style={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>Soch AI Script</span>
         </div>
 
         <div style={container}>
@@ -882,19 +912,30 @@ const ScriptGenerator = () => {
             {/* ─── Empty State ─────────────────────────── */}
             {!result && !isGenerating && !error && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ textAlign: "center" }}>
-                <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 52, height: 52, borderRadius: 14, background: "rgba(139,92,246,0.12)", marginBottom: 24 }}>
+                {sessionTurns.length > 0 && (
+                  <div style={{ marginBottom: 24, padding: "10px 14px", borderRadius: 10, background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.15)", display: "inline-block" }}>
+                    <span style={{ fontSize: 12, color: "#7C3AED", fontWeight: 500, display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ width: 6, height: 6, borderRadius: 3, background: "#7C3AED" }} />
+                      Active Conversation • {sessionTurns.length} {sessionTurns.length === 1 ? "turn" : "turns"}
+                    </span>
+                  </div>
+                )}
+                <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 52, height: 52, borderRadius: 14, background: "rgba(139,92,246,0.12)", marginBottom: 24, marginTop: sessionTurns.length > 0 ? 20 : 0 }}>
                   <Sparkles style={{ width: 26, height: 26, color: "#A78BFA" }} />
                 </div>
                 <h1 style={{ fontSize: 28, fontWeight: 700, margin: "0 0 10px", color: "#111827", letterSpacing: "-0.01em" }}>
-                  What script do you need?
+                  {sessionTurns.length > 0 ? "Continue your conversation" : "What script do you need?"}
                 </h1>
                 <p style={{ fontSize: 15, color: "#6B7280", margin: "0 0 36px", lineHeight: 1.5 }}>
-                  Describe your topic and get a ready-to-use video script instantly.
+                  {sessionTurns.length > 0 ? "Ask for changes, regenerations, or follow-up scripts." : "Describe your topic and get a ready-to-use video script instantly."}
                 </p>
 
                 {/* Suggestion Chips */}
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center" }}>
-                  {SUGGESTIONS.map((s) => (
+                  {(sessionTurns.length > 0 
+                    ? ["Make the hook more catchy", "Shorten the body", "Different tone", "Try another version"] 
+                    : SUGGESTIONS
+                  ).map((s) => (
                     <button
                       key={s}
                       onClick={() => handleGenerate(s)}
@@ -1235,6 +1276,28 @@ const ScriptGenerator = () => {
                               </button>
                             </div>
 
+                            {/* Detailed Instructions */}
+                            <div style={{ marginBottom: 16 }}>
+                              <div style={{ fontSize: 12, color: "#6B7280", marginBottom: 8, fontWeight: 500 }}>Detailed Instructions <span style={{ fontSize: 10, color: "#9CA3AF", fontWeight: 400 }}>(optional)</span></div>
+                              <textarea
+                                value={editDetailedInstructions}
+                                onChange={(e) => setEditDetailedInstructions(e.target.value)}
+                                placeholder="Specify your script style, structure, tone, or any specific points to include..."
+                                style={{
+                                  width: "100%", padding: "8px 12px", borderRadius: 8, fontSize: 12,
+                                  background: "#F5F5F5", border: "1px solid #D4D4D8", color: "#1A1A1A",
+                                  outline: "none", boxSizing: "border-box" as const, fontFamily: "inherit",
+                                  minHeight: 60, resize: "vertical",
+                                  lineHeight: 1.4,
+                                }}
+                              />
+                              {editDetailedInstructions && (
+                                <div style={{ fontSize: 10, color: "#9CA3AF", marginTop: 4 }}>
+                                  These instructions will influence script structure, tone, and content
+                                </div>
+                              )}
+                            </div>
+
                             {/* Duration */}
                             <div style={{ marginBottom: 16 }}>
                               <div style={{ fontSize: 12, color: "#6B7280", marginBottom: 8, fontWeight: 500 }}>Duration</div>
@@ -1444,6 +1507,28 @@ const ScriptGenerator = () => {
                       <button onClick={() => setShowSettings(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#9CA3AF", padding: 4 }}>
                         <X style={{ width: 16, height: 16 }} />
                       </button>
+                    </div>
+
+                    {/* Detailed Instructions */}
+                    <div style={{ marginBottom: 16 }}>
+                      <div style={{ fontSize: 12, color: "#6B7280", marginBottom: 8, fontWeight: 500 }}>Detailed Instructions <span style={{ fontSize: 10, color: "#9CA3AF", fontWeight: 400 }}>(optional)</span></div>
+                      <textarea
+                        value={detailedInstructions}
+                        onChange={(e) => setDetailedInstructions(e.target.value)}
+                        placeholder="Specify your script style, structure, tone, or any specific points to include..."
+                        style={{
+                          width: "100%", padding: "8px 12px", borderRadius: 8, fontSize: 12,
+                          background: "#F5F5F5", border: "1px solid #D4D4D8", color: "#1A1A1A",
+                          outline: "none", boxSizing: "border-box" as const, fontFamily: "inherit",
+                          minHeight: 60, resize: "vertical",
+                          lineHeight: 1.4,
+                        }}
+                      />
+                      {detailedInstructions && (
+                        <div style={{ fontSize: 10, color: "#9CA3AF", marginTop: 4 }}>
+                          These instructions will influence script structure, tone, and content
+                        </div>
+                      )}
                     </div>
 
                     {/* Duration */}
