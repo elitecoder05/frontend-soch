@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles, Copy, Check, Loader2, Send, Settings2, X,
@@ -84,6 +84,7 @@ const groupByDate = (items: ScriptHistoryItem[]) => {
 // ─── Main Component ──────────────────────────────────────────────
 const ScriptGenerator = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [topic, setTopic] = useState("");
   const [detailedInstructions, setDetailedInstructions] = useState("");
   const [duration, setDuration] = useState<string>("1min");
@@ -195,6 +196,14 @@ const ScriptGenerator = () => {
     setGuestUsageCount(count);
     setShowLimitPrompt(count >= GUEST_FREE_LIMIT);
   }, [isLoggedIn]);
+
+  // Load topic from URL parameter (e.g., ?topic=my%20topic)
+  useEffect(() => {
+    const topicParam = searchParams.get('topic');
+    if (topicParam) {
+      setTopic(decodeURIComponent(topicParam));
+    }
+  }, [searchParams]);
 
   // Close settings on outside click
   useEffect(() => {
@@ -395,6 +404,26 @@ const ScriptGenerator = () => {
       setGenerationStep(0);
       setError("Generation cancelled by user.");
     }
+  };
+
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Keep Shift+Enter for multiline input, but send on plain Enter.
+    if (e.key !== "Enter" || e.shiftKey || e.nativeEvent.isComposing) {
+      return;
+    }
+
+    e.preventDefault();
+
+    if (isGenerating) {
+      handleCancel();
+      return;
+    }
+
+    if (!topic.trim() || isGuestLimitReached) {
+      return;
+    }
+
+    handleGenerate();
   };
 
   const handleLoadHistory = async (item: ScriptHistoryItem) => {
@@ -1773,6 +1802,7 @@ const ScriptGenerator = () => {
                   className="custom-scrollbar"
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
+                  onKeyDown={handleInputKeyDown}
                   placeholder="Describe your script topic..."
                   rows={1}
                   style={{

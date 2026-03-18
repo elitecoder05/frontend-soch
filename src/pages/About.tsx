@@ -56,8 +56,11 @@ const About = () => {
             </CardHeader>
             <CardContent className="space-y-4 text-muted-foreground">
               <p>
-                Soch AI Store is an independent platform that brings together the world's most useful AI tools in one trusted space. 
-                We help creators, students, developers, and businesses discover the right AI tools without confusion. 
+                Soch AI Store is India's most reliable AI tools directory. We help creators, students, developers, and businesses discover the right AI tools without confusion. This AI tools directory helps you quickly find the best solutions for your workflow. With hundreds of AI startups launching every month, Soch AI Store makes it easy to search, compare, and choose the best AI tools in one place.
+              </p>
+              <p>
+                Soch AI Store is an independent platform that brings together the world's most useful AI tools in one trusted space.
+                We help creators, students, developers, and businesses discover the right AI tools without confusion.
                 Our goal is to make AI simple and accessible for everyone.
               </p>
               <p>

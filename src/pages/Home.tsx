@@ -1,10 +1,9 @@
 
 
-
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { AixploriaHero } from "@/components/home/AixploriaHero";
-import { CategoryBoxes } from "@/components/home/CategoryBoxes";
+import { CreatorHero } from "@/components/home/CreatorHero";
+import { AIToolsDiscoverySection } from "@/components/home/AIToolsDiscoverySection";
 import { ToolColumnList } from "@/components/home/ToolColumnList";
 import { PlatformStats } from "@/components/home/PlatformStats";
 import { InfoSection } from "@/components/home/InfoSection";
@@ -55,15 +54,15 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col selection:bg-purple-500/30 selection:text-purple-200 overflow-x-hidden">
       <Navbar />
-      
+
       <main className="flex-1 pb-24 lg:pb-0">
-        <AixploriaHero />
+        <CreatorHero />
 
         <div className="container max-w-7xl mx-auto px-4 py-8 lg:py-16 space-y-12 lg:space-y-24">
-          
-          {/* 1. Categories Section */}
+
+          {/* 1. AI Tools Discovery Section */}
           <section>
-            <CategoryBoxes />
+            <AIToolsDiscoverySection />
           </section>
 
           {/* 2. AI Tools Grid */}
