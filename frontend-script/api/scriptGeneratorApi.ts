@@ -150,6 +150,10 @@ const getAuthHeaders = () => {
 export interface ScriptHistoryItem {
     _id: string;
     topic: string;
+    sessionId?: string;
+    turnNumber?: number;
+    userPrompt?: string;
+    isFollowUp?: boolean;
     result?: ScriptResult;
     createdAt: string;
 }
@@ -164,15 +168,23 @@ export interface ScriptHistoryListResponse {
 export const saveScriptHistory = async (
     topic: string,
     params: Partial<ScriptGenerationParams>,
-    result: ScriptResult
-): Promise<{ success: boolean; error?: string }> => {
+    result: ScriptResult,
+    options?: { sessionId?: string; userPrompt?: string; isFollowUp?: boolean }
+): Promise<{ success: boolean; data?: { id: string; sessionId: string; turnNumber: number; createdAt: string }; error?: string }> => {
     try {
         const headers = getAuthHeaders();
         if (!headers.Authorization) return { success: false, error: 'Not authenticated' };
 
         const response = await axios.post(
             `${API_BASE}/api/script-history/save`,
-            { topic, params, result },
+            {
+                topic,
+                params,
+                result,
+                sessionId: options?.sessionId,
+                userPrompt: options?.userPrompt,
+                isFollowUp: options?.isFollowUp,
+            },
             { headers: { 'Content-Type': 'application/json', ...headers }, timeout: 10000 }
         );
         return response.data;
@@ -208,6 +220,36 @@ export const getScriptHistoryItem = async (id: string): Promise<{ success: boole
         return response.data;
     } catch {
         return { success: false, error: 'Failed to fetch script.' };
+    }
+};
+
+export const getScriptHistorySession = async (sessionId: string): Promise<{ success: boolean; data?: ScriptHistoryItem[]; error?: string }> => {
+    try {
+        const headers = getAuthHeaders();
+        if (!headers.Authorization) return { success: false, error: 'Not authenticated' };
+
+        const response = await axios.get(
+            `${API_BASE}/api/script-history/session/${encodeURIComponent(sessionId)}`,
+            { headers, timeout: 10000 }
+        );
+        return response.data;
+    } catch {
+        return { success: false, error: 'Failed to fetch script session.' };
+    }
+};
+
+export const deleteScriptHistorySession = async (sessionId: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+        const headers = getAuthHeaders();
+        if (!headers.Authorization) return { success: false, error: 'Not authenticated' };
+
+        const response = await axios.delete(
+            `${API_BASE}/api/script-history/session/${encodeURIComponent(sessionId)}`,
+            { headers, timeout: 10000 }
+        );
+        return response.data;
+    } catch {
+        return { success: false, error: 'Failed to delete script session.' };
     }
 };
 

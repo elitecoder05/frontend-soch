@@ -1,11 +1,12 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles, Copy, Check, Loader2, Send, Settings2, X,
   Menu, Trash2, Clock
 } from "lucide-react";
 import {
-  generateScript, saveScriptHistory, getScriptHistory, getScriptHistoryItem, deleteScriptHistory, regenerateSection,
+  generateScript, saveScriptHistory, getScriptHistory, getScriptHistoryItem, getScriptHistorySession, deleteScriptHistorySession, regenerateSection,
   type ScriptGenerationParams, type ScriptResult, type ScriptHistoryItem
 } from "../api/scriptGeneratorApi";
 import Cookies from "js-cookie";
@@ -48,6 +49,9 @@ const CTA_OPTIONS = [
   "Follow for more", "Subscribe", "Comment", "Save", "custom"
 ] as const;
 
+const GUEST_FREE_LIMIT = 5;
+const GUEST_USAGE_KEY = "soch_script_generator_guest_usage_count";
+
 // ─── Date grouping helper ────────────────────────────────────────
 const groupByDate = (items: ScriptHistoryItem[]) => {
   const groups: { label: string; items: ScriptHistoryItem[] }[] = [];
@@ -79,6 +83,7 @@ const groupByDate = (items: ScriptHistoryItem[]) => {
 
 // ─── Main Component ──────────────────────────────────────────────
 const ScriptGenerator = () => {
+  const navigate = useNavigate();
   const [topic, setTopic] = useState("");
   const [duration, setDuration] = useState<string>("1min");
   const [customDuration, setCustomDuration] = useState<number>(2);
@@ -103,7 +108,11 @@ const ScriptGenerator = () => {
   const [copied, setCopied] = useState(false);
   const [lastTopic, setLastTopic] = useState("");
   const [sessionRootTopic, setSessionRootTopic] = useState("");
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [sessionTurns, setSessionTurns] = useState<ScriptHistoryItem[]>([]);
   const [lastParams, setLastParams] = useState<Partial<ScriptGenerationParams>>({});
+  const [guestUsageCount, setGuestUsageCount] = useState<number>(0);
+  const [showLimitPrompt, setShowLimitPrompt] = useState(false);
 
   // Edit popup state
   const [showEditPopup, setShowEditPopup] = useState(false);
@@ -141,6 +150,25 @@ const ScriptGenerator = () => {
 
   const isLoggedIn = !!Cookies.get("authToken");
 
+  const createSessionId = () => {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      return crypto.randomUUID();
+    }
+    return `session-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  };
+
+  const getStoredGuestUsage = () => {
+    if (typeof window === "undefined") return 0;
+    const raw = window.localStorage.getItem(GUEST_USAGE_KEY);
+    const parsed = parseInt(raw || "0", 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+  };
+
+  const setStoredGuestUsage = (count: number) => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(GUEST_USAGE_KEY, String(Math.max(0, count)));
+  };
+
   // Load history when sidebar opens
   const loadHistory = useCallback(async () => {
     if (!isLoggedIn) return;
@@ -153,6 +181,18 @@ const ScriptGenerator = () => {
   useEffect(() => {
     if (sidebarOpen && isLoggedIn) loadHistory();
   }, [sidebarOpen, isLoggedIn, loadHistory]);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      setGuestUsageCount(0);
+      setShowLimitPrompt(false);
+      return;
+    }
+
+    const count = getStoredGuestUsage();
+    setGuestUsageCount(count);
+    setShowLimitPrompt(count >= GUEST_FREE_LIMIT);
+  }, [isLoggedIn]);
 
   // Close settings on outside click
   useEffect(() => {
@@ -241,9 +281,16 @@ const ScriptGenerator = () => {
   const handleGenerate = async (customTopic?: string) => {
     const finalTopic = (customTopic || topic).trim();
     if (!finalTopic) return;
+    if (!isLoggedIn && guestUsageCount >= GUEST_FREE_LIMIT) {
+      setShowLimitPrompt(true);
+      setError("Free limit reached. Please log in or upgrade to continue.");
+      return;
+    }
+
     const hasExistingSession = !!sessionScript && !!sessionRootTopic;
     const rootTopic = sessionRootTopic || finalTopic;
     const currentResult = sessionScript;
+    const resolvedSessionId = activeSessionId || createSessionId();
 
     // Create abort controller for cancellation
     const controller = new AbortController();
@@ -254,6 +301,7 @@ const ScriptGenerator = () => {
     setResult(null);
     setLastTopic(finalTopic);
     if (!sessionRootTopic) setSessionRootTopic(finalTopic);
+    if (!activeSessionId) setActiveSessionId(resolvedSessionId);
     setActiveHistoryId(null);
     if (customTopic) setTopic(customTopic);
     setShowSettings(false);
@@ -284,12 +332,53 @@ const ScriptGenerator = () => {
       if (response.success && response.data) {
         setResult(response.data);
         setSessionScript(response.data);
+        setSessionTurns((prev) => {
+          const turn: ScriptHistoryItem = {
+            _id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            topic: rootTopic,
+            sessionId: resolvedSessionId,
+            turnNumber: (prev.length || 0) + 1,
+            userPrompt: finalTopic,
+            isFollowUp: hasExistingSession,
+            result: response.data,
+            createdAt: new Date().toISOString(),
+          };
+
+          if (!hasExistingSession) return [turn];
+          return [...prev, turn];
+        });
+
+        if (!isLoggedIn) {
+          const nextGuestCount = guestUsageCount + 1;
+          setGuestUsageCount(nextGuestCount);
+          setStoredGuestUsage(nextGuestCount);
+          if (nextGuestCount >= GUEST_FREE_LIMIT) setShowLimitPrompt(true);
+        }
         setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 300);
 
         // Auto-save if logged in
         if (isLoggedIn) {
-          saveScriptHistory(rootTopic, params, response.data).then((saveRes) => {
-            if (saveRes.success) loadHistory(); // Refresh sidebar
+          saveScriptHistory(rootTopic, params, response.data, {
+            sessionId: resolvedSessionId,
+            userPrompt: finalTopic,
+            isFollowUp: hasExistingSession,
+          }).then((saveRes) => {
+            if (saveRes.success && saveRes.data?.sessionId) {
+              setActiveSessionId(saveRes.data.sessionId);
+              setSessionTurns((prev) => {
+                if (prev.length === 0) return prev;
+                const cloned = [...prev];
+                const latest = cloned[cloned.length - 1];
+                cloned[cloned.length - 1] = {
+                  ...latest,
+                  _id: saveRes.data?.id || latest._id,
+                  sessionId: saveRes.data?.sessionId || latest.sessionId,
+                  turnNumber: saveRes.data?.turnNumber || latest.turnNumber,
+                };
+                return cloned;
+              });
+              loadHistory();
+            }
           });
         }
       } else {
@@ -322,36 +411,47 @@ const ScriptGenerator = () => {
     setActiveHistoryId(item._id);
     setLastTopic(item.topic);
     setSessionRootTopic(item.topic);
+    const sessionId = item.sessionId || item._id;
+    setActiveSessionId(sessionId);
     setTopic("");
     setError(null);
 
-    // If result is already present (from list), use it directly
-    if (item.result && item.result.hook && item.result.body) {
-      setResult(item.result);
-      setSessionScript(item.result);
+    const sessionRes = await getScriptHistorySession(sessionId);
+    if (sessionRes.success && sessionRes.data && sessionRes.data.length > 0) {
+      setSessionTurns(sessionRes.data);
+      const latestTurn = sessionRes.data[sessionRes.data.length - 1];
+      if (latestTurn?.result) {
+        setResult(latestTurn.result);
+        setSessionScript(latestTurn.result);
+        setLastTopic(latestTurn.userPrompt || latestTurn.topic);
+      }
       setSidebarOpen(false);
       return;
     }
 
-    // Otherwise fetch full data
+    // Fallback for legacy entries with no session metadata
     const res = await getScriptHistoryItem(item._id);
     if (res.success && res.data?.result) {
+      setSessionTurns([res.data]);
       setResult(res.data.result);
       setSessionScript(res.data.result);
     }
     setSidebarOpen(false);
   };
 
-  const handleDeleteHistory = async (e: React.MouseEvent, id: string) => {
+  const handleDeleteHistory = async (e: React.MouseEvent, id: string, sessionId?: string) => {
     e.stopPropagation();
-    const res = await deleteScriptHistory(id);
+    const targetSessionId = sessionId || id;
+    const res = await deleteScriptHistorySession(targetSessionId);
     if (res.success) {
-      setHistory((prev) => prev.filter((h) => h._id !== id));
-      if (activeHistoryId === id) {
+      setHistory((prev) => prev.filter((h) => (h.sessionId || h._id) !== targetSessionId));
+      if ((activeSessionId || activeHistoryId || '') === targetSessionId) {
         setResult(null);
         setSessionScript(null);
         setLastTopic("");
         setSessionRootTopic("");
+        setSessionTurns([]);
+        setActiveSessionId(null);
         setActiveHistoryId(null);
       }
     }
@@ -399,9 +499,11 @@ const ScriptGenerator = () => {
     setReferenceUrl(editReferenceUrl);
     setShowEditPopup(false);
 
+    const resolvedSessionId = activeSessionId || createSessionId();
+
     // Build params with edited values and regenerate
     const params: ScriptGenerationParams = {
-      topic: lastTopic,
+      topic: sessionRootTopic || lastTopic,
       duration: editDuration as "30s" | "1min" | "custom",
       customDuration: editDuration === "custom" ? editCustomDuration : undefined,
       language: editLanguage as "English" | "Hindi" | "Hinglish",
@@ -414,6 +516,10 @@ const ScriptGenerator = () => {
       ctaType: editCtaEnabled ? editCtaType : undefined,
       customCta: editCtaEnabled && editCtaType === "custom" ? editCustomCta : undefined,
       referenceUrl: editReferenceUrl.trim() || undefined,
+      isFollowUp: true,
+      followUpInstruction: `Regenerate with updated settings. Latest user ask: ${lastTopic}`,
+      previousTopic: sessionRootTopic || lastTopic,
+      currentScript: sessionScript || undefined,
     };
 
     setIsGenerating(true);
@@ -425,9 +531,27 @@ const ScriptGenerator = () => {
       if (response.success && response.data) {
         setResult(response.data);
         setSessionScript(response.data);
+        if (!activeSessionId) setActiveSessionId(resolvedSessionId);
+        setSessionTurns((prev) => ([
+          ...prev,
+          {
+            _id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            topic: sessionRootTopic || lastTopic,
+            sessionId: resolvedSessionId,
+            turnNumber: (prev.length || 0) + 1,
+            userPrompt: `Regenerate: ${lastTopic}`,
+            isFollowUp: true,
+            result: response.data,
+            createdAt: new Date().toISOString(),
+          }
+        ]));
         setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 300);
         if (isLoggedIn) {
-          saveScriptHistory(lastTopic, params, response.data).then((saveRes) => {
+          saveScriptHistory(sessionRootTopic || lastTopic, params, response.data, {
+            sessionId: resolvedSessionId,
+            userPrompt: `Regenerate: ${lastTopic}`,
+            isFollowUp: true,
+          }).then((saveRes) => {
             if (saveRes.success) loadHistory();
           });
         }
@@ -470,13 +594,33 @@ const ScriptGenerator = () => {
           };
         });
 
+        const updatedResult = {
+          ...result,
+          [section]: response.data[section]
+        } as ScriptResult;
+        const resolvedSessionId = activeSessionId || createSessionId();
+        if (!activeSessionId) setActiveSessionId(resolvedSessionId);
+        setSessionTurns((prev) => ([
+          ...prev,
+          {
+            _id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            topic: sessionRootTopic || lastTopic,
+            sessionId: resolvedSessionId,
+            turnNumber: (prev.length || 0) + 1,
+            userPrompt: `Regenerate ${section}`,
+            isFollowUp: true,
+            result: updatedResult,
+            createdAt: new Date().toISOString(),
+          }
+        ]));
+
         // Auto-save if logged in
-        if (isLoggedIn && result) {
-          const updatedResult = {
-            ...result,
-            [section]: response.data[section]
-          };
-          saveScriptHistory(lastTopic, lastParams, updatedResult).then((saveRes) => {
+        if (isLoggedIn) {
+          saveScriptHistory(sessionRootTopic || lastTopic, lastParams, updatedResult, {
+            sessionId: resolvedSessionId,
+            userPrompt: `Regenerate ${section}`,
+            isFollowUp: true,
+          }).then((saveRes) => {
             if (saveRes.success) loadHistory();
           });
         }
@@ -518,11 +662,21 @@ const ScriptGenerator = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const historyGroups = groupByDate(history);
+  const sessionSummaries = useMemo(() => {
+    const map = new Map<string, ScriptHistoryItem>();
+    history.forEach((item) => {
+      const sid = item.sessionId || item._id;
+      if (!map.has(sid)) map.set(sid, item);
+    });
+    return Array.from(map.values());
+  }, [history]);
+
+  const historyGroups = groupByDate(sessionSummaries);
   const settingsMaxHeight = Math.max(
     220,
     (typeof window !== "undefined" ? window.innerHeight : 800) - keyboardInset - 160
   );
+  const isGuestLimitReached = !isLoggedIn && guestUsageCount >= GUEST_FREE_LIMIT;
 
   // ─── Styles ─────────────────────────────────────────────────
   const page: React.CSSProperties = {
@@ -607,7 +761,7 @@ const ScriptGenerator = () => {
               {/* New script button */}
               <div style={{ padding: "12px 12px 4px" }}>
                 <button onClick={() => {
-                  setResult(null); setSessionScript(null); setLastTopic(""); setSessionRootTopic(""); setActiveHistoryId(null);
+                  setResult(null); setSessionScript(null); setSessionTurns([]); setLastTopic(""); setSessionRootTopic(""); setActiveSessionId(null); setActiveHistoryId(null);
                   setTopic(""); setError(null); setSidebarOpen(false);
                 }} style={{
                   width: "100%", padding: "10px 14px", borderRadius: 10,
@@ -651,6 +805,10 @@ const ScriptGenerator = () => {
                       {group.label}
                     </div>
                     {group.items.map((item) => (
+                      (() => {
+                        const itemSessionId = item.sessionId || item._id;
+                        const isActiveSession = (activeSessionId || activeHistoryId || '') === itemSessionId;
+                        return (
                       <div
                         key={item._id}
                         onClick={() => handleLoadHistory(item)}
@@ -658,21 +816,21 @@ const ScriptGenerator = () => {
                           padding: "10px 16px", cursor: "pointer", display: "flex",
                           alignItems: "center", justifyContent: "space-between", gap: 8,
                           transition: "background 0.1s",
-                          background: activeHistoryId === item._id ? "rgba(124,58,237,0.08)" : "transparent",
-                          borderLeft: activeHistoryId === item._id ? "2px solid #7C3AED" : "2px solid transparent",
+                          background: isActiveSession ? "rgba(124,58,237,0.08)" : "transparent",
+                          borderLeft: isActiveSession ? "2px solid #7C3AED" : "2px solid transparent",
                         }}
-                        onMouseEnter={(e) => { if (activeHistoryId !== item._id) e.currentTarget.style.background = "#F3F4F6"; }}
-                        onMouseLeave={(e) => { if (activeHistoryId !== item._id) e.currentTarget.style.background = "transparent"; }}
+                        onMouseEnter={(e) => { if (!isActiveSession) e.currentTarget.style.background = "#F3F4F6"; }}
+                        onMouseLeave={(e) => { if (!isActiveSession) e.currentTarget.style.background = "transparent"; }}
                       >
                         <span style={{
-                          fontSize: 13, color: activeHistoryId === item._id ? "#7C3AED" : "#4B5563",
+                          fontSize: 13, color: isActiveSession ? "#7C3AED" : "#4B5563",
                           overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                           flex: 1,
                         }}>
                           {item.topic}
                         </span>
                         <button
-                          onClick={(e) => handleDeleteHistory(e, item._id)}
+                          onClick={(e) => handleDeleteHistory(e, item._id, itemSessionId)}
                           style={{
                             background: "none", border: "none", cursor: "pointer",
                             color: "#D1D5DB", padding: 4, flexShrink: 0, borderRadius: 6,
@@ -684,6 +842,8 @@ const ScriptGenerator = () => {
                           <Trash2 style={{ width: 13, height: 13 }} />
                         </button>
                       </div>
+                        );
+                      })()
                     ))}
                   </div>
                 ))}
@@ -845,6 +1005,34 @@ const ScriptGenerator = () => {
                 </motion.div>
               )}
             </AnimatePresence>
+
+            {/* ─── Previous Turns Timeline ───────────────── */}
+            {sessionTurns.length > 1 && !isGenerating && (
+              <div style={{ marginBottom: 18, display: "flex", flexDirection: "column", gap: 12 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: 0.8 }}>
+                  Conversation History
+                </div>
+                {sessionTurns.slice(0, -1).map((turn, index) => (
+                  <details key={`${turn._id}-${index}`} style={{ border: "1px solid #E5E7EB", borderRadius: 10, background: "#FAFAFA" }}>
+                    <summary style={{ cursor: "pointer", listStyle: "none", padding: "10px 12px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                      <span style={{ fontSize: 12, color: "#6B7280" }}>v{index + 1} · {turn.userPrompt || turn.topic}</span>
+                      <span style={{ fontSize: 10, color: "#9CA3AF" }}>{new Date(turn.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    </summary>
+                    <div style={{ borderTop: "1px solid #E5E7EB", padding: "10px 12px", display: "grid", gap: 8 }}>
+                      {turn.result?.hook?.text && (
+                        <div style={{ fontSize: 13, color: "#1F2937", whiteSpace: "pre-line" }}><strong>Hook:</strong> {turn.result.hook.text}</div>
+                      )}
+                      {turn.result?.body?.text && (
+                        <div style={{ fontSize: 13, color: "#374151", whiteSpace: "pre-line" }}><strong>Body:</strong> {turn.result.body.text}</div>
+                      )}
+                      {turn.result?.cta?.included && turn.result?.cta?.text && (
+                        <div style={{ fontSize: 13, color: "#6D28D9", whiteSpace: "pre-line" }}><strong>CTA:</strong> {turn.result.cta.text}</div>
+                      )}
+                    </div>
+                  </details>
+                ))}
+              </div>
+            )}
 
             {/* ─── Script Result ───────────────────────── */}
             <AnimatePresence>
@@ -1010,6 +1198,18 @@ const ScriptGenerator = () => {
                           {result.metadata.wordCount} words · {result.metadata.estimatedDuration}
                         </span>
                       </div>
+
+                      {!isLoggedIn && (
+                        <div style={{ marginTop: 12, padding: "10px 12px", borderRadius: 10, border: "1px solid #E5E7EB", background: "rgba(124,58,237,0.04)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+                          <span style={{ fontSize: 12, color: "#4B5563" }}>Log in now to save this script and full chat history.</span>
+                          <button
+                            onClick={() => navigate('/login', { state: { from: { pathname: '/script-generator' } } })}
+                            style={{ border: "none", background: "#7C3AED", color: "#fff", borderRadius: 8, padding: "6px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+                          >
+                            Login Now
+                          </button>
+                        </div>
+                      )}
 
                       {/* Edit Popup */}
                       <AnimatePresence>
@@ -1440,6 +1640,28 @@ const ScriptGenerator = () => {
                 )}
               </AnimatePresence>
 
+              {showLimitPrompt && isGuestLimitReached && (
+                <div style={{ marginBottom: 8, padding: "10px 12px", borderRadius: 12, border: "1px solid rgba(124,58,237,0.25)", background: "rgba(124,58,237,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+                  <span style={{ fontSize: 12, color: "#4B5563" }}>
+                    Free limit reached ({GUEST_FREE_LIMIT} scripts). Log in or upgrade to continue generating.
+                  </span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <button
+                      onClick={() => navigate('/login', { state: { from: { pathname: '/script-generator' } } })}
+                      style={{ border: "1px solid #D1D5DB", background: "#fff", color: "#374151", borderRadius: 8, padding: "6px 10px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+                    >
+                      Login
+                    </button>
+                    <button
+                      onClick={() => navigate('/pricing')}
+                      style={{ border: "none", background: "#7C3AED", color: "#fff", borderRadius: 8, padding: "6px 10px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+                    >
+                      View Plans
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Input area */}
               <div style={{
                 display: "flex", alignItems: "flex-end", gap: 8,
@@ -1483,12 +1705,12 @@ const ScriptGenerator = () => {
                 <motion.button
                   whileTap={{ scale: 0.92 }}
                   onClick={isGenerating ? handleCancel : () => handleGenerate()}
-                  disabled={!topic.trim() && !isGenerating}
+                  disabled={(!topic.trim() && !isGenerating) || (isGuestLimitReached && !isGenerating)}
                   style={{
                     width: 36, height: 36, borderRadius: 10,
-                    border: "none", cursor: (topic.trim() || isGenerating) ? "pointer" : "default",
-                    background: isGenerating ? "#EF4444" : (topic.trim() ? "#7C3AED" : "#E5E7EB"),
-                    color: isGenerating ? "#fff" : (topic.trim() ? "#fff" : "#9CA3AF"),
+                    border: "none", cursor: (topic.trim() || isGenerating) && !isGuestLimitReached ? "pointer" : "default",
+                    background: isGenerating ? "#EF4444" : (isGuestLimitReached ? "#E5E7EB" : (topic.trim() ? "#7C3AED" : "#E5E7EB")),
+                    color: isGenerating ? "#fff" : (topic.trim() && !isGuestLimitReached ? "#fff" : "#9CA3AF"),
                     display: "flex", alignItems: "center", justifyContent: "center",
                     transition: "all 0.15s", flexShrink: 0,
                   }}
