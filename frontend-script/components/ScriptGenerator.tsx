@@ -97,10 +97,12 @@ const ScriptGenerator = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationStep, setGenerationStep] = useState(0);
   const [result, setResult] = useState<ScriptResult | null>(null);
+  const [sessionScript, setSessionScript] = useState<ScriptResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   const [copied, setCopied] = useState(false);
   const [lastTopic, setLastTopic] = useState("");
+  const [sessionRootTopic, setSessionRootTopic] = useState("");
   const [lastParams, setLastParams] = useState<Partial<ScriptGenerationParams>>({});
 
   // Edit popup state
@@ -128,6 +130,10 @@ const ScriptGenerator = () => {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
   const editPopupRef = useRef<HTMLDivElement>(null);
+  const inputDockRef = useRef<HTMLDivElement>(null);
+
+  const [keyboardInset, setKeyboardInset] = useState(0);
+  const [inputDockHeight, setInputDockHeight] = useState(140);
 
   // Individual section regeneration state
   const [regeneratingSection, setRegeneratingSection] = useState<string | null>(null);
@@ -191,9 +197,53 @@ const ScriptGenerator = () => {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [showEditPopup]);
 
+  // Keep the input dock above mobile keyboards using the visual viewport API.
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.visualViewport) return;
+
+    const viewport = window.visualViewport;
+    const updateKeyboardInset = () => {
+      const inset = Math.max(0, Math.round(window.innerHeight - viewport.height - viewport.offsetTop));
+      setKeyboardInset(inset);
+    };
+
+    updateKeyboardInset();
+    viewport.addEventListener("resize", updateKeyboardInset);
+    viewport.addEventListener("scroll", updateKeyboardInset);
+    window.addEventListener("orientationchange", updateKeyboardInset);
+
+    return () => {
+      viewport.removeEventListener("resize", updateKeyboardInset);
+      viewport.removeEventListener("scroll", updateKeyboardInset);
+      window.removeEventListener("orientationchange", updateKeyboardInset);
+    };
+  }, []);
+
+  // Track dock height so result/action content always remains scrollable above it.
+  useEffect(() => {
+    const node = inputDockRef.current;
+    if (!node) return;
+
+    const updateDockHeight = () => {
+      const rect = node.getBoundingClientRect();
+      setInputDockHeight(Math.max(120, Math.round(rect.height)));
+    };
+
+    updateDockHeight();
+
+    if (typeof ResizeObserver === "undefined") return;
+    const resizeObserver = new ResizeObserver(updateDockHeight);
+    resizeObserver.observe(node);
+
+    return () => resizeObserver.disconnect();
+  }, []);
+
   const handleGenerate = async (customTopic?: string) => {
     const finalTopic = (customTopic || topic).trim();
     if (!finalTopic) return;
+    const hasExistingSession = !!sessionScript && !!sessionRootTopic;
+    const rootTopic = sessionRootTopic || finalTopic;
+    const currentResult = sessionScript;
 
     // Create abort controller for cancellation
     const controller = new AbortController();
@@ -203,12 +253,13 @@ const ScriptGenerator = () => {
     setError(null);
     setResult(null);
     setLastTopic(finalTopic);
+    if (!sessionRootTopic) setSessionRootTopic(finalTopic);
     setActiveHistoryId(null);
     if (customTopic) setTopic(customTopic);
     setShowSettings(false);
 
     const params: ScriptGenerationParams = {
-      topic: finalTopic,
+      topic: rootTopic,
       duration: duration as "30s" | "1min" | "custom",
       customDuration: duration === "custom" ? customDuration : undefined,
       language: language as "English" | "Hindi" | "Hinglish",
@@ -221,6 +272,10 @@ const ScriptGenerator = () => {
       ctaType: ctaEnabled ? ctaType : undefined,
       customCta: ctaEnabled && ctaType === "custom" ? customCta : undefined,
       referenceUrl: referenceUrl.trim() || undefined,
+      isFollowUp: hasExistingSession,
+      followUpInstruction: hasExistingSession ? finalTopic : undefined,
+      previousTopic: hasExistingSession ? sessionRootTopic : undefined,
+      currentScript: hasExistingSession ? currentResult || undefined : undefined,
     };
     setLastParams(params);
 
@@ -228,11 +283,12 @@ const ScriptGenerator = () => {
       const response = await generateScript(params, controller.signal);
       if (response.success && response.data) {
         setResult(response.data);
+        setSessionScript(response.data);
         setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 300);
 
         // Auto-save if logged in
         if (isLoggedIn) {
-          saveScriptHistory(finalTopic, params, response.data).then((saveRes) => {
+          saveScriptHistory(rootTopic, params, response.data).then((saveRes) => {
             if (saveRes.success) loadHistory(); // Refresh sidebar
           });
         }
@@ -265,12 +321,14 @@ const ScriptGenerator = () => {
   const handleLoadHistory = async (item: ScriptHistoryItem) => {
     setActiveHistoryId(item._id);
     setLastTopic(item.topic);
+    setSessionRootTopic(item.topic);
     setTopic("");
     setError(null);
 
     // If result is already present (from list), use it directly
     if (item.result && item.result.hook && item.result.body) {
       setResult(item.result);
+      setSessionScript(item.result);
       setSidebarOpen(false);
       return;
     }
@@ -279,6 +337,7 @@ const ScriptGenerator = () => {
     const res = await getScriptHistoryItem(item._id);
     if (res.success && res.data?.result) {
       setResult(res.data.result);
+      setSessionScript(res.data.result);
     }
     setSidebarOpen(false);
   };
@@ -290,7 +349,9 @@ const ScriptGenerator = () => {
       setHistory((prev) => prev.filter((h) => h._id !== id));
       if (activeHistoryId === id) {
         setResult(null);
+        setSessionScript(null);
         setLastTopic("");
+        setSessionRootTopic("");
         setActiveHistoryId(null);
       }
     }
@@ -363,6 +424,7 @@ const ScriptGenerator = () => {
     generateScript(params).then((response) => {
       if (response.success && response.data) {
         setResult(response.data);
+        setSessionScript(response.data);
         setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 300);
         if (isLoggedIn) {
           saveScriptHistory(lastTopic, params, response.data).then((saveRes) => {
@@ -397,6 +459,13 @@ const ScriptGenerator = () => {
           if (!prevResult) return prevResult;
           return {
             ...prevResult,
+            [section]: response.data[section]
+          };
+        });
+        setSessionScript(prevScript => {
+          if (!prevScript) return prevScript;
+          return {
+            ...prevScript,
             [section]: response.data[section]
           };
         });
@@ -449,14 +518,11 @@ const ScriptGenerator = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleGenerate();
-    }
-  };
-
   const historyGroups = groupByDate(history);
+  const settingsMaxHeight = Math.max(
+    220,
+    (typeof window !== "undefined" ? window.innerHeight : 800) - keyboardInset - 160
+  );
 
   // ─── Styles ─────────────────────────────────────────────────
   const page: React.CSSProperties = {
@@ -541,7 +607,7 @@ const ScriptGenerator = () => {
               {/* New script button */}
               <div style={{ padding: "12px 12px 4px" }}>
                 <button onClick={() => {
-                  setResult(null); setLastTopic(""); setActiveHistoryId(null);
+                  setResult(null); setSessionScript(null); setLastTopic(""); setSessionRootTopic(""); setActiveHistoryId(null);
                   setTopic(""); setError(null); setSidebarOpen(false);
                 }} style={{
                   width: "100%", padding: "10px 14px", borderRadius: 10,
@@ -651,7 +717,7 @@ const ScriptGenerator = () => {
 
         <div style={container}>
           {/* ─── Main content area ─────────────────────── */}
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: result || isGenerating || error ? "flex-start" : "center", paddingTop: result || isGenerating || error ? 16 : 0, paddingBottom: 140 }}>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: result || isGenerating || error ? "flex-start" : "center", paddingTop: result || isGenerating || error ? 16 : 0, paddingBottom: Math.max(140, inputDockHeight + keyboardInset + 24) }}>
 
             {/* ─── Empty State ─────────────────────────── */}
             {!result && !isGenerating && !error && (
@@ -1144,11 +1210,15 @@ const ScriptGenerator = () => {
           </div>
 
           {/* ─── Input Bar (fixed at bottom) ───────────── */}
-          <div style={{
-            position: "fixed", bottom: 0, left: 0, right: 0,
+          <div
+            ref={inputDockRef}
+            style={{
+            position: "fixed", left: 0, right: 0,
+            bottom: keyboardInset,
             background: "linear-gradient(to top, #FFFFFF 70%, transparent)",
-            padding: "20px 20px 24px",
+            padding: "20px 20px calc(16px + env(safe-area-inset-bottom, 0px))",
             zIndex: 10,
+            transition: "bottom 0.2s ease",
           }}>
             <div style={{ maxWidth: 680, margin: "0 auto", position: "relative" }}>
               {/* Settings Popover */}
@@ -1165,7 +1235,7 @@ const ScriptGenerator = () => {
                       marginBottom: 8, padding: 20, borderRadius: 16,
                       background: "#FFFFFF", border: "1px solid #E5E7EB",
                       boxShadow: "0 8px 30px rgba(0,0,0,0.08)",
-                      maxHeight: "60vh", overflowY: "auto" as const,
+                      maxHeight: settingsMaxHeight, overflowY: "auto" as const,
                     }}
                     className="custom-scrollbar"
                   >
@@ -1396,7 +1466,6 @@ const ScriptGenerator = () => {
                   className="custom-scrollbar"
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
-                  onKeyDown={handleKeyDown}
                   placeholder="Describe your script topic..."
                   rows={1}
                   style={{

@@ -657,6 +657,19 @@ const ModelDetail = () => {
               </section>
             )}
 
+            {model.tags && model.tags.length > 0 && (
+              <section>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4">Tags</h3>
+                <div className="flex flex-wrap gap-2">
+                  {model.tags.map((tag, i) => (
+                    <Badge key={i} variant="outline" className="px-3 py-1">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              </section>
+            )}
+
             {/* Pricing Plans */}
             {model.pricingPlans && model.pricingPlans.length > 0 && (
               <section>

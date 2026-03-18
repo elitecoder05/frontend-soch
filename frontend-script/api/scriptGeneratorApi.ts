@@ -16,6 +16,10 @@ export interface ScriptGenerationParams {
     ctaType?: string;
     customCta?: string;
     referenceUrl?: string;
+    isFollowUp?: boolean;
+    followUpInstruction?: string;
+    previousTopic?: string;
+    currentScript?: ScriptResult;
 }
 
 export interface ScriptResult {
