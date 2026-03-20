@@ -100,6 +100,7 @@ const ScriptGenerator = () => {
   const [customCta, setCustomCta] = useState("");
   const [referenceUrl, setReferenceUrl] = useState("");
   const [showSettings, setShowSettings] = useState(false);
+  const [shouldAutoGenerate, setShouldAutoGenerate] = useState(false);
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationStep, setGenerationStep] = useState(0);
@@ -143,6 +144,7 @@ const ScriptGenerator = () => {
   const settingsRef = useRef<HTMLDivElement>(null);
   const editPopupRef = useRef<HTMLDivElement>(null);
   const inputDockRef = useRef<HTMLDivElement>(null);
+  const autoGenerateTriggeredRef = useRef(false);
 
   const [keyboardInset, setKeyboardInset] = useState(0);
   const [inputDockHeight, setInputDockHeight] = useState(140);
@@ -197,13 +199,100 @@ const ScriptGenerator = () => {
     setShowLimitPrompt(count >= GUEST_FREE_LIMIT);
   }, [isLoggedIn]);
 
-  // Load topic from URL parameter (e.g., ?topic=my%20topic)
+  // Load all settings from URL parameters and auto-generate if requested
   useEffect(() => {
     const topicParam = searchParams.get('topic');
     if (topicParam) {
       setTopic(decodeURIComponent(topicParam));
     }
+
+    // Load detailed instructions
+    const instructionsParam = searchParams.get('instructions');
+    if (instructionsParam) {
+      setDetailedInstructions(decodeURIComponent(instructionsParam));
+    }
+
+    // Load duration settings
+    const durationParam = searchParams.get('duration');
+    if (durationParam) {
+      setDuration(durationParam);
+    }
+    const customDurationParam = searchParams.get('customDuration');
+    if (customDurationParam) {
+      setCustomDuration(parseFloat(customDurationParam));
+    }
+
+    // Load language
+    const languageParam = searchParams.get('language');
+    if (languageParam) {
+      setLanguage(languageParam);
+    }
+
+    // Load tone
+    const toneParam = searchParams.get('tone');
+    if (toneParam) {
+      setTone(toneParam);
+    }
+
+    // Load audience settings
+    const audienceParam = searchParams.get('audience');
+    if (audienceParam) {
+      setAudience(audienceParam);
+    }
+    const customAudienceParam = searchParams.get('customAudience');
+    if (customAudienceParam) {
+      setCustomAudience(decodeURIComponent(customAudienceParam));
+    }
+
+    // Load intensity settings
+    const intensityParam = searchParams.get('intensity');
+    if (intensityParam) {
+      setEmotionalIntensity(parseInt(intensityParam));
+    }
+    const customIntensityParam = searchParams.get('customIntensity');
+    if (customIntensityParam) {
+      setCustomIntensity(decodeURIComponent(customIntensityParam));
+    }
+
+    // Load CTA settings
+    const ctaEnabledParam = searchParams.get('ctaEnabled');
+    if (ctaEnabledParam === 'true') {
+      setCtaEnabled(true);
+      const ctaTypeParam = searchParams.get('ctaType');
+      if (ctaTypeParam) {
+        setCtaType(ctaTypeParam);
+      }
+      const customCtaParam = searchParams.get('customCta');
+      if (customCtaParam) {
+        setCustomCta(decodeURIComponent(customCtaParam));
+      }
+    }
+
+    // Load reference URL
+    const referenceUrlParam = searchParams.get('referenceUrl');
+    if (referenceUrlParam) {
+      setReferenceUrl(decodeURIComponent(referenceUrlParam));
+    }
+
+    // Check if auto-generate flag is set
+    const autoGenerateParam = searchParams.get('autoGenerate');
+    if (autoGenerateParam === 'true' && topicParam) {
+      // Mark that we should auto-generate
+      setShouldAutoGenerate(true);
+    }
   }, [searchParams]);
+
+  // Trigger auto-generation when flag is set and we have a topic
+  useEffect(() => {
+    if (shouldAutoGenerate && topic && !autoGenerateTriggeredRef.current) {
+      autoGenerateTriggeredRef.current = true;
+      // Use setTimeout to ensure all state updates are applied
+      setTimeout(() => {
+        handleGenerate(topic);
+        setShouldAutoGenerate(false);
+      }, 100);
+    }
+  }, [shouldAutoGenerate, topic]);
 
   // Close settings on outside click
   useEffect(() => {
@@ -1284,20 +1373,48 @@ const ScriptGenerator = () => {
                       {/* Edit Popup */}
                       <AnimatePresence>
                         {showEditPopup && (
-                          <motion.div
-                            ref={editPopupRef}
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 8 }}
-                            transition={{ duration: 0.15 }}
-                            style={{
-                              marginTop: 16, padding: 20, borderRadius: 16,
-                              background: "#FFFFFF", border: "1px solid #E5E7EB",
-                              boxShadow: "0 8px 30px rgba(0,0,0,0.08)",
-                              maxHeight: 400, overflowY: "auto" as const,
-                            }}
-                            className="custom-scrollbar"
-                          >
+                          <>
+                            {/* Backdrop */}
+                            <motion.div
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              onClick={() => setShowEditPopup(false)}
+                              style={{
+                                position: "fixed",
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                background: "rgba(0, 0, 0, 0.5)",
+                                zIndex: 999,
+                              }}
+                            />
+                            {/* Modal */}
+                            <motion.div
+                              ref={editPopupRef}
+                              initial={{ opacity: 0, scale: 0.95 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.95 }}
+                              transition={{ duration: 0.15 }}
+                              style={{
+                                position: "fixed",
+                                top: "50%",
+                                left: "50%",
+                                transform: "translate(-50%, -50%)",
+                                padding: 20,
+                                borderRadius: 16,
+                                background: "#FFFFFF",
+                                border: "1px solid #E5E7EB",
+                                boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
+                                maxHeight: "80vh",
+                                width: "90%",
+                                maxWidth: 500,
+                                overflowY: "auto" as const,
+                                zIndex: 1000,
+                              }}
+                              className="custom-scrollbar"
+                            >
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
                               <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A1A" }}>Edit Settings</span>
                               <button onClick={() => setShowEditPopup(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#9CA3AF", padding: 4 }}>
@@ -1491,7 +1608,8 @@ const ScriptGenerator = () => {
                               <Sparkles style={{ width: 14, height: 14 }} />
                               Save & Regenerate
                             </motion.button>
-                          </motion.div>
+                            </motion.div>
+                          </>
                         )}
                       </AnimatePresence>
                     </div>

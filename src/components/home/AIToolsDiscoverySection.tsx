@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
 import { useAllModels } from '@/hooks/useModels';
 import { HorizontalCarousel } from '@/components/HorizontalCarousel';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 interface ToolCategory {
   title: string;
@@ -37,9 +38,9 @@ const ToolCard = ({ tool }: { tool: any }) => {
     >
       <div className="h-28 rounded-lg border border-border/50 hover:border-primary/50 transition-all duration-300 hover:shadow-lg overflow-hidden flex flex-col items-center justify-center bg-card/30 hover:bg-card/50 p-3 relative">
         {/* Tool Logo/Icon */}
-        {tool.logo ? (
+        {tool.iconUrl ? (
           <img
-            src={tool.logo}
+            src={tool.iconUrl}
             alt={tool.name}
             className="w-12 h-12 object-contain mb-2 group-hover:scale-110 transition-transform"
           />
@@ -112,6 +113,18 @@ export const AIToolsDiscoverySection = () => {
             ) : null}
           </div>
         ))}
+      </div>
+
+      {/* Start Exploring Button */}
+      <div className="flex justify-center mt-12">
+        <Link to="/explorer">
+          <Button 
+            size="lg"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 rounded-full font-semibold"
+          >
+            Start Exploring <ArrowRight className="ml-2 w-4 h-4" />
+          </Button>
+        </Link>
       </div>
     </section>
   );

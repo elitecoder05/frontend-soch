@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Settings2, Send } from 'lucide-react';
+import { Send } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
@@ -24,9 +24,15 @@ export const CreatorHero = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (topic.trim()) {
-      navigate(`/script-generator?topic=${encodeURIComponent(topic)}`);
-    }
+    const trimmedTopic = topic.trim();
+    if (!trimmedTopic) return;
+
+    const params = new URLSearchParams({
+      topic: trimmedTopic,
+      autoGenerate: 'true',
+    });
+
+    navigate(`/script-generator?${params.toString()}`);
   };
 
   return (
@@ -91,22 +97,13 @@ export const CreatorHero = () => {
           <div className="absolute -inset-0.5 bg-gradient-to-r from-primary via-blue-500 to-purple-600 rounded-full opacity-30 group-hover:opacity-60 transition duration-500 blur-md"></div>
 
           <div className="relative flex items-center bg-background/80 backdrop-blur-xl rounded-full border border-primary/20 shadow-2xl overflow-hidden h-12 md:h-14">
-            {/* Settings Icon - Left */}
-            <button
-              type="button"
-              className="p-3 text-muted-foreground hover:text-primary transition-colors z-20"
-              title="Settings (Coming soon)"
-            >
-              <Settings2 className="w-5 h-5" />
-            </button>
-
             {/* Input Field */}
             <Input
               type="text"
               placeholder="Enter your video topic..."
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
-              className="flex-1 border-0 bg-transparent focus-visible:ring-0 text-base md:text-lg z-20 placeholder:text-muted-foreground/60 text-foreground px-4"
+              className="flex-1 border-0 bg-transparent focus-visible:ring-0 text-base md:text-lg z-20 placeholder:text-muted-foreground/60 text-foreground pl-5 pr-3"
             />
 
             {/* Send Button - Right */}
