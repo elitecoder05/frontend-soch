@@ -141,6 +141,25 @@ export const checkScriptGeneratorHealth = async (): Promise<boolean> => {
     }
 };
 
+export const getScriptUsage = async (): Promise<{ success: boolean; data?: any; error?: string }> => {
+    try {
+        const headers = getAuthHeaders();
+        const response = await axios.get(`${API_BASE}/api/script-generator/usage`, {
+            headers,
+            timeout: 5000,
+        });
+        return response.data;
+    } catch (error: any) {
+        if (error.response?.data) {
+            return error.response.data;
+        }
+        return {
+            success: false,
+            error: error.message || 'Failed to fetch usage information.',
+        };
+    }
+};
+
 // ─── Script History API ─────────────────────────────────────────
 
 import Cookies from 'js-cookie';

@@ -6,7 +6,7 @@ import {
   Menu, Trash2, Clock
 } from "lucide-react";
 import {
-  generateScript, saveScriptHistory, getScriptHistory, getScriptHistoryItem, getScriptHistorySession, deleteScriptHistorySession, regenerateSection,
+  generateScript, saveScriptHistory, getScriptHistory, getScriptHistoryItem, getScriptHistorySession, deleteScriptHistorySession, regenerateSection, getScriptUsage,
   type ScriptGenerationParams, type ScriptResult, type ScriptHistoryItem
 } from "../api/scriptGeneratorApi";
 import Cookies from "js-cookie";
@@ -49,7 +49,8 @@ const CTA_OPTIONS = [
   "Follow for more", "Subscribe", "Comment", "Save", "custom"
 ] as const;
 
-const GUEST_FREE_LIMIT = 5;
+// Get guest script limit from env variable, fallback to 5
+const GUEST_FREE_LIMIT = parseInt(import.meta.env.VITE_GUEST_SCRIPT_LIMIT ?? '5');
 const GUEST_USAGE_KEY = "soch_script_generator_guest_usage_count";
 
 // ─── Date grouping helper ────────────────────────────────────────
@@ -116,6 +117,9 @@ const ScriptGenerator = () => {
   const [lastParams, setLastParams] = useState<Partial<ScriptGenerationParams>>({});
   const [guestUsageCount, setGuestUsageCount] = useState<number>(0);
   const [showLimitPrompt, setShowLimitPrompt] = useState(false);
+  const [planLimit, setPlanLimit] = useState<number | null>(null);
+  const [remainingScripts, setRemainingScripts] = useState<number | null>(null);
+  const [userScriptUsage, setUserScriptUsage] = useState<number>(0);
 
   // Edit popup state
   const [showEditPopup, setShowEditPopup] = useState(false);
@@ -378,12 +382,31 @@ const ScriptGenerator = () => {
     return () => resizeObserver.disconnect();
   }, []);
 
+  // Fetch script usage for logged-in users
+  useEffect(() => {
+    if (isLoggedIn) {
+      const fetchUsage = async () => {
+        const result = await getScriptUsage();
+        if (result.success && result.data) {
+          setPlanLimit(result.data.limit);
+          setUserScriptUsage(result.data.usage || 0);
+          setRemainingScripts(result.data.remaining);
+        }
+      };
+      fetchUsage();
+    }
+  }, [isLoggedIn]);
+
   const handleGenerate = async (customTopic?: string) => {
     const finalTopic = (customTopic || topic).trim();
     if (!finalTopic) return;
     if (!isLoggedIn && guestUsageCount >= GUEST_FREE_LIMIT) {
       setShowLimitPrompt(true);
       setError("Free limit reached. Please log in or upgrade to continue.");
+      return;
+    }
+    if (isLoggedIn && isUserLimitReached) {
+      setError("You have reached your monthly script generation limit. Please try again next month or upgrade your plan.");
       return;
     }
 
@@ -461,6 +484,17 @@ const ScriptGenerator = () => {
           setGuestUsageCount(nextGuestCount);
           setStoredGuestUsage(nextGuestCount);
           if (nextGuestCount >= GUEST_FREE_LIMIT) setShowLimitPrompt(true);
+        } else {
+          // Update remaining count for logged-in users
+          if (historyMetadata.remaining !== undefined) {
+            setRemainingScripts(historyMetadata.remaining);
+          }
+          if (historyMetadata.usage !== undefined) {
+            setUserScriptUsage(historyMetadata.usage);
+          }
+          if (historyMetadata.limit !== undefined) {
+            setPlanLimit(historyMetadata.limit);
+          }
         }
         setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 300);
 
@@ -470,7 +504,16 @@ const ScriptGenerator = () => {
           loadHistory(); // Refresh history sidebar
         }
       } else {
-        setError(response.error || "Something went wrong. Please try again.");
+        // Check if error is due to limit exceeded (429 status or limitExceeded flag)
+        if ((response as any).limitExceeded || (response as any).remaining === 0) {
+          setError("You have reached your monthly script generation limit. Please try again next month or upgrade your plan.");
+          if ((response as any).limit !== undefined) {
+            setPlanLimit((response as any).limit);
+            setRemainingScripts(0);
+          }
+        } else {
+          setError(response.error || "Something went wrong. Please try again.");
+        }
       }
     } catch (err: any) {
       if (err.name === 'AbortError' || err.code === 'ERR_CANCELED') {
@@ -508,7 +551,7 @@ const ScriptGenerator = () => {
       return;
     }
 
-    if (!topic.trim() || isGuestLimitReached) {
+    if (!topic.trim() || isGuestLimitReached || isUserLimitReached) {
       return;
     }
 
@@ -789,6 +832,7 @@ const ScriptGenerator = () => {
     (typeof window !== "undefined" ? window.innerHeight : 800) - keyboardInset - 160
   );
   const isGuestLimitReached = !isLoggedIn && guestUsageCount >= GUEST_FREE_LIMIT;
+  const isUserLimitReached = isLoggedIn && planLimit !== null && planLimit > 0 && remainingScripts === 0;
 
   // ─── Styles ─────────────────────────────────────────────────
   const page: React.CSSProperties = {
@@ -1875,7 +1919,7 @@ const ScriptGenerator = () => {
               {showLimitPrompt && isGuestLimitReached && (
                 <div style={{ marginBottom: 8, padding: "10px 12px", borderRadius: 12, border: "1px solid rgba(124,58,237,0.25)", background: "rgba(124,58,237,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
                   <span style={{ fontSize: 12, color: "#4B5563" }}>
-                    Free limit reached ({GUEST_FREE_LIMIT} scripts). Log in or upgrade to continue generating.
+                    Free limit reached ({guestUsageCount}/{GUEST_FREE_LIMIT} scripts). Log in or upgrade to continue generating.
                   </span>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <button
@@ -1891,6 +1935,15 @@ const ScriptGenerator = () => {
                       View Plans
                     </button>
                   </div>
+                </div>
+              )}
+
+              {/* Display remaining scripts for logged-in users */}
+              {isLoggedIn && planLimit !== null && planLimit > 0 && (
+                <div style={{ marginBottom: 8, padding: "10px 12px", borderRadius: 12, border: "1px solid rgba(59,130,246,0.25)", background: "rgba(59,130,246,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: 12, color: "#1E40AF" }}>
+                    Scripts remaining this month: <strong>{remainingScripts !== null ? remainingScripts : planLimit - userScriptUsage}/{planLimit}</strong>
+                  </span>
                 </div>
               )}
 
@@ -1938,12 +1991,12 @@ const ScriptGenerator = () => {
                 <motion.button
                   whileTap={{ scale: 0.92 }}
                   onClick={isGenerating ? handleCancel : () => handleGenerate()}
-                  disabled={(!topic.trim() && !isGenerating) || (isGuestLimitReached && !isGenerating)}
+                  disabled={(!topic.trim() && !isGenerating) || ((isGuestLimitReached || isUserLimitReached) && !isGenerating)}
                   style={{
                     width: 36, height: 36, borderRadius: 10,
-                    border: "none", cursor: (topic.trim() || isGenerating) && !isGuestLimitReached ? "pointer" : "default",
-                    background: isGenerating ? "#EF4444" : (isGuestLimitReached ? "#E5E7EB" : (topic.trim() ? "#7C3AED" : "#E5E7EB")),
-                    color: isGenerating ? "#fff" : (topic.trim() && !isGuestLimitReached ? "#fff" : "#9CA3AF"),
+                    border: "none", cursor: (topic.trim() || isGenerating) && !isGuestLimitReached && !isUserLimitReached ? "pointer" : "default",
+                    background: isGenerating ? "#EF4444" : ((isGuestLimitReached || isUserLimitReached) ? "#E5E7EB" : (topic.trim() ? "#7C3AED" : "#E5E7EB")),
+                    color: isGenerating ? "#fff" : (topic.trim() && !isGuestLimitReached && !isUserLimitReached ? "#fff" : "#9CA3AF"),
                     display: "flex", alignItems: "center", justifyContent: "center",
                     transition: "all 0.15s", flexShrink: 0,
                   }}
