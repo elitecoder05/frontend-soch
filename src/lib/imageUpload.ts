@@ -1,6 +1,4 @@
-import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
-import { storage, auth } from './firebase';
-import { signInAnonymously } from 'firebase/auth';
+import apiClient from '@/api/index';
 
 export interface UploadProgress {
   progress: number;
@@ -23,81 +21,40 @@ export class ImageUploadService {
     fileName?: string,
     onProgress?: (progress: UploadProgress) => void
   ): Promise<string> {
-    // Attempt anonymous sign-in before uploading so Storage rules that require
-    // authenticated users succeed. If anonymous sign-in fails with a
-    // configuration error, surface a helpful message so you can fix project
-    // settings in the Firebase Console.
-    try {
-      if (!auth.currentUser) {
-        await signInAnonymously(auth);
-      }
-    } catch (err: any) {
-      // Provide a clearer, actionable error message for configuration issues.
-      if (err && err.code === 'auth/configuration-not-found') {
-        throw new Error('Anonymous sign-in is not enabled in this Firebase project. Enable it at Firebase Console → Authentication → Sign-in method.');
-      }
-      // If other auth errors occur, rethrow to surface them to the caller.
-      throw err;
-    }
-
-    return new Promise((resolve, reject) => {
-
       // Validate file type
       if (!file.type.startsWith('image/')) {
-        reject(new Error('Only image files are allowed'));
-        return;
+        throw new Error('Only image files are allowed');
       }
 
       // Validate file size (max 5MB)
       const maxSize = 5 * 1024 * 1024; // 5MB
       if (file.size > maxSize) {
-        reject(new Error('Image size must be less than 5MB'));
-        return;
+        throw new Error('Image size must be less than 5MB');
       }
 
-      // Generate unique filename if not provided
-      const timestamp = Date.now();
-      const randomString = Math.random().toString(36).substring(2);
-      const fileExtension = file.name.split('.').pop();
-      const finalFileName = fileName || `${timestamp}-${randomString}.${fileExtension}`;
+      const formData = new FormData();
+      formData.append('image', file, fileName || file.name);
+      formData.append('folder', path);
 
-      // Create storage reference
-      const storageRef = ref(storage, `${path}/${finalFileName}`);
-
-      // Start upload
-      const uploadTask = uploadBytesResumable(storageRef, file);
-
-      uploadTask.on(
-        'state_changed',
-        (snapshot) => {
-          // Progress updates
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          if (onProgress) {
-            onProgress({ progress });
-          }
+      const response = await apiClient.post('/api/upload/image', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
         },
-        (error) => {
-          // Handle error
-          console.error('Upload error:', error);
-          if (onProgress) {
-            onProgress({ progress: 0, error: error.message });
-          }
-          reject(error);
+        onUploadProgress: (event) => {
+          if (!onProgress || !event.total) return;
+
+          const progress = Math.round((event.loaded * 100) / event.total);
+          onProgress({ progress });
         },
-        async () => {
-          // Upload completed successfully
-          try {
-            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-            if (onProgress) {
-              onProgress({ progress: 100, url: downloadURL });
-            }
-            resolve(downloadURL);
-          } catch (error) {
-            reject(error);
-          }
-        }
-      );
-    });
+      });
+
+      const downloadURL = response.data?.url;
+      if (!downloadURL) {
+        throw new Error('Upload succeeded but no image URL was returned');
+      }
+
+      onProgress?.({ progress: 100, url: downloadURL });
+      return downloadURL;
   }
 
   /**
@@ -135,15 +92,9 @@ export class ImageUploadService {
    */
   static async deleteImage(url: string): Promise<void> {
     try {
-      // Extract the path from the URL
-      const urlParts = url.split('/o/')[1];
-      if (!urlParts) throw new Error('Invalid Firebase Storage URL');
-      
-      const pathWithParams = urlParts.split('?')[0];
-      const decodedPath = decodeURIComponent(pathWithParams);
-      
-      const imageRef = ref(storage, decodedPath);
-      await deleteObject(imageRef);
+      await apiClient.delete('/api/upload/image', {
+        data: { imageUrl: url },
+      });
     } catch (error) {
       console.error('Error deleting image:', error);
       throw error;
